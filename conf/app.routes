@@ -1,5 +1,17 @@
 # microservice specific routes
 
-->         /hmrc-frontend           hmrcfrontend.Routes
-GET        /                        uk.gov.hmrc.siprotecteduserlistadminfrontend.controllers.HelloWorldController.helloWorld
-GET        /assets/*file            controllers.Assets.versioned(path = "/public", file: Asset)
+
+GET         /                                     controllers.SiProtectedUserController.homepage
+
+GET         /add                                  controllers.SiProtectedUserController.reload
+POST        /add                                  controllers.SiProtectedUserController.submit
+GET         /clear                                controllers.SiProtectedUserController.reload
+GET         /file-upload                          controllers.SiProtectedUserController.fileUploadPage()
+POST        /file-upload                          controllers.SiProtectedUserController.upload()
+GET         /search                               controllers.SiProtectedUserController.showSearchForm()
+GET         /show-all/sortByOrg/:sortByOrg        controllers.SiProtectedUserController.getAllAllowlist(sortByOrg: Boolean)
+POST        /search                               controllers.SiProtectedUserController.handleSearchRequest()
+POST        /delete-allowlisted-user              controllers.SiProtectedUserController.handleDeleteConfirmation()
+GET         /sort-by                              controllers.SiProtectedUserController.sortAllAllowlistedUsers()
+
+->          /hmrc-frontend                        hmrcfrontend.Routes

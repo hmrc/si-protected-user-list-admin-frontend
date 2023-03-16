@@ -1,0 +1,88 @@
+@*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import config.AppConfig
+@import models.User
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.govukfrontend.views.html.components.implicits._
+
+@this(
+        formTemplate: FormWithCSRF,
+        input: GovukInput,
+        mainTemplate: main_template,
+        govukTable: GovukTable
+)
+
+@(form: Form[_], allowlisted: List[User], notice: Option[String])(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+
+@mainTemplate(title = Messages("home.page.title")) {
+    <h1 class="govuk-heading-l">@Messages("page.header")</h1>
+
+    @formTemplate(action = controllers.routes.SiProtectedUserController.submit, args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
+
+        <fieldset class="form-field-group govuk-fieldset">
+            <div class="govuk-form-group">
+            @input(Input(label = Label(content = Text(Messages("page.scp")))).withFormFieldWithErrorAsHtml(form("name")))
+            </div>
+
+
+            <div class="govuk-form-group">
+            @input(Input(label = Label(content = Text(Messages("page.org")))).withFormFieldWithErrorAsHtml(form("org")))
+            </div>
+
+
+            <div class="govuk-form-group">
+            @input(Input(label = Label(content = Text(Messages("page.requester.email")))).withFormFieldWithErrorAsHtml(form("requester_email")))
+            </div>
+
+            <div class="govuk-form-group">
+
+                <button class="govuk-button" type="submit">@Messages("page.add")</button>
+                <a class="govuk-button govuk-button--secondary" type="button" href="@routes.SiProtectedUserController.reload">
+                @Messages("clear.button")
+                </a>
+                <a class="govuk-button govuk-button--secondary" type="button" href="@routes.SiProtectedUserController.homepage">
+                @Messages("delete.complete.button")
+                </a>
+            </div>
+        </fieldset>
+    }
+
+    @notice.map { msg =>
+        <p class="govuk-body" id="notice">@msg</p>
+    }
+
+    @if(allowlisted.nonEmpty) {
+        @govukTable(
+            Table(
+                rows = allowlisted.map { user =>
+                    Seq(
+                        TableRow(content = Text(user.username)),
+                        TableRow(content = Text(user.organisationName)),
+                        TableRow(content = Text(user.requesterEmail))
+                    )
+                },
+                head = Some(Seq(
+                    HeadCell(content = Text(Messages("page.name"))),
+                    HeadCell(content = Text(Messages("page.org"))),
+                    HeadCell(content = Text(Messages("page.requester.email"))),
+                )),
+                caption = None,
+                firstCellIsHeader = false
+            )
+        )
+    }
+}
