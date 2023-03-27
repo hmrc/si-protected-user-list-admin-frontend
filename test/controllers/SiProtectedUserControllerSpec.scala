@@ -133,8 +133,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
     "return 200 if the file has been processed correctly" in new Setup {
       when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled")).thenReturn(true)
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
       when(mockDataProcessService.processBulkData(any, any, any)(any)).thenReturn(Left((0, 0, 0)))
       when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some("stride-pid")))
 
@@ -190,8 +188,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
   "loading the add user to allowlist page" should {
     "reset the 'add multiple users' session" in new Setup {
       when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(false)
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
 
       when(mockAllowlistCache.clear()(any)).thenReturn(Future.successful(()))
 
@@ -203,8 +199,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
     "return a HTML document with the 'add user to allowlist' form" in new Setup {
       when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(false)
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
 
       when(mockAllowlistCache.clear()(any)).thenReturn(Future.successful(()))
 
@@ -221,8 +215,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
   "submitting the 'add user to allowlist' form" should {
     "return 400 Bad Request if the form is invalid" in new Setup {
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
       when(mockAllowlistCache.getAll()(any)).thenReturn(Future.successful(Nil))
 
       val res: Result = await(siProtectedUserController.submit()(FakeRequest().withHeaders("Csrf-Token" -> "nocheck").withFormUrlEncodedBody()))
@@ -234,8 +226,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
     }
 
     "return 409 Conflict if the user is already allowlisted" in new Setup {
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
       when(mockAdminConnector.addEntry(any)(any)).thenReturn(Future.failed(new ConflictException("conflict")))
       when(mockAdminConnector.findEntry(any)(any))
         .thenReturn(Future.successful(User("112233445566", "some org", "aa@bb.cc")))
@@ -277,8 +267,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
       val user = User("112233445566", "some org", "aa@bb.cc")
       when(mockAdminConnector.addEntry(any)(any)).thenReturn(Future.unit)
       when(mockAllowlistCache.add(any)(any)).thenReturn(Future.successful(List(user)))
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
       when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some("stride-pid")))
 
       val res: Result = await(
@@ -326,8 +314,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
   "addPage" should {
     "open home page with both buttons for reset" in new Setup {
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
       when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(false)
 
       when(mockAllowlistCache.clear()(any)).thenReturn(Future.successful(()))
@@ -349,8 +335,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
   "showSearchForm" should {
     "display the correct html page" in new Setup {
       when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(false)
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
 
       val result: Result = await(siProtectedUserController.showSearchForm()(FakeRequest()))
       status(result) shouldBe 200
@@ -361,9 +345,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
   "handleSearchRequest" should {
     "show delete confirmation page if found" in new Setup {
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
-
       val loginUser = User("something", "orgname", "some@email.com")
       when(mockAdminConnector.findEntry(any)(any)).thenReturn(Future.successful(loginUser))
       val req = FakeRequest()
@@ -381,8 +362,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
     "show search form again if not found" in new Setup {
       when(mockAdminConnector.findEntry(any)(any)).thenReturn(Future.failed(UpstreamErrorResponse("", 404)))
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
 
       val req = FakeRequest()
         .withFormUrlEncodedBody(
@@ -404,8 +383,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
   "handleDeleteConfirmation" should {
     "show delete complete page if deleted" in new Setup {
       when(mockAdminConnector.deleteUserEntry(any)(any)).thenReturn(Future.successful(()))
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
       when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some("stride-pid")))
 
       val req: FakeRequest[AnyContentAsFormUrlEncoded] = FakeRequest()
@@ -438,8 +415,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
     "show confirmation page again if not found" in new Setup {
       when(mockAdminConnector.deleteUserEntry(any)(any)).thenReturn(Future.failed(UpstreamErrorResponse("", 404)))
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
       when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some("stride-pid")))
 
       val req = FakeRequest()
@@ -486,8 +461,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
     "show the sort page if siprotecteduser.allowlist.show.all.enabled is true" in new Setup {
       when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(false)
       when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.show.all.enabled")).thenReturn(true)
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
 
       val result: Result = await(siProtectedUserController.sortAllAllowlistedUsers()(FakeRequest()))
       status(result) shouldBe OK
@@ -511,8 +484,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
       when(mockServicesConfig.getInt("siprotecteduser.allowlist.listscreen.rowlimit")).thenReturn(1)
       when(mockAdminConnector.getAllEntries()(any))
         .thenReturn(Future.successful(List(User("someUsername", "someOrgName", "some@email.com"))))
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
 
       val result = await(siProtectedUserController.getAllAllowlist()(FakeRequest()))
       status(result) shouldBe 200
@@ -535,8 +506,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
             )
           )
         )
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
 
       val result: Result = await(siProtectedUserController.getAllAllowlist(false)(FakeRequest()))
       status(result) shouldBe 200
@@ -562,8 +531,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
             )
           )
         )
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
 
       val result: Result = await(siProtectedUserController.getAllAllowlist()(FakeRequest()))
       status(result) shouldBe 200
@@ -577,63 +544,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
       body should include("some@email.com")
 
       body should not include "someOrgName3"
-    }
-  }
-
-  "Shuttered Service" should {
-    "return Service is unavailable on the home page" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(true)
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
-
-      val result: Result = await(siProtectedUserController.homepage()(FakeRequest()))
-      status(result) shouldBe 200
-      val body: String = contentAsString(result)
-      body should include("This service is shuttered and currently unavailable")
-    }
-
-    "return Service is unavailable on the add page" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(true)
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
-
-      val result: Result = await(siProtectedUserController.reload()(FakeRequest()))
-      status(result) shouldBe 200
-      val body: String = contentAsString(result)
-      body should include("This service is shuttered and currently unavailable")
-    }
-
-    "return Service is unavailable on the upload page" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(true)
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
-
-      val result: Result = await(siProtectedUserController.fileUploadPage()(FakeRequest()))
-      status(result) shouldBe 200
-      val body: String = contentAsString(result)
-      body should include("This service is shuttered and currently unavailable")
-    }
-
-    "return Service is unavailable on the sort-by page" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(true)
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
-
-      val result: Result = await(siProtectedUserController.sortAllAllowlistedUsers()(FakeRequest()))
-      status(result) shouldBe 200
-      val body: String = contentAsString(result)
-      body should include("This service is shuttered and currently unavailable")
-    }
-
-    "return Service is unavailable on the show-find-form page" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(true)
-      when(mockAppConfig.analyticsHost).thenReturn("analytics-host")
-      when(mockAppConfig.analyticsToken).thenReturn("analytics-token")
-
-      val result: Result = await(siProtectedUserController.showSearchForm()(FakeRequest()))
-      status(result) shouldBe 200
-      val body: String = contentAsString(result)
-      body should include("This service is shuttered and currently unavailable")
     }
   }
 }
