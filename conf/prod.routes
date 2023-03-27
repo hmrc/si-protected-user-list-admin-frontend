@@ -1,5 +1,5 @@
 # Add all the application routes to the app.routes file
-->         /si-protected-user-list-admin-frontend              app.Routes
-->         /                          health.Routes
+->         /si-protected-user-list-admin        app.Routes
+->         /                                    health.Routes
 
-GET        /admin/metrics             com.kenshoo.play.metrics.MetricsController.metrics
+GET        /admin/metrics                       com.kenshoo.play.metrics.MetricsController.metrics

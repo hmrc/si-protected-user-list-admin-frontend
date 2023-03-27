@@ -1,2 +1,77 @@
 service.name = si-protected-user-list-admin-frontend
 service.text = This is your new service
+home.page.title = MDTP User Admin - SI Protected User List
+
+home.page.header = SI Protected User List Admin
+home.page.button = Add to Allowlist
+home.page.delete.button = Remove from Allowlist
+home.page.bulk.button = Bulk Add to Allowlist
+home.page.get.all =List entries in Allowlist
+home.page.merge = Merge Data from OTP
+
+
+otpafe.site.error.page.header = There are errors on the page.
+
+#SI Protected User List
+page.title = Admin Console
+page.header = SI Protected User List - Add to Allowlist
+page.add = Add
+page.successful = User has successfully been added to the allowlist:
+page.failure = User has already been added to the allowlist:
+page.scp = User ID
+page.name = User ID
+page.org = Organisation Name
+page.requester.email = Requester Email
+clear.button = Clear form fields
+
+search.title = Admin Console
+search.header =SI Protected User List - Search for Allowlisted User
+search.search = Search
+search.scp = User ID
+
+delete.confirm.title = Admin Console
+delete.confirm.header = SI Protected User List - Remove from Allowlist
+delete.confirm.confirm = Remove
+
+bulk.upload.time.title = SI Protected User List - Uploading
+
+bulk.upload.title = SI Protected User List - Bulk Add to Allowlist
+bulk.upload.desc1 = The CSV file must include a header exactly like so:
+bulk.upload.desc2 = UserID,OrganisationName,RequesterEmail
+bulk.upload.desc3 = Please order the column data as per the header.
+bulk.upload.desc4 = All 3 fields must be populated.
+bulk.upload.desc5 = A UserID in the file will overwrite any existing UserID data in the Allowlist.
+bulk.upload.desc6 = The file will be format-checked before processing.
+bulk.upload.button = Home
+bulk.upload.error = Please select a file to upload
+
+delete.complete.title = Admin Console
+delete.complete.header = User Successfully Removed
+delete.complete.desc = User has been successfully removed from the allowlist
+delete.complete.button = Home
+delete.complete.scp = User ID
+delete.complete.org = Organisation Name
+
+form.name.required = User ID is required
+form.org.required = Organisation Name is required
+form.org.length.large = Invalid Organisation Name
+form.org.length.small = Invalid Organisation Name
+form.requester_email.regex = Invalid Requester Email
+form.username.regex.length = Invalid User ID
+form.username.regex = Invalid User ID
+form.username.search = Record Not Found
+form.org.regex = Invalid Organisation Name
+form.not.found.required = User Not Found
+
+all.users.header =SI Protected User List - List of entries in Allowlist
+all.users.desc =A list of all entries that are on the allowlist
+all.users.count.outof=Showing 1000 of
+
+all.users.sort.header =SI Protected User List - All Allowlisted Users
+all.users.sort.desc =A list of all users that are on the allowlist
+
+all.users.sortby.header=SI Protected User List - List entries in Allowlist
+all.users.sortby.desc=Choose whether to sort by User ID or sort by Organisation Name
+
+all.users.sort.userid=Sort by User ID
+all.users.sort.organisation=Sort by Organisation Name
