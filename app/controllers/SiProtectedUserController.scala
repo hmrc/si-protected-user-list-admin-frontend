@@ -17,7 +17,6 @@
 package controllers
 
 import audit.AuditEvents
-import config.AppConfig
 import connectors.SiProtectedUserListAdminConnector
 import models._
 import play.api.Logging
@@ -39,14 +38,16 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.io.BufferedSource
 
 @Singleton
-class SiProtectedUserController @Inject() (allowlistSessionCache: AllowListSessionCache,
-                                           dataProcessService: DataProcessService,
-                                           auditConnector: AuditConnector,
-                                           adminConnector: SiProtectedUserListAdminConnector,
-                                           views: Views,
-                                           mcc: MessagesControllerComponents,
-                                           val authConnector: AuthConnector
-                                          )(implicit ec: ExecutionContext, appConfig: AppConfig, servicesConfig: ServicesConfig)
+class SiProtectedUserController @Inject() (
+  servicesConfig: ServicesConfig,
+  allowlistSessionCache: AllowListSessionCache,
+  dataProcessService: DataProcessService,
+  auditConnector: AuditConnector,
+  adminConnector: SiProtectedUserListAdminConnector,
+  views: Views,
+  mcc: MessagesControllerComponents,
+  val authConnector: AuthConnector
+)(implicit ec: ExecutionContext)
     extends FrontendController(mcc)
     with Logging
     with AuthorisedFunctions {

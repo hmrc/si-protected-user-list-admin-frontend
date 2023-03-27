@@ -24,7 +24,7 @@
         govukTable: GovukTable
 )
 
-@(allUsers: List[User], allowlistCount: Int, rowLimit: Int)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(allUsers: List[User], allowlistCount: Int, rowLimit: Int)(implicit request: Request[_], messages: Messages)
 
 @mainTemplate(title = Messages("home.page.title")) {
     <h1 class="govuk-heading-l">@Messages("all.users.header")</h1>

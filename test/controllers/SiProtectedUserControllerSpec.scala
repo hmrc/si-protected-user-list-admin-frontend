@@ -56,6 +56,7 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
     val auditEventCaptor = ArgCaptor[DataEvent]
 
     val siProtectedUserController: SiProtectedUserController = new SiProtectedUserController(
+      mockServicesConfig,
       mockAllowlistCache,
       mockDataProcessService,
       mockAudit,
@@ -63,7 +64,7 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
       inject[Views],
       Stubs.stubMessagesControllerComponents(),
       mockAuthConnector
-    )(ExecutionContext.Implicits.global, mockAppConfig, mockServicesConfig)
+    )(ExecutionContext.Implicits.global)
   }
 
   def writeTempFile(text: String, fileName: Option[String] = None, extension: Option[String] = None): TemporaryFile = {
