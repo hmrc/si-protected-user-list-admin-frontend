@@ -22,11 +22,10 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.scalatest.matchers.should
 import play.api.i18n.Messages
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile}
 import play.api.libs.json.Json
 import play.api.mvc.MultipartFormData._
-import play.api.test.{FakeRequest, ResultExtractors}
+import play.api.test.ResultExtractors
 
 import java.io.PrintWriter
 import scala.jdk.CollectionConverters._
@@ -251,7 +250,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
 
     val response = await(
       wsClient
-        .url(resource(s"$backendBaseUrl/delete-allowlisted-user"))
+        .url(resource(s"$backendBaseUrl/delete-records"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
         .withCookies(mockSessionCookie)
         .post(Map("name" -> "123456789012", "org" -> "some_orgname2", "requester_email" -> "some@email.com"))
@@ -327,44 +326,4 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
     def expectUserToBeStrideAuthenticated(pid: String): Unit =
       stubFor(post("/auth/authorise").willReturn(okJson(Json.obj("clientId" -> pid).toString())))
   }
-
-//  "Shuttered Service" should {
-//    val siProtectedUserController = app.injector.instanceOf[SiProtectedUserController]
-//
-//    "return Service is unavailable on the home page" in new Setup {
-//      private val result = siProtectedUserController.homepage()(FakeRequest())
-//      status(result) shouldBe 200
-//      private val body = contentAsString(result)
-//      body should include("This service is shuttered and currently unavailable")
-//    }
-//
-//    "return Service is unavailable on the add page" in new Setup {
-//
-//      private val result = siProtectedUserController.reload()(FakeRequest())
-//      status(result) shouldBe 200
-//      private val body = contentAsString(result)
-//      body should include("This service is shuttered and currently unavailable")
-//    }
-//
-//    "return Service is unavailable on the upload page" in new Setup {
-//      private val result = siProtectedUserController.fileUploadPage()(FakeRequest())
-//      status(result) shouldBe 200
-//      val body: String = contentAsString(result)
-//      body should include("This service is shuttered and currently unavailable")
-//    }
-//
-//    "return Service is unavailable on the sort-by page" in new Setup {
-//      private val result = siProtectedUserController.sortAllAllowlistedUsers()(FakeRequest())
-//      status(result) shouldBe 200
-//      private val body = contentAsString(result)
-//      body should include("This service is shuttered and currently unavailable")
-//    }
-//
-//    "return Service is unavailable on the show-find-form page" in new Setup {
-//      private val result = siProtectedUserController.showSearchForm()(FakeRequest())
-//      status(result) shouldBe 200
-//      private val body = contentAsString(result)
-//      body should include("This service is shuttered and currently unavailable")
-//    }
-//  }
 }
