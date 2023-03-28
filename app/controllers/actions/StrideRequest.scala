@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package models
+package controllers.actions
 
 import play.api.mvc.{Request, WrappedRequest}
 import uk.gov.hmrc.auth.core.retrieve.Credentials

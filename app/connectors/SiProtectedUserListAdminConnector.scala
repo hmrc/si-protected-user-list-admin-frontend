@@ -37,7 +37,7 @@ class SiProtectedUserListAdminConnector @Inject() (sc: ServicesConfig, httpClien
         s"$serviceUrl/$rootPath/add",
         Json.obj(
           "username"         -> login.username,
-          "organisationName" -> login.organisationName.replaceAll("[\b\r\n\t]{1}", ",").trim,
+          "organisationName" -> login.organisationName.replaceAll("[\b\r\n\t]+", ", ").trim,
           "requesterEmail"   -> login.requesterEmail
         )
       )

@@ -16,10 +16,12 @@
 
 package controllers
 
+import _root_.controllers.actions.StrideAction
 import audit.AuditEvents
 import connectors.SiProtectedUserListAdminConnector
 import models._
 import play.api.Logging
+import play.api.i18n.I18nSupport
 import play.api.libs.Files
 import play.api.mvc._
 import services.{AllowListSessionCache, DataProcessService}
@@ -46,15 +48,17 @@ class SiProtectedUserController @Inject() (
   adminConnector: SiProtectedUserListAdminConnector,
   views: Views,
   mcc: MessagesControllerComponents,
-  val authConnector: AuthConnector
+  val authConnector: AuthConnector,
+  strideAction: StrideAction
 )(implicit ec: ExecutionContext)
     extends FrontendController(mcc)
     with Logging
-    with AuthorisedFunctions {
+    with AuthorisedFunctions
+    with I18nSupport {
 
   private lazy val showAllEnabled: Boolean = servicesConfig.getBoolean("siprotecteduser.allowlist.show.all.enabled")
 
-  def homepage: Action[AnyContent] = Action(implicit request => Ok(views.home()))
+  def homepage: Action[AnyContent] = (Action andThen strideAction)(implicit request => Ok(views.home()))
 
   def reload: Action[AnyContent] = Action.async { implicit request =>
     logger.warn(

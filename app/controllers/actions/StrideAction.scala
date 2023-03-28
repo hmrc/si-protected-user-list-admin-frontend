@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package actions
+package controllers.actions
 
 import config.AppConfig
-import models.StrideRequest
 import play.api.Logging
 import play.api.mvc.Results.{Redirect, Unauthorized}
-import play.api.mvc.{Request, Result}
+import play.api.mvc.{ActionRefiner, Request, Result}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{allEnrolments, credentials, name}
 import uk.gov.hmrc.auth.core.retrieve.~
@@ -34,12 +33,13 @@ class StrideAction @Inject() (
   val authConnector: AuthConnector,
   appConfig: AppConfig
 )(implicit val executionContext: ExecutionContext)
-    extends AuthorisedFunctions
+    extends ActionRefiner[Request, StrideRequest]
+    with AuthorisedFunctions
     with Logging {
   private lazy val strideLoginUrl: String = s"${appConfig.strideLoginBaseUrl}/stride/sign-in"
   private lazy val strideSuccessUrl: String = appConfig.strideSuccessUrl
 
-  def publicRefine[A](request: Request[A]): Future[Either[Result, StrideRequest[A]]] = {
+  def refine[A](request: Request[A]): Future[Either[Result, StrideRequest[A]]] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
     val enrolment = appConfig.strideEnrolment

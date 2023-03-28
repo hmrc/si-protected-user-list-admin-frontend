@@ -29,7 +29,7 @@ class AppConfig @Inject() (val runModeConfiguration: Configuration) {
   lazy val analyticsToken: String = loadConfig(s"google-analytics.token")
   lazy val analyticsHost: String = loadConfig(s"google-analytics.host")
 
-  lazy val strideEnrolment: String = loadConfig("authentication.stride.Enrolment")
+  lazy val strideEnrolment: String = loadConfig("authentication.stride.enrolment")
   lazy val strideLoginBaseUrl: String = loadConfig("authentication.stride.loginBaseUrl")
   lazy val strideSuccessUrl: String = loadConfig("authentication.stride.successReturnUrl")
 }

@@ -18,6 +18,7 @@ package controllers
 
 import config.AppConfig
 import connectors.SiProtectedUserListAdminConnector
+import controllers.actions.StrideAction
 import models.User
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -36,7 +37,6 @@ import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
 import views.Views
-
 import java.io.PrintWriter
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
@@ -45,6 +45,8 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
+    private implicit val ec: ExecutionContext = inject[ExecutionContext]
+
     val mockAppConfig = mock[AppConfig]
     val mockAudit = mock[AuditConnector]
     val mockAdminConnector = mock[SiProtectedUserListAdminConnector]
@@ -63,7 +65,8 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
       mockAdminConnector,
       inject[Views],
       Stubs.stubMessagesControllerComponents(),
-      mockAuthConnector
+      mockAuthConnector,
+      new StrideAction(mockAuthConnector, mockAppConfig)
     )(ExecutionContext.Implicits.global)
   }
 
