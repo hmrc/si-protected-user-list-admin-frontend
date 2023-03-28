@@ -70,7 +70,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
       mockAdminConnector,
       inject[Views],
       Stubs.stubMessagesControllerComponents(),
-      mockAuthConnector,
       new StrideAction(mockAuthConnector, mockAppConfig)
     )(ExecutionContext.Implicits.global)
   }

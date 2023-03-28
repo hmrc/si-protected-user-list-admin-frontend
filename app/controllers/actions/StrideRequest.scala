@@ -21,4 +21,6 @@ import play.api.mvc.{Request, WrappedRequest}
 final case class StrideRequest[A](
   underlying: Request[A],
   clientIdOpt: Option[String]
-) extends WrappedRequest[A](underlying)
+) extends WrappedRequest[A](underlying) {
+  def clientId: String = clientIdOpt getOrElse "UnknownUserId"
+}
