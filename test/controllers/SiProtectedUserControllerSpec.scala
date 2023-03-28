@@ -29,7 +29,7 @@ import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile}
 import play.api.mvc._
 import play.api.test.{FakeRequest, Injecting}
 import services.{AllowListSessionCache, DataProcessService}
-import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.auth.core.{AuthConnector, Enrolment}
 import uk.gov.hmrc.gg.test.UnitSpec
 import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -37,6 +37,7 @@ import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
 import views.Views
+
 import java.io.PrintWriter
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
@@ -47,13 +48,17 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
   trait Setup {
     private implicit val ec: ExecutionContext = inject[ExecutionContext]
 
-    val mockAppConfig = mock[AppConfig]
+    protected val mockAppConfig: AppConfig = mock[AppConfig]
+    when(mockAppConfig.strideEnrolments) thenReturn Set.empty[Enrolment]
+
+    protected val mockAuthConnector: AuthConnector = mock[AuthConnector]
+    when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)) thenReturn Future.successful(Some("stride-pid"))
+
     val mockAudit = mock[AuditConnector]
     val mockAdminConnector = mock[SiProtectedUserListAdminConnector]
     val mockAllowlistCache = mock[AllowListSessionCache]
     val mockServicesConfig = mock[ServicesConfig]
     val mockDataProcessService = mock[DataProcessService]
-    val mockAuthConnector = mock[AuthConnector]
 
     val auditEventCaptor = ArgCaptor[DataEvent]
 
@@ -137,7 +142,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
     "return 200 if the file has been processed correctly" in new Setup {
       when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled")).thenReturn(true)
       when(mockDataProcessService.processBulkData(any, any, any)(any)).thenReturn(Left((0, 0, 0)))
-      when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some("stride-pid")))
 
       val lines = "UserID,OrganisationName,RequesterEmail\n01 23 45 67 89 01,\"some,org\",some@email.com"
       val createdFile: TemporaryFile = writeTempFile(lines, None, Some(".csv"))
@@ -191,7 +195,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
   "loading the add user to allowlist page" should {
     "reset the 'add multiple users' session" in new Setup {
       when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(false)
-
       when(mockAllowlistCache.clear()(any)).thenReturn(Future.successful(()))
 
       val res = await(siProtectedUserController.reload()(FakeRequest()))
@@ -202,7 +205,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
     "return a HTML document with the 'add user to allowlist' form" in new Setup {
       when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(false)
-
       when(mockAllowlistCache.clear()(any)).thenReturn(Future.successful(()))
 
       val res: Result = await(siProtectedUserController.reload()(FakeRequest()))
@@ -232,7 +234,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
       when(mockAdminConnector.addEntry(any)(any)).thenReturn(Future.failed(new ConflictException("conflict")))
       when(mockAdminConnector.findEntry(any)(any))
         .thenReturn(Future.successful(User("112233445566", "some org", "aa@bb.cc")))
-      when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some("stride-pid")))
 
       val res: Result = await(
         siProtectedUserController.submit()(
@@ -270,7 +271,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
       val user = User("112233445566", "some org", "aa@bb.cc")
       when(mockAdminConnector.addEntry(any)(any)).thenReturn(Future.unit)
       when(mockAllowlistCache.add(any)(any)).thenReturn(Future.successful(List(user)))
-      when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some("stride-pid")))
 
       val res: Result = await(
         siProtectedUserController.submit()(
@@ -386,7 +386,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
   "handleDeleteConfirmation" should {
     "show delete complete page if deleted" in new Setup {
       when(mockAdminConnector.deleteUserEntry(any)(any)).thenReturn(Future.successful(()))
-      when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some("stride-pid")))
 
       val req: FakeRequest[AnyContentAsFormUrlEncoded] = FakeRequest()
         .withSession("userId" -> "someUserId")
@@ -418,7 +417,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
     "show confirmation page again if not found" in new Setup {
       when(mockAdminConnector.deleteUserEntry(any)(any)).thenReturn(Future.failed(UpstreamErrorResponse("", 404)))
-      when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some("stride-pid")))
 
       val req = FakeRequest()
         .withSession("userId" -> "someUserId")

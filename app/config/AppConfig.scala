@@ -17,6 +17,7 @@
 package config
 
 import play.api.Configuration
+import uk.gov.hmrc.auth.core.Enrolment
 
 import javax.inject.{Inject, Singleton}
 
@@ -29,7 +30,11 @@ class AppConfig @Inject() (val runModeConfiguration: Configuration) {
   lazy val analyticsToken: String = loadConfig(s"google-analytics.token")
   lazy val analyticsHost: String = loadConfig(s"google-analytics.host")
 
-  lazy val strideEnrolment: String = loadConfig("authentication.stride.enrolment")
+  lazy val strideEnrolments: Set[Enrolment] =
+    runModeConfiguration
+      .get[Seq[String]]("authentication.stride.enrolments")
+      .map(Enrolment.apply)
+      .toSet
   lazy val strideLoginBaseUrl: String = loadConfig("authentication.stride.loginBaseUrl")
   lazy val strideSuccessUrl: String = loadConfig("authentication.stride.successReturnUrl")
 }

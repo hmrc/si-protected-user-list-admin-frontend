@@ -104,6 +104,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
       wsClient
         .url(resource(s"$backendBaseUrl/add"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> username, "org" -> orgName, "requester_email" -> "some"))
     )
     response.status shouldBe 400
@@ -115,6 +116,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
       wsClient
         .url(resource(s"$backendBaseUrl/add"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> username, "org" -> "1", "requester_email" -> "some@email.com"))
     )
     response.status shouldBe 400
@@ -171,6 +173,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
       wsClient
         .url(resource(s"$backendBaseUrl/add"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> "", "org" -> orgName, "requester_email" -> "some1@email.com"))
     )
 
@@ -187,6 +190,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
       wsClient
         .url(resource(s"$backendBaseUrl/add"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> username, "org" -> "", "requester_email" -> "some@email.com"))
     )
 
@@ -206,6 +210,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
       wsClient
         .url(resource(s"$backendBaseUrl/add"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> username, "org" -> longOrg, "requester_email" -> "some@email.com"))
     )
 
@@ -220,6 +225,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
       wsClient
         .url(resource(s"$backendBaseUrl/add"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> "", "org" -> "", "requester_email" -> "some@email.com"))
     )
     response.status shouldBe 400
@@ -237,6 +243,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
       wsClient
         .url(resource(s"$backendBaseUrl/search"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> "123456789012", "org" -> "some_orgname", "requesterEmail" -> "some@email.com"))
     )
     response.status shouldBe 404
@@ -266,6 +273,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
       wsClient
         .url(resource(s"$backendBaseUrl/search"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> "123456789012", "org" -> "some_orgname"))
     )
 

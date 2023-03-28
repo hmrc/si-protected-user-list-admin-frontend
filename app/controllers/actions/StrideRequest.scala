@@ -17,22 +17,8 @@
 package controllers.actions
 
 import play.api.mvc.{Request, WrappedRequest}
-import uk.gov.hmrc.auth.core.retrieve.Credentials
 
 final case class StrideRequest[A](
-  innerRequest: Request[A],
-  credentials: Credentials,
-  operator: StrideRequest.Operator
-) extends WrappedRequest[A](innerRequest) {
-  val dataKey: String = credentials.providerId
-}
-
-object StrideRequest {
-  case class Operator(
-    id: String,
-    name: Option[String] = None,
-    roles: Set[String]
-  ) {
-    def safeName: String = name getOrElse s"PID $id"
-  }
-}
+  underlying: Request[A],
+  clientIdOpt: Option[String]
+) extends WrappedRequest[A](underlying)

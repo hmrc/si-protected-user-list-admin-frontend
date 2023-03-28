@@ -21,8 +21,8 @@ import play.api.Logging
 import play.api.mvc.Results.{Redirect, Unauthorized}
 import play.api.mvc.{ActionRefiner, Request, Result}
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{allEnrolments, credentials, name}
-import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.clientId
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
@@ -40,26 +40,14 @@ class StrideAction @Inject() (
   private lazy val strideSuccessUrl: String = appConfig.strideSuccessUrl
 
   def refine[A](request: Request[A]): Future[Either[Result, StrideRequest[A]]] = {
-
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
-    val enrolment = appConfig.strideEnrolment
 
-    authorised(Enrolment(enrolment))
-      .retrieve(credentials and name and allEnrolments)
-      .apply {
-        case Some(credentials) ~ Some(name) ~ enrolments =>
-          val id = credentials.providerId
-          val roles: Set[String] = enrolments.enrolments
-            .map(_.key)
-            .intersect(Set(enrolment))
-          val fullName = Some(Seq(name.name, name.lastName).flatten mkString " ") filter (_.nonEmpty)
-          val operator = StrideRequest.Operator(id, fullName, roles)
-          logger.debug("User Authenticated with Stride auth")
-          Future.successful(Right(StrideRequest(request, credentials, operator)))
-        case _ =>
-          val msg = "Failed Stride Auth - Missing Data"
-          logger.info(msg)
-          Future.successful(Left(Unauthorized(msg)))
+    val hasRequiredRole = (appConfig.strideEnrolments fold EmptyPredicate)(_ or _)
+
+    authorised(hasRequiredRole)
+      .retrieve(clientId) { clientIdOpt =>
+        logger.debug("User Authenticated with Stride auth")
+        Future.successful(Right(StrideRequest(request, clientIdOpt)))
       }
       .recover {
         case _: InsufficientEnrolments =>

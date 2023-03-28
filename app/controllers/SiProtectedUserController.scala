@@ -27,14 +27,13 @@ import play.api.mvc._
 import services.{AllowListSessionCache, DataProcessService}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.http.{Request => _, SessionId, _}
+import uk.gov.hmrc.http.{Request => _, _}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import views.Views
 import zamblauskas.csv.parser.Parser
 
-import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.BufferedSource
@@ -55,53 +54,65 @@ class SiProtectedUserController @Inject() (
     with Logging
     with AuthorisedFunctions
     with I18nSupport {
-
+  private val authAction = Action andThen strideAction
   private lazy val showAllEnabled: Boolean = servicesConfig.getBoolean("siprotecteduser.allowlist.show.all.enabled")
 
-  def homepage: Action[AnyContent] = (Action andThen strideAction)(implicit request => Ok(views.home()))
+  def homepage: Action[AnyContent] = authAction(implicit request => Ok(views.home()))
 
-  def reload: Action[AnyContent] = Action.async { implicit request =>
+  def reload: Action[AnyContent] = authAction.async { implicit request =>
     logger.warn(
       "[GG-6801] Admin Screen - Button click: 'Add to Allowlist' / 'Clear fields'" + servicesConfig.getBoolean(
         "siprotecteduser.allowlist.shutter.service"
       )
     )
     if (!servicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")) {
-      withSessionId(implicit hc => allowlistSessionCache.clear().map(_ => Ok(views.add(addAllowListForm, Nil, None))))
+      allowlistSessionCache
+        .clear()
+        .map(_ => Ok(views.add(addAllowListForm, Nil, None)))
     } else {
       Future.successful(Ok(views.home()))
     }
   }
 
-  def submit: Action[AnyContent] = Action.async { implicit request =>
-    withSessionId { implicit hc =>
-      addAllowListForm
-        .bindFromRequest()
-        .fold(
-          formWithErrors => allowlistSessionCache.getAll().map(users => BadRequest(views.add(formWithErrors, users, None))),
-          formData =>
-            authorised().retrieve(Retrievals.clientId) { clientId =>
-              adminConnector
-                .addEntry(formData)
-                .flatMap { _ =>
-                  allowlistSessionCache.add(formData).map { users =>
-                    auditConnector.sendEvent(AuditEvents.allowListAddEventSuccess(clientId.getOrElse("UnknownUserId"), formData))
-                    logger.warn("[GG-6801] Admin Screen - Button click: 'Add to Allowlist' / 'Add' entry")
-                    Ok(views.add(addAllowListForm.fill(formData.copy(username = "")), users, Some("User record saved to allowlist")))
-                  }
-                }
-                .recoverWith { case _: ConflictException =>
-                  auditConnector.sendEvent(AuditEvents.allowListAddEventFailure(clientId.getOrElse("UnknownUserId"), formData))
-                  adminConnector.findEntry(formData.username) map { existingUser =>
-                    Conflict(views.add(addAllowListForm.fill(formData), List(existingUser), Some("Entry not added, already exists, see below")))
-                  }
-                }
+  def submit: Action[AnyContent] = authAction.async { implicit request =>
+    addAllowListForm
+      .bindFromRequest()
+      .fold(
+        formWithErrors =>
+          allowlistSessionCache
+            .getAll()
+            .map(users => BadRequest(views.add(formWithErrors, users, None))),
+        formData => {
+
+          adminConnector
+            .addEntry(formData)
+            .flatMap { _ =>
+              auditConnector.sendEvent(
+                AuditEvents.allowListAddEventSuccess(request.clientIdOpt getOrElse "UnknownUserId", formData)
+              )
+
+              logger.warn("[GG-6801] Admin Screen - Button click: 'Add to Allowlist' / 'Add' entry")
+
+              allowlistSessionCache
+                .add(formData)
+                .map(users => Ok(views.add(addAllowListForm.fill(formData.copy(username = "")), users, Some("User record saved to allowlist"))))
             }
-        )
-    }
+            .recoverWith { case _: ConflictException =>
+              auditConnector.sendEvent(
+                AuditEvents.allowListAddEventFailure(request.clientIdOpt getOrElse "UnknownUserId", formData)
+              )
+
+              adminConnector
+                .findEntry(formData.username)
+                .map(existingUser =>
+                  Conflict(views.add(addAllowListForm.fill(formData), List(existingUser), Some("Entry not added, already exists, see below")))
+                )
+            }
+        }
+      )
   }
 
-  def fileUploadPage(): Action[AnyContent] = Action.async { implicit request =>
+  def fileUploadPage(): Action[AnyContent] = authAction.async { implicit request =>
     if (servicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")) {
       Future.successful(Ok(views.home()))
     } else {
@@ -114,7 +125,7 @@ class SiProtectedUserController @Inject() (
     }
   }
 
-  def upload: Action[MultipartFormData[Files.TemporaryFile]] = Action.async(parse.multipartFormData) { implicit request =>
+  def upload: Action[MultipartFormData[Files.TemporaryFile]] = authAction.async(parse.multipartFormData) { implicit request =>
     if (servicesConfig.getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled")) {
       request.body
         .file("csvfile")
@@ -181,7 +192,7 @@ class SiProtectedUserController @Inject() (
       Future.successful(ServiceUnavailable)
   }
 
-  def sortAllAllowlistedUsers: Action[AnyContent] = Action.async { implicit request =>
+  def sortAllAllowlistedUsers: Action[AnyContent] = authAction.async { implicit request =>
     if (servicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")) {
       Future.successful(Ok(views.home()))
     } else {
@@ -192,31 +203,32 @@ class SiProtectedUserController @Inject() (
     }
   }
 
-  def getAllAllowlist(sortByOrganisationName: Boolean = true): Action[AnyContent] = Action.async { implicit request =>
-    if (showAllEnabled) {
-      val rowLimit = servicesConfig.getInt("siprotecteduser.allowlist.listscreen.rowlimit")
-      val startedTime: Long = System.currentTimeMillis()
-      adminConnector.getAllEntries().map { allAllowlistedUsers =>
-        val searchTime: Long = System.currentTimeMillis() - startedTime
-        val allowListCount: Int = allAllowlistedUsers.size
-        if (sortByOrganisationName) {
-          val sortedUsers: List[User] = allAllowlistedUsers.sortBy(_.organisationName)
-          logger.warn(
-            s"[GG-6801] Admin Screen - Button click: 'List entries in Allowlist' / 'Count Allowlist Entries' sorted by organisation name returned $allowListCount rows, took $searchTime ms"
-          )
-          Ok(views.showAll(sortedUsers.take(rowLimit), allowListCount, rowLimit))
-        } else {
-          val sortedUsers: List[User] = allAllowlistedUsers.sortBy(_.username)
-          logger.warn(
-            s"[GG-6801] Admin Screen - Button click: 'List entries in Allowlist' / 'Count Allowlist Entries' sorted by user id returned $allowListCount rows, took $searchTime ms"
-          )
-          Ok(views.showAll(sortedUsers.take(rowLimit), allowListCount, rowLimit))
+  def getAllAllowlist(sortByOrganisationName: Boolean = true): Action[AnyContent] =
+    authAction.async { implicit request =>
+      if (showAllEnabled) {
+        val rowLimit = servicesConfig.getInt("siprotecteduser.allowlist.listscreen.rowlimit")
+        val startedTime: Long = System.currentTimeMillis()
+        adminConnector.getAllEntries().map { allAllowlistedUsers =>
+          val searchTime: Long = System.currentTimeMillis() - startedTime
+          val allowListCount: Int = allAllowlistedUsers.size
+          if (sortByOrganisationName) {
+            val sortedUsers: List[User] = allAllowlistedUsers.sortBy(_.organisationName)
+            logger.warn(
+              s"[GG-6801] Admin Screen - Button click: 'List entries in Allowlist' / 'Count Allowlist Entries' sorted by organisation name returned $allowListCount rows, took $searchTime ms"
+            )
+            Ok(views.showAll(sortedUsers.take(rowLimit), allowListCount, rowLimit))
+          } else {
+            val sortedUsers: List[User] = allAllowlistedUsers.sortBy(_.username)
+            logger.warn(
+              s"[GG-6801] Admin Screen - Button click: 'List entries in Allowlist' / 'Count Allowlist Entries' sorted by user id returned $allowListCount rows, took $searchTime ms"
+            )
+            Ok(views.showAll(sortedUsers.take(rowLimit), allowListCount, rowLimit))
+          }
         }
-      }
-    } else Future.successful(NotFound)
-  }
+      } else Future.successful(NotFound)
+    }
 
-  def showSearchForm(): Action[AnyContent] = Action { implicit request =>
+  def showSearchForm(): Action[AnyContent] = authAction { implicit request =>
     logger.warn("[GG-6801] Admin Screen - Button click: 'Remove From Allowlist'")
     if (servicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")) {
       Ok(views.home())
@@ -225,7 +237,7 @@ class SiProtectedUserController @Inject() (
     }
   }
 
-  def handleSearchRequest: Action[AnyContent] = Action.async { implicit request =>
+  def handleSearchRequest: Action[AnyContent] = authAction.async { implicit request =>
     searchAllowListForm
       .bindFromRequest()
       .fold(
@@ -257,7 +269,7 @@ class SiProtectedUserController @Inject() (
       )
   }
 
-  def handleDeleteConfirmation(): Action[AnyContent] = Action.async { implicit request =>
+  def handleDeleteConfirmation(): Action[AnyContent] = authAction.async { implicit request =>
     addAllowListForm
       .bindFromRequest()
       .fold(
@@ -282,16 +294,5 @@ class SiProtectedUserController @Inject() (
           }
         }
       )
-  }
-
-  private def withSessionId(f: HeaderCarrier => Future[Result])(implicit request: Request[_]): Future[Result] = {
-    val headerCarrier = hc(request)
-    headerCarrier.sessionId match {
-      case Some(_) =>
-        f(headerCarrier)
-      case None =>
-        val sessionId = UUID.randomUUID().toString
-        f(headerCarrier.copy(sessionId = Some(SessionId(sessionId)))).map(_.addingToSession(SessionKeys.sessionId -> sessionId))
-    }
   }
 }

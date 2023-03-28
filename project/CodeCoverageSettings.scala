@@ -8,6 +8,7 @@ object CodeCoverageSettings {
     "Reverse.*",
     "uk.gov.hmrc.BuildInfo",
     "prod.*",
+    "app.*",
     ".*Routes.*",
     "testOnly.*",
     "testOnlyDoNotUseInAppConf.*",
