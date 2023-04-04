@@ -16,7 +16,6 @@
 
 @import models.User
 @import uk.gov.hmrc.govukfrontend.views.html.components._
-@import config.AppConfig
 
 @this(
         mainTemplate: main_template,
@@ -24,7 +23,7 @@
         govukTable: GovukTable
 )
 
-@(formWithErrors: Form[User], login: User, successFailureMessage: String = "")(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(formWithErrors: Form[User], login: User, successFailureMessage: String = "")(implicit request: Request[_], messages: Messages)
 
 @mainTemplate(title = Messages("home.page.title")) {
     <h1 class="govuk-heading-l">@Messages("delete.confirm.header")</h1>

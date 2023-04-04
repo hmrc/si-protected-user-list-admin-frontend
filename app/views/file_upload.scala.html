@@ -14,13 +14,11 @@
  * limitations under the License.
  *@
 
-@import config.AppConfig
-
 @this(
         mainTemplate: main_template
 )
 
-@()(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@()(implicit request: Request[_], messages: Messages)
 
 @mainTemplate(title = Messages("home.page.title")) {
     <h1 class="govuk-heading-l">@Messages("bulk.upload.title")</h1>

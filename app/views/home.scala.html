@@ -14,16 +14,14 @@
  * limitations under the License.
  *@
 
-@import config.AppConfig
-
 @import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @this(
+    config: ServicesConfig,
     mainTemplate: main_template
 )
 
-@()(implicit request: Request[_], messages: Messages, appConfig: AppConfig, config: ServicesConfig)
-
+@()(implicit request: Request[_], messages: Messages)
 
     @if(config.getBoolean("siprotecteduser.allowlist.shutter.service")) {
         @mainTemplate(title = Messages("Service is unavailable")) {

@@ -20,17 +20,17 @@ import akka.stream.scaladsl.{FileIO, Source}
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import org.scalatest.matchers.should
 import play.api.i18n.Messages
 import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile}
 import play.api.libs.json.Json
 import play.api.mvc.MultipartFormData._
+import play.api.test.ResultExtractors
 
 import java.io.PrintWriter
 import scala.jdk.CollectionConverters._
 import scala.util.Random
-
-class SiProtectedUserControllerISpec extends BaseISpec {
-
+class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors with should.Matchers {
   def writeTempFile(text: String, fileName: Option[String] = None, extension: Option[String] = None): TemporaryFile = {
     val tempFile = SingletonTemporaryFileCreator.create(fileName.getOrElse("prefix-"), extension.getOrElse("-suffix"))
     tempFile.deleteOnExit()
@@ -104,6 +104,7 @@ class SiProtectedUserControllerISpec extends BaseISpec {
       wsClient
         .url(resource(s"$backendBaseUrl/add"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> username, "org" -> orgName, "requester_email" -> "some"))
     )
     response.status shouldBe 400
@@ -115,6 +116,7 @@ class SiProtectedUserControllerISpec extends BaseISpec {
       wsClient
         .url(resource(s"$backendBaseUrl/add"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> username, "org" -> "1", "requester_email" -> "some@email.com"))
     )
     response.status shouldBe 400
@@ -171,6 +173,7 @@ class SiProtectedUserControllerISpec extends BaseISpec {
       wsClient
         .url(resource(s"$backendBaseUrl/add"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> "", "org" -> orgName, "requester_email" -> "some1@email.com"))
     )
 
@@ -187,6 +190,7 @@ class SiProtectedUserControllerISpec extends BaseISpec {
       wsClient
         .url(resource(s"$backendBaseUrl/add"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> username, "org" -> "", "requester_email" -> "some@email.com"))
     )
 
@@ -206,6 +210,7 @@ class SiProtectedUserControllerISpec extends BaseISpec {
       wsClient
         .url(resource(s"$backendBaseUrl/add"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> username, "org" -> longOrg, "requester_email" -> "some@email.com"))
     )
 
@@ -220,6 +225,7 @@ class SiProtectedUserControllerISpec extends BaseISpec {
       wsClient
         .url(resource(s"$backendBaseUrl/add"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> "", "org" -> "", "requester_email" -> "some@email.com"))
     )
     response.status shouldBe 400
@@ -237,6 +243,7 @@ class SiProtectedUserControllerISpec extends BaseISpec {
       wsClient
         .url(resource(s"$backendBaseUrl/search"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> "123456789012", "org" -> "some_orgname", "requesterEmail" -> "some@email.com"))
     )
     response.status shouldBe 404
@@ -250,7 +257,7 @@ class SiProtectedUserControllerISpec extends BaseISpec {
 
     val response = await(
       wsClient
-        .url(resource(s"$backendBaseUrl/delete-allowlisted-user"))
+        .url(resource(s"$backendBaseUrl/delete-records"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
         .withCookies(mockSessionCookie)
         .post(Map("name" -> "123456789012", "org" -> "some_orgname2", "requester_email" -> "some@email.com"))
@@ -266,6 +273,7 @@ class SiProtectedUserControllerISpec extends BaseISpec {
       wsClient
         .url(resource(s"$backendBaseUrl/search"))
         .withHttpHeaders("Csrf-Token" -> "nocheck")
+        .withCookies(mockSessionCookie)
         .post(Map("name" -> "123456789012", "org" -> "some_orgname"))
     )
 

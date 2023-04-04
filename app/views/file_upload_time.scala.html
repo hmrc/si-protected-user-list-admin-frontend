@@ -14,13 +14,16 @@
  * limitations under the License.
  *@
 
-@import config.AppConfig
-
 @this(
     mainTemplate: main_template
 )
 
-@(minutes: Long, remainderSeconds: Int, rows: Int, newMessage: Option[String] = None)(implicit request: Request[_], messages: Messages, appConfig: AppConfig)
+@(
+    minutes: Long,
+    remainderSeconds: Int,
+    rows: Int,
+    newMessage: Option[String] = None
+)(implicit request: Request[_], messages: Messages)
 
 @mainTemplate(title = Messages("home.page.title")) {
 <h1 class="govuk-heading-l">@{newMessage.getOrElse(Messages("bulk.upload.title"))}</h1>

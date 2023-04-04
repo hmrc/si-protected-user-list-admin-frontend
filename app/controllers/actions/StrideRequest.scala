@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@this(
-        mainTemplate: main_template
-)
+package controllers.actions
 
-@()(implicit request: Request[_], messages: Messages)
+import play.api.mvc.{Request, WrappedRequest}
 
-@mainTemplate(title = Messages("home.page.title")) {
-    <h1 class="govuk-heading-l">@Messages("delete.complete.header")</h1>
-    <div class="govuk-body">@Messages("delete.complete.desc")</div>
-
-    <form action="@routes.SiProtectedUserController.homepage">
-        <button class="govuk-button" type="submit">@Messages("delete.complete.button")</button>
-    </form>
+final case class StrideRequest[A](
+  underlying: Request[A],
+  clientIdOpt: Option[String]
+) extends WrappedRequest[A](underlying) {
+  def clientId: String = clientIdOpt getOrElse "UnknownUserId"
 }
