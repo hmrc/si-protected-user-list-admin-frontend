@@ -29,10 +29,7 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class StrideAction @Inject() (
-  val authConnector: AuthConnector,
-  appConfig: AppConfig
-)(implicit val executionContext: ExecutionContext)
+class StrideAction @Inject() (val authConnector: AuthConnector, appConfig: AppConfig)(implicit val executionContext: ExecutionContext)
     extends ActionRefiner[Request, StrideRequest]
     with AuthorisedFunctions
     with Logging {

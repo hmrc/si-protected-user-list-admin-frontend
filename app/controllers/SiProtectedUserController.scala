@@ -16,6 +16,7 @@
 
 package controllers
 
+import _root_.config.SiProtectedUserConfig
 import _root_.controllers.actions.StrideAction
 import audit.AuditEvents
 import connectors.SiProtectedUserListAdminConnector
@@ -27,7 +28,6 @@ import play.api.mvc._
 import services.{AllowListSessionCache, DataProcessService}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import views.Views
 import zamblauskas.csv.parser.Parser
@@ -37,30 +37,25 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.io.BufferedSource
 
 @Singleton
-class SiProtectedUserController @Inject() (
-  servicesConfig: ServicesConfig,
-  allowlistSessionCache: AllowListSessionCache,
-  dataProcessService: DataProcessService,
-  auditConnector: AuditConnector,
-  adminConnector: SiProtectedUserListAdminConnector,
-  views: Views,
-  mcc: MessagesControllerComponents,
-  strideAction: StrideAction
-)(implicit ec: ExecutionContext)
+class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUserConfig,
+                                           allowlistSessionCache: AllowListSessionCache,
+                                           dataProcessService: DataProcessService,
+                                           auditConnector: AuditConnector,
+                                           adminConnector: SiProtectedUserListAdminConnector,
+                                           views: Views,
+                                           mcc: MessagesControllerComponents,
+                                           strideAction: StrideAction
+                                          )(implicit ec: ExecutionContext)
     extends FrontendController(mcc)
     with Logging
     with I18nSupport {
-  private lazy val showAllEnabled = servicesConfig.getBoolean("siprotecteduser.allowlist.show.all.enabled")
+  private val showAllEnabled = siProtectedUserConfig.showAllEnabled
 
   def homepage: Action[AnyContent] = (Action andThen strideAction)(implicit request => Ok(views.home()))
 
   def reload: Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
-    logger.warn(
-      "[GG-6801] Admin Screen - Button click: 'Add to Allowlist' / 'Clear fields'" + servicesConfig.getBoolean(
-        "siprotecteduser.allowlist.shutter.service"
-      )
-    )
-    if (!servicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")) {
+    logger.warn("[GG-6801] Admin Screen - Button click: 'Add to Allowlist' / 'Clear fields'" + siProtectedUserConfig.shutterService)
+    if (!siProtectedUserConfig.shutterService) {
       allowlistSessionCache
         .clear()
         .map(_ => Ok(views.add(addAllowListForm, Nil, None)))
@@ -108,10 +103,10 @@ class SiProtectedUserController @Inject() (
   }
 
   def fileUploadPage(): Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
-    if (servicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")) {
+    if (siProtectedUserConfig.shutterService) {
       Future.successful(Ok(views.home()))
     } else {
-      if (servicesConfig.getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled")) {
+      if (siProtectedUserConfig.bulkUploadScreenEnabled) {
         logger.warn("[GG-6801] Admin Screen - Button click: 'Bulk Add to Allowlist")
         Future.successful(Ok(views.fileUpload()))
       } else {
@@ -122,7 +117,7 @@ class SiProtectedUserController @Inject() (
 
   def upload: Action[MultipartFormData[Files.TemporaryFile]] =
     (Action andThen strideAction).async(parse.multipartFormData) { implicit request =>
-      if (servicesConfig.getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled")) {
+      if (siProtectedUserConfig.bulkUploadScreenEnabled) {
         request.body
           .file("csvfile")
           .map { csvfile =>
@@ -188,7 +183,7 @@ class SiProtectedUserController @Inject() (
     }
 
   def sortAllAllowlistedUsers: Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
-    if (servicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")) {
+    if (siProtectedUserConfig.shutterService) {
       Future.successful(Ok(views.home()))
     } else {
       if (showAllEnabled) {
@@ -201,7 +196,7 @@ class SiProtectedUserController @Inject() (
   def getAllAllowlist(sortByOrganisationName: Boolean = true): Action[AnyContent] =
     (Action andThen strideAction).async { implicit request =>
       if (showAllEnabled) {
-        val rowLimit = servicesConfig.getInt("siprotecteduser.allowlist.listscreen.rowlimit")
+        val rowLimit = siProtectedUserConfig.listScreenRowLimit
         val startedTime: Long = System.currentTimeMillis()
         adminConnector.getAllEntries().map { allAllowlistedUsers =>
           val searchTime: Long = System.currentTimeMillis() - startedTime
@@ -226,7 +221,7 @@ class SiProtectedUserController @Inject() (
   def showSearchForm(): Action[AnyContent] =
     (Action andThen strideAction) { implicit request =>
       logger.warn("[GG-6801] Admin Screen - Button click: 'Remove From Allowlist'")
-      if (servicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")) {
+      if (siProtectedUserConfig.shutterService) {
         Ok(views.home())
       } else {
         Ok(views.deleteForm(searchAllowListForm))

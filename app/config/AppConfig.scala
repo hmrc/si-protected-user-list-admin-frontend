@@ -18,17 +18,19 @@ package config
 
 import play.api.Configuration
 import uk.gov.hmrc.auth.core.Enrolment
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
 
 @Singleton
-class AppConfig @Inject() (val runModeConfiguration: Configuration) {
+class AppConfig @Inject() (val runModeConfiguration: Configuration, servicesConfig: ServicesConfig) {
   private def loadConfig(key: String) = runModeConfiguration.get[String](key)
 
   lazy val appName: String = loadConfig("appName")
 
   lazy val analyticsToken: String = loadConfig(s"google-analytics.token")
   lazy val analyticsHost: String = loadConfig(s"google-analytics.host")
+  lazy val analyticsConfig: AnalyticsConfig = AnalyticsConfig(analyticsToken = analyticsToken, analyticsHost = analyticsHost)
 
   lazy val strideEnrolments: Set[Enrolment] =
     runModeConfiguration
@@ -37,4 +39,27 @@ class AppConfig @Inject() (val runModeConfiguration: Configuration) {
       .toSet
   lazy val strideLoginBaseUrl: String = loadConfig("authentication.stride.loginBaseUrl")
   lazy val strideSuccessUrl: String = loadConfig("authentication.stride.successReturnUrl")
+  lazy val authStrideEnrolments: AuthStrideEnrolmentsConfig =
+    AuthStrideEnrolmentsConfig(strideLoginBaseUrl = strideLoginBaseUrl, strideSuccessUrl = strideSuccessUrl, strideEnrolments = strideEnrolments)
+
+  lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
+    bulkUploadScreenEnabled = servicesConfig.getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled"),
+    bulkUploadRowLimit = servicesConfig.getInt("siprotecteduser.allowlist.bulkupload.file.row.limit"),
+    bulkUploadBatchSize = servicesConfig.getInt("siprotecteduser.allowlist.bulkupload.insert.batch.size"),
+    bulkUploadBatchDelaySecs = servicesConfig.getInt("siprotecteduser.allowlist.bulkupload.insert.batch.delay.secs"),
+    showAllEnabled = servicesConfig.getBoolean("siprotecteduser.allowlist.show.all.enabled"),
+    shutterService = servicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service"),
+    listScreenRowLimit = servicesConfig.getInt("siprotecteduser.allowlist.listscreen.rowlimit")
+  )
 }
+
+case class AnalyticsConfig(analyticsToken: String, analyticsHost: String)
+case class AuthStrideEnrolmentsConfig(strideLoginBaseUrl: String, strideSuccessUrl: String, strideEnrolments: Set[Enrolment])
+case class SiProtectedUserConfig(bulkUploadScreenEnabled: Boolean,
+                                 bulkUploadRowLimit: Int,
+                                 bulkUploadBatchSize: Int,
+                                 bulkUploadBatchDelaySecs: Int,
+                                 showAllEnabled: Boolean,
+                                 shutterService: Boolean,
+                                 listScreenRowLimit: Int
+                                )

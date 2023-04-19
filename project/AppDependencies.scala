@@ -1,4 +1,4 @@
-import sbt._
+import sbt.*
 
 object AppDependencies {
 
@@ -12,7 +12,10 @@ object AppDependencies {
   )
 
   val test = Seq(
-    "uk.gov.hmrc" %% "government-gateway-test" % "5.0.0" % "test,it",
-    "uk.gov.hmrc" %% "bootstrap-test-play-28"  % "7.14.0" % "test,it"
+    "uk.gov.hmrc"         %% "government-gateway-test" % "5.0.0"    % "test,it",
+    "uk.gov.hmrc"         %% "bootstrap-test-play-28"  % "7.14.0"   % "test,it",
+    "org.scalatestplus"   %% "scalacheck-1-15"         % "3.2.11.0" % "test,it",
+    "org.scalacheck"      %% "scalacheck"              % "1.17.0"   % "test,it",
+    "com.vladsch.flexmark" % "flexmark-all"            % "0.64.0"   % "test, it"
   )
 }

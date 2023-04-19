@@ -16,7 +16,7 @@
 
 package controllers
 
-import config.AppConfig
+import config.{AppConfig, SiProtectedUserConfig}
 import connectors.SiProtectedUserListAdminConnector
 import controllers.actions.StrideAction
 import models.User
@@ -34,44 +34,46 @@ import uk.gov.hmrc.gg.test.UnitSpec
 import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
+import util.Generators
 import views.Views
 
 import java.io.PrintWriter
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 
-class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOneAppPerSuite {
+class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOneAppPerSuite with Generators {
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
     private implicit val ec: ExecutionContext = inject[ExecutionContext]
 
-    protected val mockAppConfig: AppConfig = mock[AppConfig]
+    val mockAppConfig: AppConfig = mock[AppConfig]
     when(mockAppConfig.strideEnrolments) thenReturn Set.empty[Enrolment]
 
-    protected val mockAuthConnector: AuthConnector = mock[AuthConnector]
+    val mockAuthConnector: AuthConnector = mock[AuthConnector]
     when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)) thenReturn Future.successful(Some("stride-pid"))
 
     val mockAudit = mock[AuditConnector]
     val mockAdminConnector = mock[SiProtectedUserListAdminConnector]
     val mockAllowlistCache = mock[AllowListSessionCache]
-    val mockServicesConfig = mock[ServicesConfig]
+    val defaultSiProtectedUserConfig = siProtectedUserConfigGen.sample.get
     val mockDataProcessService = mock[DataProcessService]
 
     val auditEventCaptor = ArgCaptor[DataEvent]
 
-    val siProtectedUserController: SiProtectedUserController = new SiProtectedUserController(
-      mockServicesConfig,
-      mockAllowlistCache,
-      mockDataProcessService,
-      mockAudit,
-      mockAdminConnector,
-      inject[Views],
-      Stubs.stubMessagesControllerComponents(),
-      new StrideAction(mockAuthConnector, mockAppConfig)
-    )(ExecutionContext.Implicits.global)
+    val views = inject[Views]
+    def siProtectedUserController(siProtectedUserConfig: SiProtectedUserConfig = defaultSiProtectedUserConfig): SiProtectedUserController =
+      new SiProtectedUserController(
+        siProtectedUserConfig,
+        mockAllowlistCache,
+        mockDataProcessService,
+        mockAudit,
+        mockAdminConnector,
+        views,
+        Stubs.stubMessagesControllerComponents(),
+        new StrideAction(mockAuthConnector, mockAppConfig)
+      )(ExecutionContext.Implicits.global)
   }
 
   def writeTempFile(text: String, fileName: Option[String] = None, extension: Option[String] = None): TemporaryFile = {
@@ -89,7 +91,8 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
   "upload" should {
     "return service unavailble if the siprotecteduser.allowlist.bulkupload.screen.enabled is set to false" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled")).thenReturn(false)
+
+      val controller = siProtectedUserController(defaultSiProtectedUserConfig.copy(bulkUploadScreenEnabled = false))
 
       val lines: String = "UserId,OrganisationName,RequesterEmail\n01 23 45 67 89 01,\"some,org\",some@email.com"
       val createdFile: TemporaryFile = writeTempFile(lines, None, Some(".csv"))
@@ -100,12 +103,11 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
         badParts = Nil
       )
 
-      val result: Result = await(siProtectedUserController.upload()(FakeRequest().withBody(formDataBody)))
+      val result: Result = await(controller.upload()(FakeRequest().withBody(formDataBody)))
       status(result) shouldBe 503
     }
 
     "return no file found if a file is uploaded but not mapped to the correct key" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled")).thenReturn(true)
 
       val lines = "UserId,OrganisationName,RequesterEmail\n01 23 45 67 89 01,\"some,org\",some@email.com"
       val createdFile: TemporaryFile = writeTempFile(lines, None, Some(".csv"))
@@ -116,13 +118,12 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
         badParts = Nil
       )
 
-      val result: Result = await(siProtectedUserController.upload()(FakeRequest().withBody(formDataBody)))
+      val result: Result = await(siProtectedUserController().upload()(FakeRequest().withBody(formDataBody)))
       status(result)                        shouldBe 303
       result.newFlash.flatMap(_.get("error")) should contain("Only .csv files are supported. Please try again")
     }
 
     "return 303 with the flashing error message notCsv when the file is not a csv file" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled")).thenReturn(true)
 
       val lines = "sometext"
       val createdFile: TemporaryFile = writeTempFile(lines, None, Some(".txt"))
@@ -133,13 +134,13 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
         badParts = Nil
       )
 
-      val result: Result = await(siProtectedUserController.upload()(FakeRequest().withBody(formDataBody)))
+      val result: Result = await(siProtectedUserController().upload()(FakeRequest().withBody(formDataBody)))
       status(result)                        shouldBe 303
       result.newFlash.flatMap(_.get("error")) should contain("Only .csv files are supported. Please try again")
     }
 
     "return 200 if the file has been processed correctly" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled")).thenReturn(true)
+
       when(mockDataProcessService.processBulkData(any, any, any)(any)).thenReturn(Left((0, 0, 0)))
 
       val lines = "UserID,OrganisationName,RequesterEmail\n01 23 45 67 89 01,\"some,org\",some@email.com"
@@ -151,12 +152,11 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
         badParts = Nil
       )
 
-      val result = await(siProtectedUserController.upload()(FakeRequest().withBody(formDataBody)))
+      val result = await(siProtectedUserController().upload()(FakeRequest().withBody(formDataBody)))
       status(result) shouldBe 200
     }
 
     "return no file found if there is no file in the post body" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled")).thenReturn(true)
       val lines = ""
       val createdFile: TemporaryFile = writeTempFile(lines, None, Some(".csv"))
       val filePart = new MultipartFormData.FilePart[TemporaryFile]("csvfile", "", Some("application/octet-stream"), createdFile)
@@ -166,13 +166,12 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
         badParts = Nil
       )
 
-      val result: Result = await(siProtectedUserController.upload()(FakeRequest().withBody(formDataBody)))
+      val result: Result = await(siProtectedUserController().upload()(FakeRequest().withBody(formDataBody)))
       status(result)                        shouldBe 303
       result.newFlash.flatMap(_.get("error")) should contain("Only .csv files are supported. Please try again")
     }
 
     "return formatError if the headers aren't correct in the csv file" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled")).thenReturn(true)
 
       val lines = "U,OrganisationName,RequesterEmail\n01 23 45 67 89 01,\"some,org\",some@email.com"
       val createdFile: TemporaryFile = writeTempFile(lines, None, Some(".csv"))
@@ -183,7 +182,7 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
         badParts = Nil
       )
 
-      val result: Result = await(siProtectedUserController.upload()(FakeRequest().withBody(formDataBody)))
+      val result: Result = await(siProtectedUserController().upload()(FakeRequest().withBody(formDataBody)))
       status(result) shouldBe 303
       result.newFlash.flatMap(_.get("error")) should contain(
         "1. Check the header row exists AND contains the case-sensitive string: UserID,OrganisationName,RequesterEmail"
@@ -193,20 +192,20 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
   "loading the add user to allowlist page" should {
     "reset the 'add multiple users' session" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(false)
+
       when(mockAllowlistCache.clear()(any)).thenReturn(Future.successful(()))
 
-      val res = await(siProtectedUserController.reload()(FakeRequest()))
+      val controller = siProtectedUserController()
+      val res = await(controller.reload()(FakeRequest()))
       status(res) shouldBe OK
 
       verify(mockAllowlistCache).clear()(any)
     }
 
     "return a HTML document with the 'add user to allowlist' form" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(false)
       when(mockAllowlistCache.clear()(any)).thenReturn(Future.successful(()))
 
-      val res: Result = await(siProtectedUserController.reload()(FakeRequest()))
+      val res: Result = await(siProtectedUserController().reload()(FakeRequest()))
       status(res) shouldBe OK
 
       val html: Document = Jsoup.parse(contentAsString(res))
@@ -221,7 +220,7 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
     "return 400 Bad Request if the form is invalid" in new Setup {
       when(mockAllowlistCache.getAll()(any)).thenReturn(Future.successful(Nil))
 
-      val res: Result = await(siProtectedUserController.submit()(FakeRequest().withHeaders("Csrf-Token" -> "nocheck").withFormUrlEncodedBody()))
+      val res: Result = await(siProtectedUserController().submit()(FakeRequest().withHeaders("Csrf-Token" -> "nocheck").withFormUrlEncodedBody()))
       status(res) shouldBe BAD_REQUEST
 
       val html: Document = Jsoup.parse(contentAsString(res))
@@ -235,7 +234,7 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
         .thenReturn(Future.successful(User("112233445566", "some org", "aa@bb.cc")))
 
       val res: Result = await(
-        siProtectedUserController.submit()(
+        siProtectedUserController().submit()(
           FakeRequest()
             .withSession("userId" -> "someUserId")
             .withFormUrlEncodedBody(
@@ -272,7 +271,7 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
       when(mockAllowlistCache.add(any)(any)).thenReturn(Future.successful(List(user)))
 
       val res: Result = await(
-        siProtectedUserController.submit()(
+        siProtectedUserController().submit()(
           FakeRequest()
             .withSession("userId" -> "someUserId")
             .withFormUrlEncodedBody(
@@ -316,11 +315,10 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
   "addPage" should {
     "open home page with both buttons for reset" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(false)
 
       when(mockAllowlistCache.clear()(any)).thenReturn(Future.successful(()))
 
-      val result: Result = await(siProtectedUserController.reload()(FakeRequest()))
+      val result: Result = await(siProtectedUserController().reload()(FakeRequest()))
 
       status(result) shouldBe 200
 
@@ -336,9 +334,8 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
   "showSearchForm" should {
     "display the correct html page" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(false)
 
-      val result: Result = await(siProtectedUserController.showSearchForm()(FakeRequest()))
+      val result: Result = await(siProtectedUserController().showSearchForm()(FakeRequest()))
       status(result) shouldBe 200
       val body: String = contentAsString(result)
       body should include("search.header")
@@ -356,7 +353,7 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
           "requester_email" -> "some@email.com"
         )
         .withMethod("POST")
-      val result = await(siProtectedUserController.handleSearchRequest()(req))
+      val result = await(siProtectedUserController().handleSearchRequest()(req))
       status(result) shouldBe 200
       val body = contentAsString(result)
       body should include("delete.confirm.header")
@@ -373,7 +370,7 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
         )
         .withMethod("POST")
 
-      val result: Result = await(siProtectedUserController.handleSearchRequest()(req))
+      val result: Result = await(siProtectedUserController().handleSearchRequest()(req))
       status(result) shouldBe NOT_FOUND
 
       val body: String = contentAsString(result)
@@ -395,7 +392,7 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
         )
         .withMethod("POST")
 
-      val result: Result = await(siProtectedUserController.handleDeleteConfirmation()(req))
+      val result: Result = await(siProtectedUserController().handleDeleteConfirmation()(req))
       status(result) shouldBe 200
 
       val body: String = contentAsString(result)
@@ -426,7 +423,7 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
         )
         .withMethod("POST")
 
-      val result = await(siProtectedUserController.handleDeleteConfirmation()(req))
+      val result = await(siProtectedUserController().handleDeleteConfirmation()(req))
       status(result) shouldBe NOT_FOUND
 
       val body = contentAsString(result)
@@ -451,18 +448,15 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
   "sortAllAllowlistedUsers" should {
     "return not found if siprotecteduser.allowlist.show.all.enabled is false" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(false)
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.show.all.enabled")).thenReturn(false)
-
-      val result: Result = await(siProtectedUserController.sortAllAllowlistedUsers()(FakeRequest()))
+      val controller = siProtectedUserController(defaultSiProtectedUserConfig.copy(showAllEnabled = false))
+      val result: Result = await(controller.sortAllAllowlistedUsers()(FakeRequest()))
       status(result) shouldBe NOT_FOUND
     }
 
     "show the sort page if siprotecteduser.allowlist.show.all.enabled is true" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service")).thenReturn(false)
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.show.all.enabled")).thenReturn(true)
 
-      val result: Result = await(siProtectedUserController.sortAllAllowlistedUsers()(FakeRequest()))
+      val controller = siProtectedUserController(defaultSiProtectedUserConfig.copy(showAllEnabled = true, shutterService = false))
+      val result: Result = await(controller.sortAllAllowlistedUsers()(FakeRequest()))
       status(result) shouldBe OK
 
       val body: String = contentAsString(result)
@@ -473,19 +467,18 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
   "getAllAllowlist" should {
     "return not found if siprotecteduser.allowlist.show.all.enabled is false" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.show.all.enabled")).thenReturn(false)
 
-      val result = await(siProtectedUserController.getAllAllowlist(false)(FakeRequest()))
+      val controller = siProtectedUserController(defaultSiProtectedUserConfig.copy(showAllEnabled = false))
+      val result = await(controller.getAllAllowlist(false)(FakeRequest()))
       status(result) shouldBe NOT_FOUND
     }
 
     "return the allowlist entries page if siprotecteduser.allowlist.show.all.enabled is true" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.show.all.enabled")).thenReturn(true)
-      when(mockServicesConfig.getInt("siprotecteduser.allowlist.listscreen.rowlimit")).thenReturn(1)
       when(mockAdminConnector.getAllEntries()(any))
         .thenReturn(Future.successful(List(User("someUsername", "someOrgName", "some@email.com"))))
 
-      val result = await(siProtectedUserController.getAllAllowlist()(FakeRequest()))
+      val controller = siProtectedUserController(defaultSiProtectedUserConfig.copy(showAllEnabled = true))
+      val result = await(controller.getAllAllowlist()(FakeRequest()))
       status(result) shouldBe 200
       val body = contentAsString(result)
       body should include("someUsername")
@@ -494,8 +487,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
     }
 
     "return the allowlist entries page if siprotecteduser.allowlist.show.all.enabled is true and truncate list based on config when sort by org is false" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.show.all.enabled")).thenReturn(true)
-      when(mockServicesConfig.getInt("siprotecteduser.allowlist.listscreen.rowlimit")).thenReturn(1)
       when(mockAdminConnector.getAllEntries()(any))
         .thenReturn(
           Future.successful(
@@ -507,7 +498,8 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
           )
         )
 
-      val result: Result = await(siProtectedUserController.getAllAllowlist(false)(FakeRequest()))
+      val controller = siProtectedUserController(defaultSiProtectedUserConfig.copy(listScreenRowLimit = 1))
+      val result: Result = await(controller.getAllAllowlist(false)(FakeRequest()))
       status(result) shouldBe 200
       val body: String = contentAsString(result)
       body should include("someUsername")
@@ -519,8 +511,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
     }
 
     "return the allowlist entries page if siprotecteduser.allowlist.show.all.enabled is true and truncate list based on config when sort by org is true" in new Setup {
-      when(mockServicesConfig.getBoolean("siprotecteduser.allowlist.show.all.enabled")).thenReturn(true)
-      when(mockServicesConfig.getInt("siprotecteduser.allowlist.listscreen.rowlimit")).thenReturn(2)
       when(mockAdminConnector.getAllEntries()(any))
         .thenReturn(
           Future.successful(
@@ -532,7 +522,8 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
           )
         )
 
-      val result: Result = await(siProtectedUserController.getAllAllowlist()(FakeRequest()))
+      val controller = siProtectedUserController(defaultSiProtectedUserConfig.copy(listScreenRowLimit = 2))
+      val result: Result = await(controller.getAllAllowlist()(FakeRequest()))
       status(result) shouldBe 200
       val body: String = contentAsString(result)
       body should include("someUsername")
