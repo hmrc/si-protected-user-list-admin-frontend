@@ -16,8 +16,9 @@
 
 package util
 
-import config.SiProtectedUserConfig
+import config.{AuthStrideEnrolmentsConfig, SiProtectedUserConfig}
 import org.scalacheck.Gen
+import uk.gov.hmrc.auth.core.Enrolment
 
 trait Generators {
   val nonEmptyStringGen = for {
@@ -42,4 +43,14 @@ trait Generators {
     shutterService = shutterService,
     listScreenRowLimit = listScreenRowLimit
   )
+
+  val authStrideEnrolmentsConfigGen: Gen[AuthStrideEnrolmentsConfig] = for {
+    strideLoginBaseUrl <- nonEmptyStringGen
+    strideSuccessUrl   <- nonEmptyStringGen
+    strideEnrolments   <- Gen.const(Set.empty[Enrolment])
+  } yield AuthStrideEnrolmentsConfig(strideLoginBaseUrl = strideLoginBaseUrl,
+                                     strideSuccessUrl = strideSuccessUrl,
+                                     strideEnrolments = strideEnrolments
+                                    )
+
 }

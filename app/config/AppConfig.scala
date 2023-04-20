@@ -51,15 +51,26 @@ class AppConfig @Inject() (val runModeConfiguration: Configuration, servicesConf
     shutterService = servicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service"),
     listScreenRowLimit = servicesConfig.getInt("siprotecteduser.allowlist.listscreen.rowlimit")
   )
+
+  lazy val siProtectedUserBackendEndpoint = servicesConfig.baseUrl("si-protected-user-list-admin")
+
+  lazy val sessionCacheConfig = SessionCacheConfig(
+    baseUri = servicesConfig.baseUrl("cacheable.session-cache"),
+    domain = servicesConfig.getConfString("cacheable.session-cache.domain",
+                                          throw new RuntimeException("missing required config cacheable.session-cache.domain")
+                                         )
+  )
 }
 
 case class AnalyticsConfig(analyticsToken: String, analyticsHost: String)
 case class AuthStrideEnrolmentsConfig(strideLoginBaseUrl: String, strideSuccessUrl: String, strideEnrolments: Set[Enrolment])
-case class SiProtectedUserConfig(bulkUploadScreenEnabled: Boolean,
-                                 bulkUploadRowLimit: Int,
-                                 bulkUploadBatchSize: Int,
-                                 bulkUploadBatchDelaySecs: Int,
-                                 showAllEnabled: Boolean,
-                                 shutterService: Boolean,
-                                 listScreenRowLimit: Int
-                                )
+case class SiProtectedUserConfig(
+  bulkUploadScreenEnabled: Boolean,
+  bulkUploadRowLimit: Int,
+  bulkUploadBatchSize: Int,
+  bulkUploadBatchDelaySecs: Int,
+  showAllEnabled: Boolean,
+  shutterService: Boolean,
+  listScreenRowLimit: Int
+)
+case class SessionCacheConfig(baseUri: String, domain: String)

@@ -16,22 +16,21 @@
 
 package services
 
-import javax.inject.{Inject, Named, Singleton}
+import config.SessionCacheConfig
 import models.User
 import uk.gov.hmrc.http.cache.client.SessionCache
-import uk.gov.hmrc.http.{CoreDelete, CoreGet, CorePut, HeaderCarrier}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.{CoreDelete, CoreGet, CorePut, HeaderCarrier, HttpClient}
 
+import javax.inject.{Inject, Named, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AllowListSessionCache @Inject() (sc: ServicesConfig, @Named("appName") appName: String, httpClient: HttpClient)(implicit ec: ExecutionContext)
-    extends SessionCache {
-  override def baseUri: String = sc.baseUrl("cacheable.session-cache")
+class AllowListSessionCache @Inject() (sc: SessionCacheConfig, @Named("appName") appName: String, httpClient: HttpClient)(implicit
+  ec: ExecutionContext
+) extends SessionCache {
+  override def baseUri: String = sc.baseUri
 
-  override def domain: String =
-    sc.getConfString("cacheable.session-cache.domain", throw new RuntimeException("missing required config cacheable.session-cache.domain"))
+  override def domain: String = sc.domain
 
   override def defaultSource: String = appName
 

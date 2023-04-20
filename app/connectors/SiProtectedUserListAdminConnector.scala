@@ -16,19 +16,19 @@
 
 package connectors
 
+import com.google.inject.name.Named
 import models.{Upload, User}
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, UpstreamErrorResponse}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SiProtectedUserListAdminConnector @Inject() (sc: ServicesConfig, httpClient: HttpClient)(implicit ec: ExecutionContext) {
-  private val serviceUrl = sc.baseUrl("si-protected-user-list-admin")
-
+class SiProtectedUserListAdminConnector @Inject() (@Named("siProtectedUserBackendEndpoint") serviceUrl: String, httpClient: HttpClient)(implicit
+  ec: ExecutionContext
+) {
   private val rootPath = "si-protected-user-list-admin"
 
   def addEntry(login: User)(implicit hc: HeaderCarrier): Future[Unit] =

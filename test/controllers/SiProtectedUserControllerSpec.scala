@@ -16,7 +16,7 @@
 
 package controllers
 
-import config.{AppConfig, SiProtectedUserConfig}
+import config.SiProtectedUserConfig
 import connectors.SiProtectedUserListAdminConnector
 import controllers.actions.StrideAction
 import models.User
@@ -29,7 +29,7 @@ import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile}
 import play.api.mvc._
 import play.api.test.{FakeRequest, Injecting}
 import services.{AllowListSessionCache, DataProcessService}
-import uk.gov.hmrc.auth.core.{AuthConnector, Enrolment}
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.gg.test.UnitSpec
 import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -47,17 +47,16 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
   trait Setup {
     private implicit val ec: ExecutionContext = inject[ExecutionContext]
-
-    val mockAppConfig: AppConfig = mock[AppConfig]
-    when(mockAppConfig.strideEnrolments) thenReturn Set.empty[Enrolment]
+    val defaultSiProtectedUserConfig = siProtectedUserConfigGen.sample.get
+    val defaultAuthStrideEnrolmentsConfigGen = authStrideEnrolmentsConfigGen.sample.get
+    val appName = nonEmptyStringGen.sample.get
 
     val mockAuthConnector: AuthConnector = mock[AuthConnector]
     when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)) thenReturn Future.successful(Some("stride-pid"))
-
     val mockAudit = mock[AuditConnector]
     val mockAdminConnector = mock[SiProtectedUserListAdminConnector]
     val mockAllowlistCache = mock[AllowListSessionCache]
-    val defaultSiProtectedUserConfig = siProtectedUserConfigGen.sample.get
+
     val mockDataProcessService = mock[DataProcessService]
 
     val auditEventCaptor = ArgCaptor[DataEvent]
@@ -72,7 +71,7 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
         mockAdminConnector,
         views,
         Stubs.stubMessagesControllerComponents(),
-        new StrideAction(mockAuthConnector, mockAppConfig)
+        new StrideAction(mockAuthConnector, defaultAuthStrideEnrolmentsConfigGen, appName)
       )(ExecutionContext.Implicits.global)
   }
 

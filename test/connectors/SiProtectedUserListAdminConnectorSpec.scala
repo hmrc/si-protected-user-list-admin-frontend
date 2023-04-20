@@ -21,7 +21,6 @@ import org.mockito.stubbing.OngoingStubbing
 import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.gg.test.UnitSpec
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -32,11 +31,9 @@ class SiProtectedUserListAdminConnectorSpec extends UnitSpec {
     val aServiceUrl = "service-url"
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
-    val mockServicesConfig = mock[ServicesConfig]
     val mockHttpClient = mock[HttpClient]
 
-    when(mockServicesConfig.baseUrl("si-protected-user-list-admin")).thenReturn(aServiceUrl)
-    val adminConnector: SiProtectedUserListAdminConnector = new SiProtectedUserListAdminConnector(mockServicesConfig, mockHttpClient)
+    val adminConnector: SiProtectedUserListAdminConnector = new SiProtectedUserListAdminConnector(aServiceUrl, mockHttpClient)
 
     def responseGood(): HttpResponse = HttpResponse(
       201,

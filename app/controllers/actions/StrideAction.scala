@@ -16,7 +16,8 @@
 
 package controllers.actions
 
-import config.AppConfig
+import com.google.inject.name.Named
+import config.AuthStrideEnrolmentsConfig
 import play.api.Logging
 import play.api.mvc.Results.{Redirect, Unauthorized}
 import play.api.mvc.{ActionRefiner, Request, Result}
@@ -29,17 +30,21 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class StrideAction @Inject() (val authConnector: AuthConnector, appConfig: AppConfig)(implicit val executionContext: ExecutionContext)
-    extends ActionRefiner[Request, StrideRequest]
+class StrideAction @Inject() (val authConnector: AuthConnector,
+                              strideEnrolmentsConfig: AuthStrideEnrolmentsConfig,
+                              @Named("appName") appName: String
+                             )(implicit
+  val executionContext: ExecutionContext
+) extends ActionRefiner[Request, StrideRequest]
     with AuthorisedFunctions
     with Logging {
-  private lazy val strideLoginUrl: String = s"${appConfig.strideLoginBaseUrl}/stride/sign-in"
-  private lazy val strideSuccessUrl: String = appConfig.strideSuccessUrl
+  private lazy val strideLoginUrl: String = s"${strideEnrolmentsConfig.strideLoginBaseUrl}/stride/sign-in"
+  private lazy val strideSuccessUrl: String = strideEnrolmentsConfig.strideSuccessUrl
 
   def refine[A](request: Request[A]): Future[Either[Result, StrideRequest[A]]] = {
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
-    val hasRequiredRole = (appConfig.strideEnrolments fold EmptyPredicate)(_ or _)
+    val hasRequiredRole = (strideEnrolmentsConfig.strideEnrolments fold EmptyPredicate)(_ or _)
 
     authorised(hasRequiredRole)
       .retrieve(clientId) { clientIdOpt =>
@@ -58,7 +63,7 @@ class StrideAction @Inject() (val authConnector: AuthConnector, appConfig: AppCo
               strideLoginUrl,
               Map(
                 "successURL" -> Seq(strideSuccessUrl),
-                "origin"     -> Seq(appConfig.appName)
+                "origin"     -> Seq(appName)
               )
             )
           )
