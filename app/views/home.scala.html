@@ -14,26 +14,23 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+@import config.SiProtectedUserConfig
 
-@this(
-    config: ServicesConfig,
-    mainTemplate: main_template
-)
+@this(mainLayout: Layout)
 
-@()(implicit request: Request[_], messages: Messages)
+@(config: SiProtectedUserConfig)(implicit request: Request[_], messages: Messages)
 
-    @if(config.getBoolean("siprotecteduser.allowlist.shutter.service")) {
-        @mainTemplate(title = Messages("Service is unavailable")) {
+    @if(config.shutterService) {
+        @mainLayout(pageTitle = Messages("Service is unavailable")) {
             <h1>This service is shuttered and currently unavailable</h1>
         }
     } else {
-        @mainTemplate(title = Messages("home.page.title")) {
+        @mainLayout(pageTitle = Messages("home.page.title")) {
 
             <h1 class="govuk-heading-l">MDTP User Admin - Si Protected Users</h1>
 
             <div class="govuk-form-group">
-                <a class="govuk-button" href=@controllers.routes.SiProtectedUserController.reload>@Messages("home.page.button")</a>
+                <a class="govuk-button" href=@controllers.routes.AddEntryController.showAddEntryPage()>@Messages("home.page.button")</a>
             </div>
 
             <div class="govuk-form-group">

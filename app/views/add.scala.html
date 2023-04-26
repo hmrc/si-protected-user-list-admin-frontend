@@ -17,41 +17,39 @@
 @import models.User
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.govukfrontend.views.html.components.implicits._
-
 @this(
         formTemplate: FormWithCSRF,
         input: GovukInput,
-        mainTemplate: main_template,
-        govukTable: GovukTable
+        mainLayout: Layout
 )
 
 @(form: Form[_], allowlisted: List[User], notice: Option[String])(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(title = Messages("home.page.title")) {
-    <h1 class="govuk-heading-l">@Messages("page.header")</h1>
+@mainLayout(pageTitle = Messages("add.page.title")) {
+    <h1 class="govuk-heading-l">@Messages("add.page.header")</h1>
 
     @formTemplate(action = controllers.routes.SiProtectedUserController.submit, args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
 
         <fieldset class="form-field-group govuk-fieldset">
             <div class="govuk-form-group">
-            @input(Input(label = Label(content = Text(Messages("page.scp")))).withFormFieldWithErrorAsHtml(form("name")))
+            @input(Input(label = Label(content = Text(Messages("add.page.scp")))).withFormFieldWithErrorAsHtml(form("name")))
             </div>
 
 
             <div class="govuk-form-group">
-            @input(Input(label = Label(content = Text(Messages("page.org")))).withFormFieldWithErrorAsHtml(form("org")))
+            @input(Input(label = Label(content = Text(Messages("add.page.org")))).withFormFieldWithErrorAsHtml(form("org")))
             </div>
 
 
             <div class="govuk-form-group">
-            @input(Input(label = Label(content = Text(Messages("page.requester.email")))).withFormFieldWithErrorAsHtml(form("requester_email")))
+            @input(Input(label = Label(content = Text(Messages("add.page.requester.email")))).withFormFieldWithErrorAsHtml(form("requester_email")))
             </div>
 
             <div class="govuk-form-group">
 
-                <button class="govuk-button" type="submit">@Messages("page.add")</button>
-                <a class="govuk-button govuk-button--secondary" type="button" href="@routes.SiProtectedUserController.reload">
-                @Messages("clear.button")
+                <button class="govuk-button" type="submit">@Messages("add.page.add")</button>
+                <a class="govuk-button govuk-button--secondary" type="button" href="@routes.AddEntryController.showAddEntryPage()">
+                @Messages("add.page.clear.button")
                 </a>
                 <a class="govuk-button govuk-button--secondary" type="button" href="@routes.SiProtectedUserController.homepage">
                 @Messages("delete.complete.button")
@@ -64,24 +62,5 @@
         <p class="govuk-body" id="notice">@msg</p>
     }
 
-    @if(allowlisted.nonEmpty) {
-        @govukTable(
-            Table(
-                rows = allowlisted.map { user =>
-                    Seq(
-                        TableRow(content = Text(user.username)),
-                        TableRow(content = Text(user.organisationName)),
-                        TableRow(content = Text(user.requesterEmail))
-                    )
-                },
-                head = Some(Seq(
-                    HeadCell(content = Text(Messages("page.name"))),
-                    HeadCell(content = Text(Messages("page.org"))),
-                    HeadCell(content = Text(Messages("page.requester.email"))),
-                )),
-                caption = None,
-                firstCellIsHeader = false
-            )
-        )
-    }
+
 }

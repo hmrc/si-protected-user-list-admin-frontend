@@ -16,8 +16,8 @@
 
 package controllers
 
-import _root_.config.SiProtectedUserConfig
-import _root_.controllers.actions.StrideAction
+import config.SiProtectedUserConfig
+import controllers.actions.StrideAction
 import audit.AuditEvents
 import connectors.SiProtectedUserListAdminConnector
 import models._
@@ -51,21 +51,10 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
     with I18nSupport {
   private val showAllEnabled = siProtectedUserConfig.showAllEnabled
 
-  def homepage: Action[AnyContent] = (Action andThen strideAction)(implicit request => Ok(views.home()))
-
-  def reload: Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
-    logger.warn("[GG-6801] Admin Screen - Button click: 'Add to Allowlist' / 'Clear fields'" + siProtectedUserConfig.shutterService)
-    if (!siProtectedUserConfig.shutterService) {
-      allowlistSessionCache
-        .clear()
-        .map(_ => Ok(views.add(addAllowListForm, Nil, None)))
-    } else {
-      Future.successful(Ok(views.home()))
-    }
-  }
+  def homepage: Action[AnyContent] = (Action andThen strideAction)(implicit request => Ok(views.home(siProtectedUserConfig)))
 
   def submit: Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
-    addAllowListForm
+    addEntryForm
       .bindFromRequest()
       .fold(
         formWithErrors =>
@@ -85,7 +74,7 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
 
               allowlistSessionCache
                 .add(formData)
-                .map(users => Ok(views.add(addAllowListForm.fill(formData.copy(username = "")), users, Some("User record saved to allowlist"))))
+                .map(users => Ok(views.add(addEntryForm.fill(formData.copy(username = "")), users, Some("User record saved to allowlist"))))
             }
             .recoverWith { case _: ConflictException =>
               auditConnector.sendEvent(
@@ -95,7 +84,7 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
               adminConnector
                 .findEntry(formData.username)
                 .map(existingUser =>
-                  Conflict(views.add(addAllowListForm.fill(formData), List(existingUser), Some("Entry not added, already exists, see below")))
+                  Conflict(views.add(addEntryForm.fill(formData), List(existingUser), Some("Entry not added, already exists, see below")))
                 )
             }
         }
@@ -104,7 +93,7 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
 
   def fileUploadPage(): Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
     if (siProtectedUserConfig.shutterService) {
-      Future.successful(Ok(views.home()))
+      Future.successful(Ok(views.home(siProtectedUserConfig)))
     } else {
       if (siProtectedUserConfig.bulkUploadScreenEnabled) {
         logger.warn("[GG-6801] Admin Screen - Button click: 'Bulk Add to Allowlist")
@@ -184,7 +173,7 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
 
   def sortAllAllowlistedUsers: Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
     if (siProtectedUserConfig.shutterService) {
-      Future.successful(Ok(views.home()))
+      Future.successful(Ok(views.home(siProtectedUserConfig)))
     } else {
       if (showAllEnabled) {
         logger.warn("[GG-6801] Admin Screen - Button click: 'List entries in Allowlist'")
@@ -222,7 +211,7 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
     (Action andThen strideAction) { implicit request =>
       logger.warn("[GG-6801] Admin Screen - Button click: 'Remove From Allowlist'")
       if (siProtectedUserConfig.shutterService) {
-        Ok(views.home())
+        Ok(views.home(siProtectedUserConfig))
       } else {
         Ok(views.deleteForm(searchAllowListForm))
       }
@@ -241,7 +230,7 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
                 .findEntry(updatedUsername)
                 .map { login =>
                   logger.warn("[GG-6801] Admin Screen - Button click: 'Remove From Allowlist' / 'Search'")
-                  Ok(views.deleteConfirmation(addAllowListForm, login))
+                  Ok(views.deleteConfirmation(addEntryForm, login))
                 }
                 .recover { case UpstreamErrorResponse(_, 404, _, _) =>
                   NotFound(views.deleteForm(searchAllowListForm.withError("not.found", "")))
@@ -263,7 +252,7 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
 
   def handleDeleteConfirmation(): Action[AnyContent] =
     (Action andThen strideAction).async { implicit request =>
-      addAllowListForm
+      addEntryForm
         .bindFromRequest()
         .fold(
           formWithErrors => {

@@ -1,4 +1,4 @@
-service.name = si-protected-user-list-admin-frontend
+service.name = Si Applications Dashboard
 service.text = This is your new service
 home.page.title = MDTP User Admin - SI Protected User List
 
@@ -13,16 +13,16 @@ home.page.merge = Merge Data from OTP
 otpafe.site.error.page.header = There are errors on the page.
 
 #SI Protected User List
-page.title = Admin Console
-page.header = SI Protected User List - Add to Allowlist
-page.add = Add
-page.successful = User has successfully been added to the allowlist:
-page.failure = User has already been added to the allowlist:
-page.scp = User ID
-page.name = User ID
-page.org = Organisation Name
-page.requester.email = Requester Email
-clear.button = Clear form fields
+add.page.title = Admin Console
+add.page.header = Add Entry
+add.page.add = Add
+add.page.successful = User has successfully been added to the allowlist:
+add.page.failure = User has already been added to the allowlist:
+add.page.scp = User ID
+add.page.name = User ID
+add.page.org = Organisation Name
+add.page.requester.email = Requester Email
+add.page.clear.button = Clear form fields
 
 search.title = Admin Console
 search.header =SI Protected User List - Search for Allowlisted User

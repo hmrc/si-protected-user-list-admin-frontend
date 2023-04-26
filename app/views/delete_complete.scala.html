@@ -15,12 +15,12 @@
  *@
 
 @this(
-        mainTemplate: main_template
+        mainLayout: Layout
 )
 
 @()(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(title = Messages("home.page.title")) {
+@mainLayout(pageTitle = Messages("home.page.title")) {
     <h1 class="govuk-heading-l">@Messages("delete.complete.header")</h1>
     <div class="govuk-body">@Messages("delete.complete.desc")</div>
 

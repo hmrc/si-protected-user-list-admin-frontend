@@ -14,17 +14,15 @@
  * limitations under the License.
  *@
 
-@import config.AppConfig
-
-@this(mainTemplate: main_template)
+@this(mainLayout: Layout)
 
 @()(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(title = Messages("home.page.title")) {
-    <h1 class="govuk-heading-l">@Messages("all.users.sortby.header")</h1>
-    <div class="govuk-body">@Messages("all.users.sortby.desc")</div>
-    <br/>
+    @mainLayout(pageTitle = Messages("home.page.title")) {
+        <h1 class="govuk-heading-l">@Messages("all.users.sortby.header")</h1>
+        <div class="govuk-body">@Messages("all.users.sortby.desc")</div>
+        <br/>
 
-    <button class="govuk-button" type="submit" onclick="location.href = '@controllers.routes.SiProtectedUserController.getAllAllowlist(false)'">@Messages("all.users.sort.userid")</button>
-    <button class="govuk-button" type="submit" onclick="location.href = '@controllers.routes.SiProtectedUserController.getAllAllowlist(true)'">@Messages("all.users.sort.organisation")</button>
-}
+        <button class="govuk-button" type="submit" onclick="location.href = '@controllers.routes.SiProtectedUserController.getAllAllowlist(false)'">@Messages("all.users.sort.userid")</button>
+        <button class="govuk-button" type="submit" onclick="location.href = '@controllers.routes.SiProtectedUserController.getAllAllowlist(true)'">@Messages("all.users.sort.organisation")</button>
+    }

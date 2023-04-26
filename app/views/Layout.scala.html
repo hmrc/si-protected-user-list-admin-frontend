@@ -14,29 +14,27 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.hmrcfrontend.views.html.helpers.{HmrcStandardFooter, HmrcStandardHeader, HmrcHead, HmrcScripts}
-@import uk.gov.hmrc.govukfrontend.views.html.components.GovukLayout
+@import uk.gov.hmrc.hmrcfrontend.views.html.helpers._
+@import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage.{HmrcStandardPageParams, TemplateOverrides}
 
 @this(
-    govukLayout: GovukLayout,
-    hmrcHead: HmrcHead,
-    hmrcStandardHeader: HmrcStandardHeader,
-    hmrcStandardFooter: HmrcStandardFooter,
-    hmrcScripts: HmrcScripts
+        hmrcLayout: HmrcStandardPage,
 )
 
 @(
-    pageTitle: String,
-    headBlock: Option[Html] = None,
-    beforeContentBlock: Option[Html] = None,
-    scripts: Option[Html] = None
+        pageTitle: String,
+        headBlock: Option[Html] = None,
+        beforeContentBlock: Option[Html] = None,
+        scripts: Option[Html] = None
 )(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
 
-@govukLayout(
-  pageTitle = Some(pageTitle),
-  headBlock = Some(hmrcHead(headBlock)),
-  headerBlock = Some(hmrcStandardHeader()),
-  beforeContentBlock = Some(hmrcHead(beforeContentBlock)),
-  scriptsBlock = Some(hmrcScripts(scripts)),
-  footerBlock = Some(hmrcStandardFooter())
+@hmrcLayout(
+    HmrcStandardPageParams(
+        pageTitle = Some(pageTitle),
+        templateOverrides = TemplateOverrides(
+            additionalHeadBlock = headBlock,
+            beforeContentBlock = beforeContentBlock,
+            additionalScriptsBlock = scripts
+        )
+    )
 )(contentBlock)

@@ -20,13 +20,13 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
-        mainTemplate: main_template,
+        mainLayout: Layout,
         govukTable: GovukTable
 )
 
 @(allUsers: List[User], allowlistCount: Int, rowLimit: Int)(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(title = Messages("home.page.title")) {
+@mainLayout(pageTitle = Messages("home.page.title")) {
     <h1 class="govuk-heading-l">@Messages("all.users.header")</h1>
     <div class="govuk-body">@Messages("all.users.desc")</div>
 

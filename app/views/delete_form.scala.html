@@ -19,7 +19,7 @@
 @import uk.gov.hmrc.hmrcfrontend.views.Implicits._
 
 @this(
-        mainTemplate: main_template,
+        mainLayout: Layout,
         formTemplate: FormWithCSRF,
         govukInput: GovukInput,
         errorSummary: GovukErrorSummary
@@ -27,7 +27,7 @@
 
 @(form: Form[_], successFailureMessage: String*)(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(title = Messages("home.page.title")) {
+@mainLayout(pageTitle = Messages("home.page.title")) {
     <h1 class="govuk-heading-l">@Messages("search.header")</h1>
 
     @formTemplate(action = controllers.routes.SiProtectedUserController.handleSearchRequest(), args =  Symbol("autocomplete")  -> "off", Symbol("novalidate")  -> "") {

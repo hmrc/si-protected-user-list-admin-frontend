@@ -14,53 +14,55 @@
  * limitations under the License.
  *@
 
-@this(
-    mainTemplate: main_template
-)
+@this(mainLayout: Layout)
+
 
 @(
-    minutes: Long,
-    remainderSeconds: Int,
-    rows: Int,
-    newMessage: Option[String] = None
+        minutes: Long,
+        remainderSeconds: Int,
+        rows: Int,
+        newMessage: Option[String] = None
 )(implicit request: Request[_], messages: Messages)
+    @mainLayout(pageTitle = Messages("home.page.title")) {
 
-@mainTemplate(title = Messages("home.page.title")) {
-<h1 class="govuk-heading-l">@{newMessage.getOrElse(Messages("bulk.upload.title"))}</h1>
-<div class="govuk-body" id="messageTime">Estimated upload time:<b id="time">@{s" $minutes:$remainderSeconds minutes"}</b></div>
-<br/>
-<button class="govuk-button" type="button" onclick="location.href='@routes.SiProtectedUserController.homepage'">
-    @Messages("bulk.upload.button")
-</button>
+        <h1 class="govuk-heading-l">@{
+            newMessage.getOrElse(Messages("bulk.upload.title"))
+        }</h1>
+        <div class="govuk-body" id="messageTime">Estimated upload time:<b id="time">@{
+            s" $minutes:$remainderSeconds minutes"
+        }</b></div>
+        <br/>
+        <button class="govuk-button" type="button" onclick="location.href = '@routes.SiProtectedUserController.homepage'">
+        @Messages("bulk.upload.button")
+        </button>
 
 
-<script>
-        let seconds = @remainderSeconds;
-        let minutes = @minutes;
+        <script>
+                let seconds = @remainderSeconds;
+                let minutes = @minutes;
 
-        let downloadTimer = setInterval(function(){
+                let downloadTimer = setInterval(function () {
 
-            if (minutes >= 1) {
-                if (seconds <= 10)
-                    document.getElementById("time").innerText = " " + minutes.toString() + ":" + "0" + --seconds + " minutes";
-                else
-                    document.getElementById("time").innerText = " " + minutes.toString() + ":" + --seconds + " minutes";
-            }
-            else {
-                if (seconds <= 10)
-                    document.getElementById("time").innerText = " 0" + --seconds + " seconds";
-                else
-                    document.getElementById("time").innerText = " " + --seconds + " seconds";
-            }
+                    if (minutes >= 1) {
+                        if (seconds <= 10)
+                            document.getElementById("time").innerText = " " + minutes.toString() + ":" + "0" + --seconds + " minutes";
+                        else
+                            document.getElementById("time").innerText = " " + minutes.toString() + ":" + --seconds + " minutes";
+                    } else {
+                        if (seconds <= 10)
+                            document.getElementById("time").innerText = " 0" + --seconds + " seconds";
+                        else
+                            document.getElementById("time").innerText = " " + --seconds + " seconds";
+                    }
 
-            if (seconds <= 0 && minutes <= 0){
-                clearInterval(downloadTimer);
-                document.getElementById("messageTime").innerText = "File processed successfully, " + @rows + " loaded";
-            }
-            if (seconds <= 0) {
-                seconds = 60;
-                --minutes
-            }
-        },1000);
-</script>
-}
+                    if (seconds <= 0 && minutes <= 0) {
+                        clearInterval(downloadTimer);
+                        document.getElementById("messageTime").innerText = "File processed successfully, " + @rows +" loaded";
+                    }
+                    if (seconds <= 0) {
+                        seconds = 60;
+                        --minutes
+                    }
+                }, 1000);
+        </script>
+    }

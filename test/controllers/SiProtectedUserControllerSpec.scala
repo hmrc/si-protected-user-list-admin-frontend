@@ -189,31 +189,31 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
     }
   }
 
-  "loading the add user to allowlist page" should {
-    "reset the 'add multiple users' session" in new Setup {
-
-      when(mockAllowlistCache.clear()(any)).thenReturn(Future.successful(()))
-
-      val controller = siProtectedUserController()
-      val res = await(controller.reload()(FakeRequest()))
-      status(res) shouldBe OK
-
-      verify(mockAllowlistCache).clear()(any)
-    }
-
-    "return a HTML document with the 'add user to allowlist' form" in new Setup {
-      when(mockAllowlistCache.clear()(any)).thenReturn(Future.successful(()))
-
-      val res: Result = await(siProtectedUserController().reload()(FakeRequest()))
-      status(res) shouldBe OK
-
-      val html: Document = Jsoup.parse(contentAsString(res))
-      val fieldIds = html.select("input[type=text]").asScala.map(_.id)
-      fieldIds should contain("name")
-      fieldIds should contain("org")
-      fieldIds should contain("requester_email")
-    }
-  }
+//  "loading the add user to allowlist page" should {
+//    "reset the 'add multiple users' session" in new Setup {
+//
+//      when(mockAllowlistCache.clear()(any)).thenReturn(Future.successful(()))
+//
+//      val controller = siProtectedUserController()
+//      val res = await(controller.reload()(FakeRequest()))
+//      status(res) shouldBe OK
+//
+//      verify(mockAllowlistCache).clear()(any)
+//    }
+//
+//    "return a HTML document with the 'add user to allowlist' form" in new Setup {
+//      when(mockAllowlistCache.clear()(any)).thenReturn(Future.successful(()))
+//
+//      val res: Result = await(siProtectedUserController().reload()(FakeRequest()))
+//      status(res) shouldBe OK
+//
+//      val html: Document = Jsoup.parse(contentAsString(res))
+//      val fieldIds = html.select("input[type=text]").asScala.map(_.id)
+//      fieldIds should contain("name")
+//      fieldIds should contain("org")
+//      fieldIds should contain("requester_email")
+//    }
+//  }
 
   "submitting the 'add user to allowlist' form" should {
     "return 400 Bad Request if the form is invalid" in new Setup {
@@ -309,25 +309,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
       requesterEmailField.`val` shouldBe "aa@bb.cc"
 
       html.select("#notice").text shouldBe "User record saved to allowlist"
-    }
-  }
-
-  "addPage" should {
-    "open home page with both buttons for reset" in new Setup {
-
-      when(mockAllowlistCache.clear()(any)).thenReturn(Future.successful(()))
-
-      val result: Result = await(siProtectedUserController().reload()(FakeRequest()))
-
-      status(result) shouldBe 200
-
-      val body: String = contentAsString(result)
-
-      body should include("home.page.title")
-      body should include("page.header")
-      body should include("page.add")
-      body should include("page.scp")
-      body should include("page.org")
     }
   }
 

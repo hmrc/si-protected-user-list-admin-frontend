@@ -33,9 +33,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class StrideAction @Inject() (val authConnector: AuthConnector,
                               strideEnrolmentsConfig: AuthStrideEnrolmentsConfig,
                               @Named("appName") appName: String
-                             )(implicit
-  val executionContext: ExecutionContext
-) extends ActionRefiner[Request, StrideRequest]
+                             )(implicit val executionContext: ExecutionContext)
+    extends ActionRefiner[Request, StrideRequest]
     with AuthorisedFunctions
     with Logging {
   private lazy val strideLoginUrl: String = s"${strideEnrolmentsConfig.strideLoginBaseUrl}/stride/sign-in"

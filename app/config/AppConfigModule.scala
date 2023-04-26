@@ -17,23 +17,26 @@
 package config
 
 import com.google.inject.name.Named
-import com.google.inject.{AbstractModule, Provides}
+import com.google.inject.{AbstractModule, Provides, Singleton}
 
 class AppConfigModule extends AbstractModule {
+  override def configure(): Unit = {
 
-  @Provides
+    bind(classOf[AppConfig]).asEagerSingleton()
+  }
+  @Provides @Singleton
   def analyticsConfig(appConfig: AppConfig): AnalyticsConfig = appConfig.analyticsConfig
 
-  @Provides
+  @Provides @Singleton
   def authStrideEnrolmentsConfig(appConfig: AppConfig): AuthStrideEnrolmentsConfig = appConfig.authStrideEnrolments
 
-  @Provides
+  @Provides @Singleton
   def siProtectedUserConfig(appConfig: AppConfig): SiProtectedUserConfig = appConfig.siProtectedUserConfig
 
   @Provides @Named("siProtectedUserBackendEndpoint")
   def siProtectedUserBackendEndpoint(appConfig: AppConfig): String = appConfig.siProtectedUserBackendEndpoint
 
-  @Provides
+  @Provides @Singleton
   def sessionCacheConfig(appConfig: AppConfig): SessionCacheConfig = appConfig.sessionCacheConfig
 
 }

@@ -22,7 +22,7 @@ package object models {
   private val orgNameRegex = """^.{2,300}$"""
   private val emailRegex = """^.{0,62}@.{1,64}\..{1,64}$"""
 
-  val addAllowListForm: Form[User] = Form(
+  val addEntryForm: Form[User] = Form(
     mapping(
       "name" -> nonEmptyText
         .transform(s => s.replaceAll(" ", ""), identity[String])

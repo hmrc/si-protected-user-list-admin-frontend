@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@this()
+package services
 
-@(content: Html,
-    includeGridWrapper: Boolean = false,
-    articleClasses: Option[String] = None)
+import javax.inject.Singleton
 
-<article class="content__body@if( includeGridWrapper ){ grid-wrapper}@if(articleClasses.isDefined){ @articleClasses.get }">
-@content
-</article>
+@Singleton
+class SiProtectedUserListService {}

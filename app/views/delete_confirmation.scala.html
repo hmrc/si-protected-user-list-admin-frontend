@@ -18,14 +18,14 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
-        mainTemplate: main_template,
+        mainLayout: Layout,
         formTemplate: FormWithCSRF,
         govukTable: GovukTable
 )
 
 @(formWithErrors: Form[User], login: User, successFailureMessage: String = "")(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(title = Messages("home.page.title")) {
+@mainLayout(pageTitle = Messages("home.page.title")) {
     <h1 class="govuk-heading-l">@Messages("delete.confirm.header")</h1>
 
     <div class="govuk-body">You have selected to delete the following allowlist entry</div>
