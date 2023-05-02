@@ -1,66 +1,61 @@
 @*
- * Copyright 2023 HM Revenue & Customs
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *@
-
-@import models.User
+* Copyright 2023 HM Revenue & Customs
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*@
+@import config.SiProtectedUserConfig
+@import controllers.routes
+@import play.api.data.Form
+@import play.api.i18n.Messages
+@import play.api.mvc.Request
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.govukfrontend.views.html.components.implicits._
+@import uk.gov.hmrc.hmrcfrontend.views.Implicits.RichErrorSummary
+@import views.html.Layout
 @this(
         formTemplate: FormWithCSRF,
         input: GovukInput,
+        govukErrorSummary: GovukErrorSummary,
+        govukSelect: GovukSelect,
+        govukButton: GovukButton,
         mainLayout: Layout
 )
 
-@(form: Form[_], allowlisted: List[User], notice: Option[String])(implicit request: Request[_], messages: Messages)
+@(form: Form[Entry], siProtectedUserConfig: SiProtectedUserConfig)(implicit request: Request[_], messages: Messages)
 
-@mainLayout(pageTitle = Messages("add.page.title")) {
+@mainLayout(
+    pageTitle = Messages("add.page.title"),
+    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage.url))
+) {
     <h1 class="govuk-heading-l">@Messages("add.page.header")</h1>
 
     @formTemplate(action = controllers.routes.SiProtectedUserController.submit, args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
+        @if(form.errors.nonEmpty) {
+            @govukErrorSummary(ErrorSummary().withFormErrorsAsText(form))
+        }
+        @govukSelect(Select(
+            id = "action",
+            name = "action",
+            items = InputForms.addEntryActions.map(action => SelectItem(Some(action), action)),
+            label = Label(content = Text(messages("add.page.action")))
+        ))
+        @input(Input(label = Label(content = Text(Messages("add.page.nino")))).withFormFieldWithErrorAsHtml(form("nino")))
+        @input(Input(label = Label(content = Text(Messages("add.page.nino")))).withFormFieldWithErrorAsHtml(form("nino")))
+        @input(Input(label = Label(content = Text(Messages("add.page.org")))).withFormFieldWithErrorAsHtml(form("org")))
 
-        <fieldset class="form-field-group govuk-fieldset">
-            <div class="govuk-form-group">
-            @input(Input(label = Label(content = Text(Messages("add.page.scp")))).withFormFieldWithErrorAsHtml(form("name")))
-            </div>
-
-
-            <div class="govuk-form-group">
-            @input(Input(label = Label(content = Text(Messages("add.page.org")))).withFormFieldWithErrorAsHtml(form("org")))
-            </div>
-
-
-            <div class="govuk-form-group">
-            @input(Input(label = Label(content = Text(Messages("add.page.requester.email")))).withFormFieldWithErrorAsHtml(form("requester_email")))
-            </div>
-
-            <div class="govuk-form-group">
-
-                <button class="govuk-button" type="submit">@Messages("add.page.add")</button>
-                <a class="govuk-button govuk-button--secondary" type="button" href="@routes.AddEntryController.showAddEntryPage()">
-                @Messages("add.page.clear.button")
-                </a>
-                <a class="govuk-button govuk-button--secondary" type="button" href="@routes.SiProtectedUserController.homepage">
-                @Messages("delete.complete.button")
-                </a>
-            </div>
-        </fieldset>
+        @input(Input(label = Label(content = Text(Messages("add.page.requester.email")))).withFormFieldWithErrorAsHtml(form("requester_email")))
+        @govukButton(Button(href = Some(routes.AddEntryController.showAddEntryPage().url), content = Text(Messages("add.page.add"))))
+        @govukButton(Button(href = Some(routes.AddEntryController.showAddEntryPage().url), content = Text(Messages("add.page.clear.button")), classes = "govuk-button govuk-button--secondary"))
     }
-
-    @notice.map { msg =>
-        <p class="govuk-body" id="notice">@msg</p>
-    }
-
 
 }

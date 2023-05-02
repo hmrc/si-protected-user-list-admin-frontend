@@ -14,6 +14,9 @@
  * limitations under the License.
  *@
 
+@import play.api.i18n.Messages
+@import play.api.mvc.RequestHeader
+@import uk.gov.hmrc.govukfrontend.views.viewmodels.backlink.BackLink
 @import uk.gov.hmrc.hmrcfrontend.views.html.helpers._
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage.{HmrcStandardPageParams, TemplateOverrides}
 
@@ -25,7 +28,8 @@
         pageTitle: String,
         headBlock: Option[Html] = None,
         beforeContentBlock: Option[Html] = None,
-        scripts: Option[Html] = None
+        scripts: Option[Html] = None,
+        backLink: Option[BackLink] = None
 )(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
 
 @hmrcLayout(
@@ -35,6 +39,7 @@
             additionalHeadBlock = headBlock,
             beforeContentBlock = beforeContentBlock,
             additionalScriptsBlock = scripts
-        )
+        ),
+        backLink = backLink
     )
 )(contentBlock)

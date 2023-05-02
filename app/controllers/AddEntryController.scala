@@ -17,9 +17,8 @@
 package controllers
 
 import config.SiProtectedUserConfig
-import connectors.SiProtectedUserListAdminConnector
 import controllers.actions.StrideAction
-import models.addEntryForm
+import models.InputForms.entryForm
 import play.api.Logging
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -43,7 +42,7 @@ class AddEntryController @Inject() (siProtectedUserConfig: SiProtectedUserConfig
 
   def showAddEntryPage(): Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
     if (!siProtectedUserConfig.shutterService) {
-      Future.successful(Ok(views.add(addEntryForm, Nil, None)))
+      Future.successful(Ok(views.add(entryForm, siProtectedUserConfig)))
     } else {
       Future.successful(Ok(views.home(siProtectedUserConfig)))
     }

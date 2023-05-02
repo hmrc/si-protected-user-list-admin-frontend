@@ -16,10 +16,11 @@
 
 package controllers
 
-import config.SiProtectedUserConfig
-import controllers.actions.StrideAction
 import audit.AuditEvents
+import config.SiProtectedUserConfig
 import connectors.SiProtectedUserListAdminConnector
+import controllers.actions.StrideAction
+import models.InputForms.{searchAllowListForm, userForm}
 import models._
 import play.api.Logging
 import play.api.i18n.I18nSupport
@@ -54,13 +55,13 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
   def homepage: Action[AnyContent] = (Action andThen strideAction)(implicit request => Ok(views.home(siProtectedUserConfig)))
 
   def submit: Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
-    addEntryForm
+    userForm
       .bindFromRequest()
       .fold(
         formWithErrors =>
           allowlistSessionCache
             .getAll()
-            .map(users => BadRequest(views.add(formWithErrors, users, None))),
+            .map(users => BadRequest(views.add(formWithErrors, siProtectedUserConfig))),
         formData => {
 
           adminConnector
@@ -74,7 +75,7 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
 
               allowlistSessionCache
                 .add(formData)
-                .map(users => Ok(views.add(addEntryForm.fill(formData.copy(username = "")), users, Some("User record saved to allowlist"))))
+                .map(users => Ok(views.add(userForm.fill(formData.copy(username = "")), siProtectedUserConfig)))
             }
             .recoverWith { case _: ConflictException =>
               auditConnector.sendEvent(
@@ -83,9 +84,7 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
 
               adminConnector
                 .findEntry(formData.username)
-                .map(existingUser =>
-                  Conflict(views.add(addEntryForm.fill(formData), List(existingUser), Some("Entry not added, already exists, see below")))
-                )
+                .map(existingUser => Conflict(views.add(userForm.fill(formData), siProtectedUserConfig)))
             }
         }
       )
@@ -230,7 +229,7 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
                 .findEntry(updatedUsername)
                 .map { login =>
                   logger.warn("[GG-6801] Admin Screen - Button click: 'Remove From Allowlist' / 'Search'")
-                  Ok(views.deleteConfirmation(addEntryForm, login))
+                  Ok(views.deleteConfirmation(userForm, login))
                 }
                 .recover { case UpstreamErrorResponse(_, 404, _, _) =>
                   NotFound(views.deleteForm(searchAllowListForm.withError("not.found", "")))
@@ -252,7 +251,7 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
 
   def handleDeleteConfirmation(): Action[AnyContent] =
     (Action andThen strideAction).async { implicit request =>
-      addEntryForm
+      userForm
         .bindFromRequest()
         .fold(
           formWithErrors => {

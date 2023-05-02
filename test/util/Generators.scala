@@ -17,14 +17,20 @@
 package util
 
 import config.{AuthStrideEnrolmentsConfig, SiProtectedUserConfig}
+import models.InputForms
 import org.scalacheck.Gen
 import uk.gov.hmrc.auth.core.Enrolment
+import uk.gov.hmrc.domain.{Generator, Nino, SaUtr, SaUtrGenerator}
 
 trait Generators {
   val nonEmptyStringGen = for {
     length <- Gen.chooseNum(1, 50)
     str    <- Gen.listOfN(length, Gen.alphaChar).map(_.mkString)
   } yield str
+
+  val ninoGen: Gen[Nino] = Gen.const( new Generator().nextNino)
+
+  val sautrGen:Gen[SaUtr] = Gen.const(new SaUtrGenerator().nextSaUtr)
 
   val siProtectedUserConfigGen: Gen[SiProtectedUserConfig] = for {
     bulkUploadScreenEnabled  <- Gen.const(true)
@@ -34,6 +40,7 @@ trait Generators {
     showAllEnabled           <- Gen.const(true)
     shutterService           <- Gen.const(false)
     listScreenRowLimit       <- Gen.chooseNum(1, 1500)
+    actions                  <- Gen.const(InputForms.addEntryActions)
   } yield SiProtectedUserConfig(
     bulkUploadScreenEnabled = bulkUploadScreenEnabled,
     bulkUploadRowLimit = bulkUploadRowLimit,
@@ -41,7 +48,8 @@ trait Generators {
     bulkUploadBatchDelaySecs = bulkUploadBatchDelaySecs,
     showAllEnabled = showAllEnabled,
     shutterService = shutterService,
-    listScreenRowLimit = listScreenRowLimit
+    listScreenRowLimit = listScreenRowLimit,
+    addEntryActions = actions
   )
 
   val authStrideEnrolmentsConfigGen: Gen[AuthStrideEnrolmentsConfig] = for {

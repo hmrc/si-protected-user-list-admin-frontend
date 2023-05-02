@@ -16,12 +16,10 @@ otpafe.site.error.page.header = There are errors on the page.
 add.page.title = Admin Console
 add.page.header = Add Entry
 add.page.add = Add
-add.page.successful = User has successfully been added to the allowlist:
-add.page.failure = User has already been added to the allowlist:
-add.page.scp = User ID
-add.page.name = User ID
-add.page.org = Organisation Name
-add.page.requester.email = Requester Email
+add.page.nino = NINO
+add.page.sautr = SA UTR
+add.page.group = Group
+add.page.idProvider = Identity Provider Id
 add.page.clear.button = Clear form fields
 
 search.title = Admin Console
@@ -52,16 +50,10 @@ delete.complete.button = Home
 delete.complete.scp = User ID
 delete.complete.org = Organisation Name
 
-form.name.required = User ID is required
-form.org.required = Organisation Name is required
-form.org.length.large = Invalid Organisation Name
-form.org.length.small = Invalid Organisation Name
-form.requester_email.regex = Invalid Requester Email
-form.username.regex.length = Invalid User ID
-form.username.regex = Invalid User ID
-form.username.search = Record Not Found
-form.org.regex = Invalid Organisation Name
-form.not.found.required = User Not Found
+form.credId.required
+form.nino.regex = Invalid Nino
+form.nino.sautr = Invalid SA UTR
+form.nino.sautr.required = At least one of Nino or Sautr is required
 
 all.users.header =SI Protected User List - List of entries in Allowlist
 all.users.desc =A list of all entries that are on the allowlist

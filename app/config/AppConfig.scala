@@ -23,33 +23,36 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import javax.inject.{Inject, Singleton}
 
 @Singleton
-class AppConfig @Inject() (val runModeConfiguration: Configuration, servicesConfig: ServicesConfig) {
-  private def loadConfig(key: String) = runModeConfiguration.get[String](key)
+class AppConfig @Inject() (val configuration: Configuration, servicesConfig: ServicesConfig) {
+  private def getString(key: String) = configuration.get[String](key)
+  private def getBoolean(key: String) = configuration.get[Boolean](key)
+  private def getInt(key: String) = configuration.get[Int](key)
 
-  lazy val appName: String = loadConfig("appName")
+  lazy val appName: String = getString("appName")
 
-  lazy val analyticsToken: String = loadConfig(s"google-analytics.token")
-  lazy val analyticsHost: String = loadConfig(s"google-analytics.host")
+  lazy val analyticsToken: String = getString(s"google-analytics.token")
+  lazy val analyticsHost: String = getString(s"google-analytics.host")
   lazy val analyticsConfig: AnalyticsConfig = AnalyticsConfig(analyticsToken = analyticsToken, analyticsHost = analyticsHost)
 
   lazy val strideEnrolments: Set[Enrolment] =
-    runModeConfiguration
+    configuration
       .get[Seq[String]]("authentication.stride.enrolments")
       .map(Enrolment.apply)
       .toSet
-  lazy val strideLoginBaseUrl: String = loadConfig("authentication.stride.loginBaseUrl")
-  lazy val strideSuccessUrl: String = loadConfig("authentication.stride.successReturnUrl")
+  lazy val strideLoginBaseUrl: String = getString("authentication.stride.loginBaseUrl")
+  lazy val strideSuccessUrl: String = getString("authentication.stride.successReturnUrl")
   lazy val authStrideEnrolments: AuthStrideEnrolmentsConfig =
     AuthStrideEnrolmentsConfig(strideLoginBaseUrl = strideLoginBaseUrl, strideSuccessUrl = strideSuccessUrl, strideEnrolments = strideEnrolments)
 
   lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
-    bulkUploadScreenEnabled = servicesConfig.getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled"),
-    bulkUploadRowLimit = servicesConfig.getInt("siprotecteduser.allowlist.bulkupload.file.row.limit"),
-    bulkUploadBatchSize = servicesConfig.getInt("siprotecteduser.allowlist.bulkupload.insert.batch.size"),
-    bulkUploadBatchDelaySecs = servicesConfig.getInt("siprotecteduser.allowlist.bulkupload.insert.batch.delay.secs"),
-    showAllEnabled = servicesConfig.getBoolean("siprotecteduser.allowlist.show.all.enabled"),
-    shutterService = servicesConfig.getBoolean("siprotecteduser.allowlist.shutter.service"),
-    listScreenRowLimit = servicesConfig.getInt("siprotecteduser.allowlist.listscreen.rowlimit")
+    bulkUploadScreenEnabled = getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled"),
+    bulkUploadRowLimit = getInt("siprotecteduser.allowlist.bulkupload.file.row.limit"),
+    bulkUploadBatchSize = getInt("siprotecteduser.allowlist.bulkupload.insert.batch.size"),
+    bulkUploadBatchDelaySecs = getInt("siprotecteduser.allowlist.bulkupload.insert.batch.delay.secs"),
+    showAllEnabled = getBoolean("siprotecteduser.allowlist.show.all.enabled"),
+    shutterService = getBoolean("siprotecteduser.allowlist.shutter.service"),
+    listScreenRowLimit = getInt("siprotecteduser.allowlist.listscreen.rowlimit"),
+    addEntryActions = configuration.get[Seq[String]]("siprotecteduser.addEntry.actions")
   )
 
   lazy val siProtectedUserBackendEndpoint = servicesConfig.baseUrl("si-protected-user-list-admin")
@@ -71,6 +74,7 @@ case class SiProtectedUserConfig(
   bulkUploadBatchDelaySecs: Int,
   showAllEnabled: Boolean,
   shutterService: Boolean,
-  listScreenRowLimit: Int
+  listScreenRowLimit: Int,
+  addEntryActions: Seq[String]
 )
 case class SessionCacheConfig(baseUri: String, domain: String)
