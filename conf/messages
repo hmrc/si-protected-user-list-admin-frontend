@@ -13,15 +13,41 @@ home.page.merge = Merge Data from OTP
 otpafe.site.error.page.header = There are errors on the page.
 
 #SI Protected User List
-add.page.title = Admin Console
+add.page.title = Add Entry
 add.page.header = Add Entry
 add.page.add = Add
-add.page.nino = NINO
-add.page.sautr = SA UTR
+add.page.action = What are you trying to do?
+add.page.nino = National Insurance Number
+add.page.nino.hint = Optional if SA UTR provided
+add.page.sautr = Self Assessment Unique Tax Reference
+add.page.sautr.hint = Optional if NINO provided
 add.page.group = Group
-add.page.idProvider = Identity Provider Id
-add.page.clear.button = Clear form fields
+add.page.group.hint = Optional way to tag this entry
+add.page.identityProvider = Identity Provider
+add.page.identityProviderId = Identity Provider Id
+add.page.addedByTeam = Added by team
+add.page.cancel.button = Cancel
+add.page.action.select.LOCK = Lock a NINO or SA UTR to the credential ID provided.
+add.page.action.select.BLOCK = Block a NINO or SA UTR from being used.
 
+add.confirm.title = Confirm new entry
+add.confirm.header = Confirm new entry
+add.confirm.entryId = Entry ID
+add.confirm.status = Status
+add.confirm.action.LOCK = Locked
+add.confirm.action.BLOCK = Blocked
+add.confirm.nino = NINO
+add.confirm.sautr = SA UTR
+add.confirm.identityProvider = Identity Provider
+add.confirm.identityProviderId = Identity Provider ID
+add.confirm.group = Group
+add.confirm.addedByTeam = Added by
+
+
+form.nino.regex = Invalid Nino
+form.sautr.regex = Invalid SA UTR
+form.nino.sautr.required = At least one of Nino or Sautr is required
+form.identityProviderId.required = Identity Provider Id is required when action is Lock a NINO or SaUtr to a credential
 search.title = Admin Console
 search.header =SI Protected User List - Search for Allowlisted User
 search.search = Search
@@ -50,10 +76,6 @@ delete.complete.button = Home
 delete.complete.scp = User ID
 delete.complete.org = Organisation Name
 
-form.credId.required
-form.nino.regex = Invalid Nino
-form.nino.sautr = Invalid SA UTR
-form.nino.sautr.required = At least one of Nino or Sautr is required
 
 all.users.header =SI Protected User List - List of entries in Allowlist
 all.users.desc =A list of all entries that are on the allowlist

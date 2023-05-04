@@ -17,7 +17,7 @@
 package models
 
 import play.api.data.Form
-import play.api.data.Forms.{mapping, nonEmptyText, optional, text}
+import play.api.data.Forms._
 import uk.gov.voa.play.form.ConditionalMappings.mandatoryIfEqual
 
 object InputForms {
@@ -25,18 +25,20 @@ object InputForms {
   private val orgNameRegex = """^.{2,300}$"""
   val emailRegex = """^.{0,62}@.{1,64}\..{1,64}$"""
   val ninoRegex = "((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]"
-  private val saUtrRegex = "[0-9]{10}"
+  val saUtrRegex = "[0-9]{10}"
   val addEntryActionBlock = "BLOCK"
   val addEntryActionLock = "LOCK"
   val addEntryActions = Seq(addEntryActionBlock, addEntryActionLock)
+  val identityProviders = Seq("GG")
   val entryForm: Form[Entry] = Form(
     mapping(
+      "entryId"            -> ignored(Option.empty[String]),
       "action"             -> nonEmptyText,
       "nino"               -> optional(nonEmptyText.verifying("form.nino.regex", _.matches(ninoRegex))),
       "sautr"              -> optional(nonEmptyText.verifying("form.sautr.regex", _.matches(saUtrRegex))),
-      "identityProviderId" -> mandatoryIfEqual("action", addEntryActionLock, nonEmptyText),
-      "group"              -> optional(nonEmptyText),
       "identityProvider"   -> mandatoryIfEqual("action", addEntryActionLock, nonEmptyText),
+      "identityProviderId" -> mandatoryIfEqual("action", addEntryActionLock, text.verifying("form.identityProviderId.required", !_.trim.isEmpty)),
+      "group"              -> optional(nonEmptyText),
       "addedByTeam"        -> nonEmptyText
     )(Entry.apply)(Entry.unapply)
       .verifying("form.nino.sautr.required", entry => entry.sautr.isDefined || entry.nino.isDefined)

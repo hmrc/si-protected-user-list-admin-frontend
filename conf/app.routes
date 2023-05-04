@@ -1,17 +1,17 @@
 # microservice specific routes
 
 
-GET         /                                     controllers.SiProtectedUserController.homepage
+GET         /                           controllers.SiProtectedUserController.homepage
 
-GET         /add                                  controllers.AddEntryController.showAddEntryPage()
-POST        /add                                  controllers.SiProtectedUserController.submit
-GET         /clear                                controllers.AddEntryController.showAddEntryPage()
-GET         /file-upload                          controllers.SiProtectedUserController.fileUploadPage()
-POST        /file-upload                          controllers.SiProtectedUserController.upload()
-GET         /search                               controllers.SiProtectedUserController.showSearchForm()
-GET         /show-all/:ascending                  controllers.SiProtectedUserController.getAllAllowlist(ascending: Boolean)
-POST        /search                               controllers.SiProtectedUserController.handleSearchRequest()
-POST        /delete-records                       controllers.SiProtectedUserController.handleDeleteConfirmation()
-GET         /sort-by                              controllers.SiProtectedUserController.sortAllAllowlistedUsers()
+GET         /add                        controllers.AddEntryController.showAddEntryPage()
+POST        /add                        controllers.AddEntryController.submit()
+GET         /clear                      controllers.AddEntryController.showAddEntryPage()
+GET         /file-upload                controllers.SiProtectedUserController.fileUploadPage()
+POST        /file-upload                controllers.SiProtectedUserController.upload()
+GET         /search                     controllers.SiProtectedUserController.showSearchForm()
+GET         /show-all/:ascending        controllers.SiProtectedUserController.getAllAllowlist(ascending: Boolean)
+POST        /search                     controllers.SiProtectedUserController.handleSearchRequest()
+POST        /delete-records             controllers.SiProtectedUserController.handleDeleteConfirmation()
+GET         /sort-by                    controllers.SiProtectedUserController.sortAllAllowlistedUsers()
 
-->          /hmrc-frontend                        hmrcfrontend.Routes
+->          /hmrc-frontend              hmrcfrontend.Routes

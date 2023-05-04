@@ -16,13 +16,12 @@
 
 package controllers
 
-import config.{AppConfigModule, SiProtectedUserConfig}
+import config.SiProtectedUserConfig
 import controllers.actions.StrideAction
+import org.jsoup.Jsoup
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.Application
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.{FakeRequest, Injecting}
 import services.SiProtectedUserListService
 import uk.gov.hmrc.auth.core.AuthConnector
@@ -33,6 +32,7 @@ import views.Views
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.jdk.CollectionConverters._
 
 class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPerSuite with Generators with ScalaFutures {
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
@@ -58,22 +58,41 @@ class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPer
     def expectStrideAuthenticated(): Unit = {
       when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some(stridePid)))
     }
+
+    def assertPageContainsFormFields(body: String): Unit = {
+      body should include("add.page.title")
+      body should include("add.page.action")
+      body should include("add.page.nino")
+      body should include("add.page.sautr")
+      body should include("add.page.identityProvider")
+      body should include("add.page.identityProviderId")
+      body should include("add.page.addedByTeam")
+      body should include("add.page.add")
+      body should include("add.page.cancel.button")
+    }
   }
-  "showAddEntryPage" should {
-    "forward to the add entry view" in new Setup {
+  "AddEntryController" should {
+    "forward to the add entry view when GET /add is called" in new Setup {
       expectStrideAuthenticated()
 
       val result = addEntryController().showAddEntryPage()(FakeRequest()).futureValue
-      status(result) shouldBe 200
+      status(result) shouldBe OK
 
-      val body: String = contentAsString(result)
-
-      body should include("add.page.title")
-      body should include("page.header")
-      body should include("page.add")
-      body should include("page.scp")
-      body should include("page.org")
-
+      val body = contentAsString(result)
+      assertPageContainsFormFields(body)
     }
+
+    "Return BAD_REQUEST when POST /add is called with invalid fields" in new Setup {
+      expectStrideAuthenticated()
+      val result = addEntryController().submit()(FakeRequest().withFormUrlEncodedBody())
+      status(result) shouldBe BAD_REQUEST
+
+      val body = contentAsString(result)
+
+      val html = Jsoup.parse(body)
+      val errors = html.select(".govuk-error-summary__list").html()
+      errors should include("error.required")
+    }
+
   }
 }

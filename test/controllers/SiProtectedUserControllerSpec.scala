@@ -216,100 +216,100 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 //  }
 
   "submitting the 'add user to allowlist' form" should {
-    "return 400 Bad Request if the form is invalid" in new Setup {
-      when(mockAllowlistCache.getAll()(any)).thenReturn(Future.successful(Nil))
+//    "return 400 Bad Request if the form is invalid" in new Setup {
+//      when(mockAllowlistCache.getAll()(any)).thenReturn(Future.successful(Nil))
+//
+//      val res: Result = await(siProtectedUserController().submit()(FakeRequest().withHeaders("Csrf-Token" -> "nocheck").withFormUrlEncodedBody()))
+//      status(res) shouldBe BAD_REQUEST
+//
+//      val html: Document = Jsoup.parse(contentAsString(res))
+//      val errors = html.select(".govuk-error-message").asScala
+//      errors should have size 3
+//    }
 
-      val res: Result = await(siProtectedUserController().submit()(FakeRequest().withHeaders("Csrf-Token" -> "nocheck").withFormUrlEncodedBody()))
-      status(res) shouldBe BAD_REQUEST
+//    "return 409 Conflict if the user is already allowlisted" in new Setup {
+//      when(mockAdminConnector.addEntry(any)(any)).thenReturn(Future.failed(new ConflictException("conflict")))
+//      when(mockAdminConnector.findEntry(any)(any))
+//        .thenReturn(Future.successful(User("112233445566", "some org", "aa@bb.cc")))
+//
+//      val res: Result = await(
+//        siProtectedUserController().submit()(
+//          FakeRequest()
+//            .withSession("userId" -> "someUserId")
+//            .withFormUrlEncodedBody(
+//              "name"            -> "112233445566",
+//              "org"             -> "some org",
+//              "requester_email" -> "aa@bb.cc"
+//            )
+//            .withMethod("POST")
+//        )
+//      )
+//      status(res) shouldBe CONFLICT
+//
+//      val html: Document = Jsoup.parse(contentAsString(res))
+//      html.select("#notice").text shouldBe "Entry not added, already exists, see below"
+//      verify(mockAudit).sendEvent(auditEventCaptor.capture)(any[HeaderCarrier], any[ExecutionContext])
+//
+//      val event: DataEvent = auditEventCaptor.value
+//
+//      event.auditSource               shouldEqual "si-protected-user-list-admin-frontend"
+//      event.auditType                 shouldEqual "ListUpdate"
+//      event.detail.get("strideUserPid")  shouldBe Some("stride-pid")
+//      event.detail.get("operation")      shouldBe Some("add")
+//      event.detail.get("success")        shouldBe Some("false")
+//      event.detail.get("failureReason")  shouldBe Some("Record already exists")
+//      event.detail.get("orgLoginId")     shouldBe Some("112233445566")
+//      event.detail.get("orgName")        shouldBe Some("some org")
+//      event.detail.get("requesterEmail") shouldBe Some("aa@bb.cc")
+//
+//    }
 
-      val html: Document = Jsoup.parse(contentAsString(res))
-      val errors = html.select(".govuk-error-message").asScala
-      errors should have size 3
-    }
-
-    "return 409 Conflict if the user is already allowlisted" in new Setup {
-      when(mockAdminConnector.addEntry(any)(any)).thenReturn(Future.failed(new ConflictException("conflict")))
-      when(mockAdminConnector.findEntry(any)(any))
-        .thenReturn(Future.successful(User("112233445566", "some org", "aa@bb.cc")))
-
-      val res: Result = await(
-        siProtectedUserController().submit()(
-          FakeRequest()
-            .withSession("userId" -> "someUserId")
-            .withFormUrlEncodedBody(
-              "name"            -> "112233445566",
-              "org"             -> "some org",
-              "requester_email" -> "aa@bb.cc"
-            )
-            .withMethod("POST")
-        )
-      )
-      status(res) shouldBe CONFLICT
-
-      val html: Document = Jsoup.parse(contentAsString(res))
-      html.select("#notice").text shouldBe "Entry not added, already exists, see below"
-      verify(mockAudit).sendEvent(auditEventCaptor.capture)(any[HeaderCarrier], any[ExecutionContext])
-
-      val event: DataEvent = auditEventCaptor.value
-
-      event.auditSource               shouldEqual "si-protected-user-list-admin-frontend"
-      event.auditType                 shouldEqual "ListUpdate"
-      event.detail.get("strideUserPid")  shouldBe Some("stride-pid")
-      event.detail.get("operation")      shouldBe Some("add")
-      event.detail.get("success")        shouldBe Some("false")
-      event.detail.get("failureReason")  shouldBe Some("Record already exists")
-      event.detail.get("orgLoginId")     shouldBe Some("112233445566")
-      event.detail.get("orgName")        shouldBe Some("some org")
-      event.detail.get("requesterEmail") shouldBe Some("aa@bb.cc")
-
-    }
-
-    "return 200 Ok, add the user to the allowlist, and clear the 'user ID' field if a valid non-allowlisted user is added" in new Setup {
-      val user = User("112233445566", "some org", "aa@bb.cc")
-      when(mockAdminConnector.addEntry(any)(any)).thenReturn(Future.unit)
-      when(mockAllowlistCache.add(any)(any)).thenReturn(Future.successful(List(user)))
-
-      val res: Result = await(
-        siProtectedUserController().submit()(
-          FakeRequest()
-            .withSession("userId" -> "someUserId")
-            .withFormUrlEncodedBody(
-              "name"            -> "112233445566",
-              "org"             -> "some org",
-              "requester_email" -> "aa@bb.cc"
-            )
-            .withMethod("POST")
-        )
-      )
-      status(res) shouldBe OK
-
-      verify(mockAdminConnector).addEntry(eqTo(user))(any)
-      verify(mockAllowlistCache).add(eqTo(user))(any)
-      verify(mockAudit).sendEvent(auditEventCaptor.capture)(any[HeaderCarrier], any[ExecutionContext])
-
-      val event: DataEvent = auditEventCaptor.value
-      event.auditSource                  shouldEqual "si-protected-user-list-admin-frontend"
-      event.auditType                    shouldEqual "ListUpdate"
-      event.detail.get("strideUserPid")  shouldEqual Some("stride-pid")
-      event.detail.get("operation")      shouldEqual Some("add")
-      event.detail.get("success")        shouldEqual Some("true")
-      event.detail.get("orgLoginId")     shouldEqual Some("112233445566")
-      event.detail.get("orgName")        shouldEqual Some("some org")
-      event.detail.get("requesterEmail") shouldEqual Some("aa@bb.cc")
-
-      val html: Document = Jsoup.parse(contentAsString(res))
-
-      val userIdField: Elements = html.select("#name")
-      userIdField.`val` shouldBe empty
-
-      val orgNameField: Elements = html.select("#org")
-      orgNameField.`val` shouldBe "some org"
-
-      val requesterEmailField: Elements = html.select("#requester_email")
-      requesterEmailField.`val` shouldBe "aa@bb.cc"
-
-      html.select("#notice").text shouldBe "User record saved to allowlist"
-    }
+//    "return 200 Ok, add the user to the allowlist, and clear the 'user ID' field if a valid non-allowlisted user is added" in new Setup {
+//      val user = User("112233445566", "some org", "aa@bb.cc")
+//      when(mockAdminConnector.addEntry(any)(any)).thenReturn(Future.unit)
+//      when(mockAllowlistCache.add(any)(any)).thenReturn(Future.successful(List(user)))
+//
+//      val res: Result = await(
+//        siProtectedUserController().submit()(
+//          FakeRequest()
+//            .withSession("userId" -> "someUserId")
+//            .withFormUrlEncodedBody(
+//              "name"            -> "112233445566",
+//              "org"             -> "some org",
+//              "requester_email" -> "aa@bb.cc"
+//            )
+//            .withMethod("POST")
+//        )
+//      )
+//      status(res) shouldBe OK
+//
+//      verify(mockAdminConnector).addEntry(eqTo(user))(any)
+//      verify(mockAllowlistCache).add(eqTo(user))(any)
+//      verify(mockAudit).sendEvent(auditEventCaptor.capture)(any[HeaderCarrier], any[ExecutionContext])
+//
+//      val event: DataEvent = auditEventCaptor.value
+//      event.auditSource                  shouldEqual "si-protected-user-list-admin-frontend"
+//      event.auditType                    shouldEqual "ListUpdate"
+//      event.detail.get("strideUserPid")  shouldEqual Some("stride-pid")
+//      event.detail.get("operation")      shouldEqual Some("add")
+//      event.detail.get("success")        shouldEqual Some("true")
+//      event.detail.get("orgLoginId")     shouldEqual Some("112233445566")
+//      event.detail.get("orgName")        shouldEqual Some("some org")
+//      event.detail.get("requesterEmail") shouldEqual Some("aa@bb.cc")
+//
+//      val html: Document = Jsoup.parse(contentAsString(res))
+//
+//      val userIdField: Elements = html.select("#name")
+//      userIdField.`val` shouldBe empty
+//
+//      val orgNameField: Elements = html.select("#org")
+//      orgNameField.`val` shouldBe "some org"
+//
+//      val requesterEmailField: Elements = html.select("#requester_email")
+//      requesterEmailField.`val` shouldBe "aa@bb.cc"
+//
+//      html.select("#notice").text shouldBe "User record saved to allowlist"
+//    }
   }
 
   "showSearchForm" should {

@@ -29,8 +29,8 @@ import scala.concurrent.duration.{Duration, SECONDS}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class DataProcessService @Inject() (adminConnector: SiProtectedUserListAdminConnector, sc: SiProtectedUserConfig, auditConnector: AuditConnector)(
-  implicit ec: ExecutionContext
+class DataProcessService @Inject() (adminConnector: SiProtectedUserListAdminConnector, sc: SiProtectedUserConfig, auditConnector: AuditConnector)(implicit
+  ec: ExecutionContext
 ) extends Logging {
 
   def processBulkData(allowListData: Seq[Option[Upload]], filename: String, stridePid: Option[String])(implicit

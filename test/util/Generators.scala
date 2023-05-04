@@ -17,7 +17,7 @@
 package util
 
 import config.{AuthStrideEnrolmentsConfig, SiProtectedUserConfig}
-import models.InputForms
+import models.{Entry, InputForms}
 import org.scalacheck.Gen
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.domain.{Generator, Nino, SaUtr, SaUtrGenerator}
@@ -28,9 +28,29 @@ trait Generators {
     str    <- Gen.listOfN(length, Gen.alphaChar).map(_.mkString)
   } yield str
 
-  val ninoGen: Gen[Nino] = Gen.const( new Generator().nextNino)
+  val ninoGen: Gen[Nino] = Gen.const(new Generator().nextNino)
 
-  val sautrGen:Gen[SaUtr] = Gen.const(new SaUtrGenerator().nextSaUtr)
+  val sautrGen: Gen[SaUtr] = Gen.const(new SaUtrGenerator().nextSaUtr)
+
+  val entryGen: Gen[Entry] = for {
+    entryId            <- Gen.some(nonEmptyStringGen)
+    action             <- Gen.oneOf(InputForms.addEntryActionBlock, InputForms.addEntryActionLock)
+    nino               <- Gen.some(ninoGen.map(_.nino))
+    sautr              <- Gen.some(sautrGen.map(_.utr))
+    identityProvider   <- Gen.some(nonEmptyStringGen)
+    identityProviderId <- Gen.some(nonEmptyStringGen)
+    group              <- Gen.some(nonEmptyStringGen)
+    addedByTeam        <- nonEmptyStringGen
+  } yield Entry(
+    entryId = entryId,
+    action = action,
+    nino = nino,
+    sautr = sautr,
+    identityProvider = identityProvider,
+    identityProviderId = identityProviderId,
+    group = group,
+    addedByTeam = addedByTeam
+  )
 
   val siProtectedUserConfigGen: Gen[SiProtectedUserConfig] = for {
     bulkUploadScreenEnabled  <- Gen.const(true)
@@ -40,7 +60,9 @@ trait Generators {
     showAllEnabled           <- Gen.const(true)
     shutterService           <- Gen.const(false)
     listScreenRowLimit       <- Gen.chooseNum(1, 1500)
-    actions                  <- Gen.const(InputForms.addEntryActions)
+    num                      <- Gen.chooseNum(1, 10)
+    addedByTeams             <- Gen.listOfN(num, nonEmptyStringGen)
+    identityProviders        <- Gen.listOfN(num, nonEmptyStringGen)
   } yield SiProtectedUserConfig(
     bulkUploadScreenEnabled = bulkUploadScreenEnabled,
     bulkUploadRowLimit = bulkUploadRowLimit,
@@ -49,16 +71,14 @@ trait Generators {
     showAllEnabled = showAllEnabled,
     shutterService = shutterService,
     listScreenRowLimit = listScreenRowLimit,
-    addEntryActions = actions
+    identityProviders = identityProviders,
+    addedByTeams = addedByTeams
   )
 
   val authStrideEnrolmentsConfigGen: Gen[AuthStrideEnrolmentsConfig] = for {
     strideLoginBaseUrl <- nonEmptyStringGen
     strideSuccessUrl   <- nonEmptyStringGen
     strideEnrolments   <- Gen.const(Set.empty[Enrolment])
-  } yield AuthStrideEnrolmentsConfig(strideLoginBaseUrl = strideLoginBaseUrl,
-                                     strideSuccessUrl = strideSuccessUrl,
-                                     strideEnrolments = strideEnrolments
-                                    )
+  } yield AuthStrideEnrolmentsConfig(strideLoginBaseUrl = strideLoginBaseUrl, strideSuccessUrl = strideSuccessUrl, strideEnrolments = strideEnrolments)
 
 }

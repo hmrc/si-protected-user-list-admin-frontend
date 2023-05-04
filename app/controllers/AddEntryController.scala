@@ -47,4 +47,20 @@ class AddEntryController @Inject() (siProtectedUserConfig: SiProtectedUserConfig
       Future.successful(Ok(views.home(siProtectedUserConfig)))
     }
   }
+
+  def submit(): Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
+    entryForm
+      .bindFromRequest()
+      .fold(
+        errorForm => {
+          logger.info(s"ERRORS ${errorForm.errors}")
+          Future.successful(BadRequest(views.add(errorForm, siProtectedUserConfig)))
+        },
+        entry => {
+          logger.info(s"SUCCESS $entry")
+          Future.successful(Ok(views.addConfirmation(entry)))
+        }
+      )
+
+  }
 }

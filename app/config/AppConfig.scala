@@ -45,23 +45,22 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
     AuthStrideEnrolmentsConfig(strideLoginBaseUrl = strideLoginBaseUrl, strideSuccessUrl = strideSuccessUrl, strideEnrolments = strideEnrolments)
 
   lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
-    bulkUploadScreenEnabled = getBoolean("siprotecteduser.allowlist.bulkupload.screen.enabled"),
-    bulkUploadRowLimit = getInt("siprotecteduser.allowlist.bulkupload.file.row.limit"),
-    bulkUploadBatchSize = getInt("siprotecteduser.allowlist.bulkupload.insert.batch.size"),
-    bulkUploadBatchDelaySecs = getInt("siprotecteduser.allowlist.bulkupload.insert.batch.delay.secs"),
-    showAllEnabled = getBoolean("siprotecteduser.allowlist.show.all.enabled"),
-    shutterService = getBoolean("siprotecteduser.allowlist.shutter.service"),
-    listScreenRowLimit = getInt("siprotecteduser.allowlist.listscreen.rowlimit"),
-    addEntryActions = configuration.get[Seq[String]]("siprotecteduser.addEntry.actions")
+    bulkUploadScreenEnabled = getBoolean("si-protected-user.allow-list.bulk-upload.screen-enabled"),
+    bulkUploadRowLimit = getInt("si-protected-user.allow-list.bulk-upload.file.row-limit"),
+    bulkUploadBatchSize = getInt("si-protected-user.allow-list.bulk-upload.insert.batch-size"),
+    bulkUploadBatchDelaySecs = getInt("si-protected-user.allow-list.bulk-upload.insert.batch-delay-secs"),
+    showAllEnabled = getBoolean("si-protected-user.allow-list.show-all-enabled"),
+    shutterService = getBoolean("si-protected-user.allow-list.shutter-service"),
+    listScreenRowLimit = getInt("si-protected-user.allow-list.list-screen.row-limit"),
+    identityProviders = configuration.get[Seq[String]]("si-protected-user.add-entry.identity-providers"),
+    addedByTeams = configuration.get[Seq[String]]("si-protected-user.add-entry.added-by-teams")
   )
 
   lazy val siProtectedUserBackendEndpoint = servicesConfig.baseUrl("si-protected-user-list-admin")
 
   lazy val sessionCacheConfig = SessionCacheConfig(
     baseUri = servicesConfig.baseUrl("cacheable.session-cache"),
-    domain = servicesConfig.getConfString("cacheable.session-cache.domain",
-                                          throw new RuntimeException("missing required config cacheable.session-cache.domain")
-                                         )
+    domain = servicesConfig.getConfString("cacheable.session-cache.domain", throw new RuntimeException("missing required config cacheable.session-cache.domain"))
   )
 }
 
@@ -75,6 +74,7 @@ case class SiProtectedUserConfig(
   showAllEnabled: Boolean,
   shutterService: Boolean,
   listScreenRowLimit: Int,
-  addEntryActions: Seq[String]
+  identityProviders: Seq[String],
+  addedByTeams: Seq[String]
 )
 case class SessionCacheConfig(baseUri: String, domain: String)

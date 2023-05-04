@@ -1,4 +1,4 @@
-/*
+@*
  * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,22 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *@
 
-package models
+@this()
 
-import play.api.libs.json.{Json, OFormat}
+@(key: String, classes: Option[String] = None, id: Option[String] = None)(implicit msgs: Messages)
 
-case class Entry(entryId: Option[String],
-                 action: String,
-                 nino: Option[String],
-                 sautr: Option[String],
-                 identityProvider: Option[String],
-                 identityProviderId: Option[String],
-                 group: Option[String],
-                 addedByTeam: String
-                )
-object Entry {
-  implicit val formats: OFormat[Entry] = Json.format[Entry]
+@cls = @{"govuk-heading-l ".concat(classes.getOrElse(""))}
 
-}
+<h1 class="@cls">@Html(msgs(key))</h1>
+
+
+
+
+

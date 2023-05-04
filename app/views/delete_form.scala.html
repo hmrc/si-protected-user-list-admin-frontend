@@ -22,7 +22,8 @@
         mainLayout: Layout,
         formTemplate: FormWithCSRF,
         govukInput: GovukInput,
-        errorSummary: GovukErrorSummary
+        errorSummary: GovukErrorSummary,
+        govukFieldset: GovukFieldset
 )
 
 @(form: Form[_], successFailureMessage: String*)(implicit request: Request[_], messages: Messages)

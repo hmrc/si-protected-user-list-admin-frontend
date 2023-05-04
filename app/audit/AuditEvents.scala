@@ -78,8 +78,7 @@ trait AuditEvents {
         "orgName"        -> login.organisationName,
         "requesterEmail" -> login.requesterEmail
       ),
-      tags =
-        hc.toAuditTags("HMRC - Login - Restricted User List - delete entry", request.path) ++ Map(hc.names.deviceID -> hc.deviceID.getOrElse("-"))
+      tags = hc.toAuditTags("HMRC - Login - Restricted User List - delete entry", request.path) ++ Map(hc.names.deviceID -> hc.deviceID.getOrElse("-"))
     )
 
   def allowListDeleteEventFailure(userId: String, login: User)(implicit hc: HeaderCarrier, request: Request[_]): DataEvent =
@@ -95,8 +94,7 @@ trait AuditEvents {
         "orgName"        -> login.organisationName,
         "requesterEmail" -> login.requesterEmail
       ),
-      tags =
-        hc.toAuditTags("HMRC - Login - Restricted User List - delete entry", request.path) ++ Map(hc.names.deviceID -> hc.deviceID.getOrElse("-"))
+      tags = hc.toAuditTags("HMRC - Login - Restricted User List - delete entry", request.path) ++ Map(hc.names.deviceID -> hc.deviceID.getOrElse("-"))
     )
 }
 

@@ -1,0 +1,49 @@
+@*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import play.api.i18n.Messages
+@import play.api.mvc.Request
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+@import views.html.Layout
+@import views.html.fragments.Heading1
+@this(
+        govukSummaryList: GovukSummaryList,
+        h1: Heading1,
+        mainLayout: Layout
+)
+
+@(entry: Entry)(implicit request: Request[_], messages: Messages)
+
+@mainLayout(
+    pageTitle = Messages("add.confirm.title"),
+    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage.url))
+) {
+    @h1("add.confirm.header")
+    @govukSummaryList(
+        SummaryList(
+            Seq(
+                SummaryListRow(key = Key(Text(Messages("add.confirm.entryId"))), value = Value(content = Text(entry.entryId.getOrElse("")))),
+                SummaryListRow(key = Key(Text(Messages("add.confirm.status"))), value = Value(content = Text(Messages(s"add.confirm.action.${entry.action}")))),
+                SummaryListRow(key = Key(Text(Messages("add.confirm.nino"))), value = Value(content = Text(entry.nino.getOrElse("")))),
+                SummaryListRow(key = Key(Text(Messages("add.confirm.sautr"))), value = Value(content = Text(entry.sautr.getOrElse("")))),
+                SummaryListRow(key = Key(Text(Messages("add.confirm.identityProvider"))), value = Value(content = Text(entry.identityProvider.getOrElse("")))),
+                SummaryListRow(key = Key(Text(Messages("add.confirm.identityProviderId"))), value = Value(content = Text(entry.identityProviderId.getOrElse("")))),
+                SummaryListRow(key = Key(Text(Messages("add.confirm.group"))), value = Value(content = Text(entry.group.getOrElse("")))),
+                SummaryListRow(key = Key(Text(Messages("add.confirm.addedByTeam"))), value = Value(content = Text(entry.addedByTeam))),
+            )
+        )
+    )
+}

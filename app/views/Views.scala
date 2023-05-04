@@ -20,6 +20,7 @@ import javax.inject.Inject
 
 class Views @Inject() (
   val add: views.html.add,
+  val addConfirmation: views.html.add_confirmation,
   val deleteComplete: views.html.delete_complete,
   val deleteConfirmation: views.html.delete_confirmation,
   val deleteForm: views.html.delete_form,
