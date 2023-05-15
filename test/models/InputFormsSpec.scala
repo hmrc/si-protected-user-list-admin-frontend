@@ -45,9 +45,8 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
   )
 
   "EntryForm" should {
-    "nino is optional when sautr is present" in {
+    "handle scenarios for table" in {
       forAll(table) { (_, request, expectedErrors) =>
-        println(request)
         val form = InputForms.entryForm
         val result = form.bind(request)
         result.errors should contain theSameElementsAs expectedErrors

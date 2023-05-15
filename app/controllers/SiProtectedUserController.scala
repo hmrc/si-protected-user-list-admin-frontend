@@ -38,6 +38,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.io.BufferedSource
 
 @Singleton
+@Deprecated
 class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUserConfig,
                                            allowlistSessionCache: AllowListSessionCache,
                                            dataProcessService: DataProcessService,
@@ -53,42 +54,6 @@ class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUse
   private val showAllEnabled = siProtectedUserConfig.showAllEnabled
 
   def homepage: Action[AnyContent] = (Action andThen strideAction)(implicit request => Ok(views.home(siProtectedUserConfig)))
-
-//  def submit: Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
-//    userForm
-//      .bindFromRequest()
-//      .fold(
-//        formWithErrors =>
-//          allowlistSessionCache
-//            .getAll()
-//            .map(users => BadRequest(views.add(formWithErrors, siProtectedUserConfig))),
-//        formData => {
-//
-//          adminConnector
-//            .addEntry(formData)
-//            .flatMap { _ =>
-//              auditConnector.sendEvent(
-//                AuditEvents.allowListAddEventSuccess(request.clientIdOpt getOrElse "UnknownUserId", formData)
-//              )
-//
-//              logger.warn("[GG-6801] Admin Screen - Button click: 'Add to Allowlist' / 'Add' entry")
-//
-//              allowlistSessionCache
-//                .add(formData)
-//                .map(users => Ok(views.add(userForm.fill(formData.copy(username = "")), siProtectedUserConfig)))
-//            }
-//            .recoverWith { case _: ConflictException =>
-//              auditConnector.sendEvent(
-//                AuditEvents.allowListAddEventFailure(request.clientIdOpt getOrElse "UnknownUserId", formData)
-//              )
-//
-//              adminConnector
-//                .findEntry(formData.username)
-//                .map(existingUser => Conflict(views.add(userForm.fill(formData), siProtectedUserConfig)))
-//            }
-//        }
-//      )
-//  }
 
   def fileUploadPage(): Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
     if (siProtectedUserConfig.shutterService) {

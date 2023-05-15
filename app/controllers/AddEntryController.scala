@@ -20,9 +20,10 @@ import config.SiProtectedUserConfig
 import controllers.actions.StrideAction
 import models.InputForms.entryForm
 import play.api.Logging
-import play.api.i18n.I18nSupport
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.SiProtectedUserListService
+import uk.gov.hmrc.http.ConflictException
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import views.Views
 
@@ -53,12 +54,16 @@ class AddEntryController @Inject() (siProtectedUserConfig: SiProtectedUserConfig
       .bindFromRequest()
       .fold(
         errorForm => {
-          logger.info(s"ERRORS ${errorForm.errors}")
           Future.successful(BadRequest(views.add(errorForm, siProtectedUserConfig)))
         },
         entry => {
-          logger.info(s"SUCCESS $entry")
-          Future.successful(Ok(views.addConfirmation(entry)))
+          val entryWithUserId = entry.copy(addedByUser = Some(request.clientId))
+          siProtectedUserListService
+            .addEntry(entryWithUserId)
+            .map(protectedUserRecord => Created(views.addConfirmation(entry, protectedUserRecord)))
+            .recoverWith { case _: ConflictException =>
+              Future.successful(Conflict(views.add(entryForm.fill(entry).withGlobalError(Messages("error.conflict")), siProtectedUserConfig)))
+            }
         }
       )
 

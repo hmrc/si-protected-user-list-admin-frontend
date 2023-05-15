@@ -26,6 +26,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
+@Deprecated
 class SiProtectedUserListAdminConnector @Inject() (@Named("siProtectedUserBackendEndpoint") serviceUrl: String, httpClient: HttpClient)(implicit
   ec: ExecutionContext
 ) {

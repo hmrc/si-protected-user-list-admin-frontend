@@ -42,6 +42,7 @@ add.confirm.identityProvider = Identity Provider
 add.confirm.identityProviderId = Identity Provider ID
 add.confirm.group = Group
 add.confirm.addedByTeam = Added by
+add.error.conflict = There is already an existing entry for these details
 
 
 form.nino.regex = Invalid Nino

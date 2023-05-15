@@ -17,7 +17,7 @@
 package util
 
 import config.{AuthStrideEnrolmentsConfig, SiProtectedUserConfig}
-import models.{Entry, InputForms}
+import models._
 import org.scalacheck.Gen
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.domain.{Generator, Nino, SaUtr, SaUtrGenerator}
@@ -40,7 +40,10 @@ trait Generators {
     identityProvider   <- Gen.some(nonEmptyStringGen)
     identityProviderId <- Gen.some(nonEmptyStringGen)
     group              <- Gen.some(nonEmptyStringGen)
-    addedByTeam        <- nonEmptyStringGen
+    addedByTeam        <- Gen.some(nonEmptyStringGen)
+    updatedByTeam      <- Gen.some(nonEmptyStringGen)
+    updatedByUser      <- Gen.some(nonEmptyStringGen)
+    addedByUser        <- Gen.some(nonEmptyStringGen)
   } yield Entry(
     entryId = entryId,
     action = action,
@@ -49,8 +52,13 @@ trait Generators {
     identityProvider = identityProvider,
     identityProviderId = identityProviderId,
     group = group,
-    addedByTeam = addedByTeam
+    addedByTeam = addedByTeam,
+    updatedByTeam = updatedByTeam,
+    updatedByUser = updatedByUser,
+    addedByUser = addedByUser
   )
+
+  val validRequestEntryGen = entryGen.map(_.copy(entryId = None, addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
 
   val siProtectedUserConfigGen: Gen[SiProtectedUserConfig] = for {
     bulkUploadScreenEnabled  <- Gen.const(true)
@@ -81,4 +89,47 @@ trait Generators {
     strideEnrolments   <- Gen.const(Set.empty[Enrolment])
   } yield AuthStrideEnrolmentsConfig(strideLoginBaseUrl = strideLoginBaseUrl, strideSuccessUrl = strideSuccessUrl, strideEnrolments = strideEnrolments)
 
+  val taxIdTypeGen: Gen[TaxIdentifierType] = Gen.oneOf(TaxIdentifierType.values)
+
+  val taxIdProviderIdGen: Gen[IdentityProviderId] = for {
+    authProviderIdType  <- Gen oneOf Seq("GovernmentGateway", "OLfG")
+    authProviderIdValue <- Gen.alphaNumStr
+  } yield IdentityProviderId(authProviderIdType, authProviderIdValue)
+
+  val taxIdGen: Gen[TaxIdentifier] = for {
+    typeName <- Gen oneOf TaxIdentifierType.values
+    value    <- Gen.alphaNumStr
+  } yield TaxIdentifier(typeName, value)
+
+  val protectedUserGen: Gen[ProtectedUser] = for {
+    taxIdType          <- taxIdTypeGen
+    taxIdValue         <- Gen.alphaNumStr
+    identityProviderId <- Gen.some(taxIdProviderIdGen)
+    group              <- nonEmptyStringGen
+    addedByUser        <- Gen.some(nonEmptyStringGen)
+    addedByTeam        <- Gen.some(nonEmptyStringGen)
+    updatedByUser      <- Gen.some(nonEmptyStringGen)
+    updatedByTeam      <- Gen.some(nonEmptyStringGen)
+  } yield ProtectedUser(
+    taxId = TaxIdentifier(taxIdType, taxIdValue),
+    identityProviderId = identityProviderId,
+    group = group,
+    addedByUser = addedByUser,
+    addedByTeam = addedByTeam,
+    updatedByUser = updatedByUser,
+    updatedByTeam = updatedByTeam
+  )
+
+  val protectedUserRecordGen: Gen[ProtectedUserRecord] = for {
+    entryId      <- nonEmptyStringGen
+    firstCreated <- Gen.posNum[Long]
+    lastUpdated  <- Gen.option(Gen.posNum[Long])
+    body         <- protectedUserGen
+
+  } yield ProtectedUserRecord(
+    entryId = entryId,
+    firstCreated = firstCreated,
+    lastUpdated = lastUpdated,
+    body = body
+  )
 }

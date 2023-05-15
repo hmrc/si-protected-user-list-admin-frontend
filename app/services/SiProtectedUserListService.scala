@@ -16,7 +16,17 @@
 
 package services
 
-import javax.inject.Singleton
+import connectors.SiProtectedUserAdminBackendConnector
+import models.{Entry, ProtectedUserRecord}
+import uk.gov.hmrc.http.HeaderCarrier
+
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.Future
 
 @Singleton
-class SiProtectedUserListService {}
+class SiProtectedUserListService @Inject() (siProtectedUserAdminBackendConnector: SiProtectedUserAdminBackendConnector) {
+
+  def addEntry(entry: Entry)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] = {
+    siProtectedUserAdminBackendConnector.addEntry(entry.toProtectedUser())
+  }
+}

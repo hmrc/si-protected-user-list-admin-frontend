@@ -25,6 +25,7 @@ import javax.inject.{Inject, Named, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
+@Deprecated
 class AllowListSessionCache @Inject() (sc: SessionCacheConfig, @Named("appName") appName: String, httpClient: HttpClient)(implicit
   ec: ExecutionContext
 ) extends SessionCache {

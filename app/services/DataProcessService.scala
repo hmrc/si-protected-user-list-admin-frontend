@@ -29,6 +29,7 @@ import scala.concurrent.duration.{Duration, SECONDS}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
+@Deprecated
 class DataProcessService @Inject() (adminConnector: SiProtectedUserListAdminConnector, sc: SiProtectedUserConfig, auditConnector: AuditConnector)(implicit
   ec: ExecutionContext
 ) extends Logging {

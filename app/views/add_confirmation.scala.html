@@ -25,7 +25,7 @@
         mainLayout: Layout
 )
 
-@(entry: Entry)(implicit request: Request[_], messages: Messages)
+@(entry: Entry, protectedUserRecord: ProtectedUserRecord)(implicit request: Request[_], messages: Messages)
 
 @mainLayout(
     pageTitle = Messages("add.confirm.title"),
@@ -35,14 +35,13 @@
     @govukSummaryList(
         SummaryList(
             Seq(
-                SummaryListRow(key = Key(Text(Messages("add.confirm.entryId"))), value = Value(content = Text(entry.entryId.getOrElse("")))),
+                SummaryListRow(key = Key(Text(Messages("add.confirm.entryId"))), value = Value(content = Text(protectedUserRecord.entryId))),
                 SummaryListRow(key = Key(Text(Messages("add.confirm.status"))), value = Value(content = Text(Messages(s"add.confirm.action.${entry.action}")))),
-                SummaryListRow(key = Key(Text(Messages("add.confirm.nino"))), value = Value(content = Text(entry.nino.getOrElse("")))),
-                SummaryListRow(key = Key(Text(Messages("add.confirm.sautr"))), value = Value(content = Text(entry.sautr.getOrElse("")))),
-                SummaryListRow(key = Key(Text(Messages("add.confirm.identityProvider"))), value = Value(content = Text(entry.identityProvider.getOrElse("")))),
-                SummaryListRow(key = Key(Text(Messages("add.confirm.identityProviderId"))), value = Value(content = Text(entry.identityProviderId.getOrElse("")))),
-                SummaryListRow(key = Key(Text(Messages("add.confirm.group"))), value = Value(content = Text(entry.group.getOrElse("")))),
-                SummaryListRow(key = Key(Text(Messages("add.confirm.addedByTeam"))), value = Value(content = Text(entry.addedByTeam))),
+                SummaryListRow(key = Key(Text(protectedUserRecord.body.taxId.name.toString)), value = Value(content = Text(protectedUserRecord.body.taxId.value))),
+                SummaryListRow(key = Key(Text(Messages("add.confirm.identityProvider"))), value = Value(content = Text(protectedUserRecord.body.identityProviderId.map(_.name).getOrElse("")))),
+                SummaryListRow(key = Key(Text(Messages("add.confirm.identityProviderId"))), value = Value(content = Text(protectedUserRecord.body.identityProviderId.map(_.value).getOrElse("")))),
+                SummaryListRow(key = Key(Text(Messages("add.confirm.group"))), value = Value(content = Text(protectedUserRecord.body.group))),
+                SummaryListRow(key = Key(Text(Messages("add.confirm.addedByTeam"))), value = Value(content = Text(protectedUserRecord.body.addedByTeam.getOrElse("")))),
             )
         )
     )

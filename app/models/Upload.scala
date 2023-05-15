@@ -18,7 +18,7 @@ package models
 
 import zamblauskas.csv.parser._
 import zamblauskas.functional._
-
+@Deprecated
 case class Upload(username: String, organisationName: String, requesterEmail: String)
 
 object Upload {

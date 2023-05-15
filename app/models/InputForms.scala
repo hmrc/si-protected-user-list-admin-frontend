@@ -29,17 +29,19 @@ object InputForms {
   val addEntryActionBlock = "BLOCK"
   val addEntryActionLock = "LOCK"
   val addEntryActions = Seq(addEntryActionBlock, addEntryActionLock)
-  val identityProviders = Seq("GG")
   val entryForm: Form[Entry] = Form(
     mapping(
       "entryId"            -> ignored(Option.empty[String]),
+      "addedByUser"        -> ignored(Option.empty[String]),
+      "updatedByUser"      -> ignored(Option.empty[String]),
       "action"             -> nonEmptyText,
       "nino"               -> optional(nonEmptyText.verifying("form.nino.regex", _.matches(ninoRegex))),
       "sautr"              -> optional(nonEmptyText.verifying("form.sautr.regex", _.matches(saUtrRegex))),
       "identityProvider"   -> mandatoryIfEqual("action", addEntryActionLock, nonEmptyText),
       "identityProviderId" -> mandatoryIfEqual("action", addEntryActionLock, text.verifying("form.identityProviderId.required", !_.trim.isEmpty)),
       "group"              -> optional(nonEmptyText),
-      "addedByTeam"        -> nonEmptyText
+      "addedByTeam"        -> optional(nonEmptyText),
+      "updatedByTeam"      -> optional(nonEmptyText)
     )(Entry.apply)(Entry.unapply)
       .verifying("form.nino.sautr.required", entry => entry.sautr.isDefined || entry.nino.isDefined)
   )

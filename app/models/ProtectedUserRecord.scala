@@ -16,10 +16,15 @@
 
 package models
 
-import play.api.libs.json.{Json, OFormat}
-@Deprecated
-case class User(username: String, organisationName: String, requesterEmail: String)
-@Deprecated
-object User {
-  implicit val formats: OFormat[User] = Json.format[User]
+import play.api.libs.json._
+
+case class ProtectedUserRecord(
+  entryId: String,
+  firstCreated: Long,
+  lastUpdated: Option[Long],
+  body: ProtectedUser
+)
+
+object ProtectedUserRecord {
+  implicit val format: OFormat[ProtectedUserRecord] = Json.format
 }
