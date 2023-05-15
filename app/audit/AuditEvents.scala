@@ -16,86 +16,9 @@
 
 package audit
 
-import models.User
-import play.api.mvc.Request
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.audit.AuditExtensions._
-import uk.gov.hmrc.play.audit.model.DataEvent
-
 trait AuditEvents {
+  // Todo add Audit event for new model
 
-  private val auditSource = "si-protected-user-list-admin-frontend"
-  private val auditType = "ListUpdate"
-
-  def allowListAddEventSuccess(userId: String, login: User)(implicit hc: HeaderCarrier, request: Request[_]): DataEvent =
-    DataEvent(
-      auditSource,
-      auditType,
-      detail = Map(
-        "strideUserPid"  -> userId,
-        "operation"      -> "add",
-        "success"        -> "true",
-        "orgLoginId"     -> login.username,
-        "orgName"        -> login.organisationName,
-        "requesterEmail" -> login.requesterEmail
-      ),
-      tags = hc.toAuditTags("HMRC - Login - Restricted User List - add entry", request.path) ++ Map(hc.names.deviceID -> hc.deviceID.getOrElse("-"))
-    )
-
-  def bulkUploadAuditEvent(userId: String, rowsInFile: String)(implicit hc: HeaderCarrier): DataEvent =
-    DataEvent(
-      auditSource,
-      auditType,
-      detail = Map("strideUserPid" -> userId, "operation" -> "BulkUploadOfCredentialsToAllowlist", "rowsInFile" -> rowsInFile),
-      tags = hc.toAuditTags("HMRC - Login - Restricted User List - bulk update") ++ Map(hc.names.deviceID -> hc.deviceID.getOrElse(""))
-    )
-
-  def allowListAddEventFailure(userId: String, login: User)(implicit hc: HeaderCarrier, request: Request[_]): DataEvent =
-    DataEvent(
-      auditSource,
-      auditType,
-      detail = Map(
-        "strideUserPid"  -> userId,
-        "operation"      -> "add",
-        "success"        -> "false",
-        "failureReason"  -> "Record already exists",
-        "orgLoginId"     -> login.username,
-        "orgName"        -> login.organisationName,
-        "requesterEmail" -> login.requesterEmail
-      ),
-      tags = hc.toAuditTags("HMRC - Login - Restricted User List - add entry", request.path) ++ Map(hc.names.deviceID -> hc.deviceID.getOrElse("-"))
-    )
-
-  def allowListDeleteEventSuccess(userId: String, login: User)(implicit hc: HeaderCarrier, request: Request[_]): DataEvent =
-    DataEvent(
-      auditSource,
-      auditType,
-      detail = Map(
-        "strideUserPid"  -> userId,
-        "operation"      -> "delete",
-        "success"        -> "true",
-        "orgLoginId"     -> login.username,
-        "orgName"        -> login.organisationName,
-        "requesterEmail" -> login.requesterEmail
-      ),
-      tags = hc.toAuditTags("HMRC - Login - Restricted User List - delete entry", request.path) ++ Map(hc.names.deviceID -> hc.deviceID.getOrElse("-"))
-    )
-
-  def allowListDeleteEventFailure(userId: String, login: User)(implicit hc: HeaderCarrier, request: Request[_]): DataEvent =
-    DataEvent(
-      auditSource,
-      auditType,
-      detail = Map(
-        "strideUserPid"  -> userId,
-        "operation"      -> "delete",
-        "success"        -> "false",
-        "failureReason"  -> "Record did not exist",
-        "orgLoginId"     -> login.username,
-        "orgName"        -> login.organisationName,
-        "requesterEmail" -> login.requesterEmail
-      ),
-      tags = hc.toAuditTags("HMRC - Login - Restricted User List - delete entry", request.path) ++ Map(hc.names.deviceID -> hc.deviceID.getOrElse("-"))
-    )
 }
 
 object AuditEvents extends AuditEvents

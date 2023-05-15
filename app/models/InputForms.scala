@@ -21,9 +21,6 @@ import play.api.data.Forms._
 import uk.gov.voa.play.form.ConditionalMappings.mandatoryIfEqual
 
 object InputForms {
-  private val nameRegex = "^[A-Za-z0-9]{12}$"
-  private val orgNameRegex = """^.{2,300}$"""
-  val emailRegex = """^.{0,62}@.{1,64}\..{1,64}$"""
   val ninoRegex = "((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]"
   val saUtrRegex = "[0-9]{10}"
   val addEntryActionBlock = "BLOCK"
@@ -46,26 +43,4 @@ object InputForms {
       .verifying("form.nino.sautr.required", entry => entry.sautr.isDefined || entry.nino.isDefined)
   )
 
-  val userForm: Form[User] = Form(
-    mapping(
-      "name" -> nonEmptyText
-        .transform(s => s.replaceAll(" ", ""), identity[String])
-        .verifying("form.username.regex", _.matches(nameRegex)),
-      "org" -> nonEmptyText
-        .transform(_.trim, identity[String])
-        .verifying("form.org.regex", _.matches(orgNameRegex)),
-      "requester_email" -> nonEmptyText.verifying(
-        "form.requester_email.regex",
-        _.matches(emailRegex)
-      )
-    )(User.apply)(User.unapply)
-  )
-
-  val searchAllowListForm: Form[Search] = Form(
-    mapping(
-      "name" -> text
-        .transform(s => s.replaceAll(" ", ""), identity[String])
-        .verifying("form.username.regex", _.matches("([A-Za-z0-9 ]{12})"))
-    )(Search.apply)(Search.unapply)
-  )
 }
