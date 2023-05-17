@@ -29,7 +29,7 @@ object TaxIdentifierType {
   private def parseErr(str: String) = s"Could not read tax ID type from $str."
 
   def from(string: String): Either[String, TaxIdentifierType] =
-    TaxIdentifierType.values
+    values
       .find(_.toString.toLowerCase == string)
       .toRight(parseErr(string))
 

@@ -29,7 +29,7 @@
 
 @mainLayout(
     pageTitle = Messages("add.confirm.title"),
-    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage.url))
+    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
 ) {
     @h1("add.confirm.header")
     @govukSummaryList(

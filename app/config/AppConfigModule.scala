@@ -16,7 +16,6 @@
 
 package config
 
-import com.google.inject.name.Named
 import com.google.inject.{AbstractModule, Provides, Singleton}
 
 class AppConfigModule extends AbstractModule {
@@ -33,10 +32,10 @@ class AppConfigModule extends AbstractModule {
   @Provides @Singleton
   def siProtectedUserConfig(appConfig: AppConfig): SiProtectedUserConfig = appConfig.siProtectedUserConfig
 
-  @Provides @Named("siProtectedUserBackendEndpoint")
-  def siProtectedUserBackendEndpoint(appConfig: AppConfig): String = appConfig.siProtectedUserBackendEndpoint
-
   @Provides @Singleton
   def sessionCacheConfig(appConfig: AppConfig): SessionCacheConfig = appConfig.sessionCacheConfig
+
+  @Provides @Singleton
+  def backendConfig(appConfig: AppConfig): BackendConfig = appConfig.backendConfig
 
 }

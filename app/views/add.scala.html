@@ -38,7 +38,7 @@
 
 @mainLayout(
     pageTitle = Messages("add.page.title"),
-    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage.url))
+    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
 ) {
     @h1("add.page.header")
     @formTemplate(action = controllers.routes.AddEntryController.submit(), args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
@@ -68,7 +68,7 @@
             label = Label(content = Text(messages("add.page.addedByTeam")), classes = "govuk-!-font-weight-bold")
         ).withFormField(form("addedByTeam")))
         @govukButton(Button(content = Text(Messages("add.page.add"))))
-        @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage.url), content = Text(Messages("add.page.cancel.button")), classes = "govuk-button govuk-button--secondary"))
+        @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("add.page.cancel.button")), classes = "govuk-button govuk-button--secondary"))
     }
 
 }

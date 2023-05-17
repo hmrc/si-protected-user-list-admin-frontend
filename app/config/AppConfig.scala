@@ -30,19 +30,17 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
 
   lazy val appName: String = getString("appName")
 
-  lazy val analyticsToken: String = getString(s"google-analytics.token")
-  lazy val analyticsHost: String = getString(s"google-analytics.host")
-  lazy val analyticsConfig: AnalyticsConfig = AnalyticsConfig(analyticsToken = analyticsToken, analyticsHost = analyticsHost)
+  lazy val analyticsConfig: AnalyticsConfig = AnalyticsConfig(analyticsToken = getString(s"google-analytics.token"), analyticsHost = getString(s"google-analytics.host"))
 
-  lazy val strideEnrolments: Set[Enrolment] =
-    configuration
-      .get[Seq[String]]("authentication.stride.enrolments")
-      .map(Enrolment.apply)
-      .toSet
-  lazy val strideLoginBaseUrl: String = getString("authentication.stride.loginBaseUrl")
-  lazy val strideSuccessUrl: String = getString("authentication.stride.successReturnUrl")
   lazy val authStrideEnrolments: AuthStrideEnrolmentsConfig =
-    AuthStrideEnrolmentsConfig(strideLoginBaseUrl = strideLoginBaseUrl, strideSuccessUrl = strideSuccessUrl, strideEnrolments = strideEnrolments)
+    AuthStrideEnrolmentsConfig(
+      strideLoginBaseUrl = getString("authentication.stride.loginBaseUrl"),
+      strideSuccessUrl = getString("authentication.stride.successReturnUrl"),
+      strideEnrolments = configuration
+        .get[Seq[String]]("authentication.stride.enrolments")
+        .map(Enrolment.apply)
+        .toSet
+    )
 
   lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
     bulkUploadScreenEnabled = getBoolean("si-protected-user.allow-list.bulk-upload.screen-enabled"),
@@ -56,7 +54,12 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
     addedByTeams = configuration.get[Seq[String]]("si-protected-user.add-entry.added-by-teams")
   )
 
-  lazy val siProtectedUserBackendEndpoint = servicesConfig.baseUrl("si-protected-user-list-admin")
+  lazy val backendConfig = BackendConfig(
+    endpoint = servicesConfig.baseUrl("si-protected-user-list-admin"),
+    contextRoot = servicesConfig.getConfString(s"si-protected-user-list-admin.context-root",
+                                               throw new RuntimeException(s"Could not find config key 'si-protected-user-list-admin.context-root'")
+                                              )
+  )
 
   lazy val sessionCacheConfig = SessionCacheConfig(
     baseUri = servicesConfig.baseUrl("cacheable.session-cache"),
@@ -78,3 +81,4 @@ case class SiProtectedUserConfig(
   addedByTeams: Seq[String]
 )
 case class SessionCacheConfig(baseUri: String, domain: String)
+case class BackendConfig(endpoint: String, contextRoot: String)

@@ -16,24 +16,24 @@
 
 package connectors
 
+import config.BackendConfig
 import models.{ProtectedUser, ProtectedUserRecord}
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, UpstreamErrorResponse}
 
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SiProtectedUserAdminBackendConnector @Inject() (@Named("siProtectedUserBackendEndpoint") serviceUrl: String, httpClient: HttpClient)(implicit
+class SiProtectedUserAdminBackendConnector @Inject() (backendConfig: BackendConfig, httpClient: HttpClient)(implicit
   ec: ExecutionContext
 ) {
-  private val rootPath = "si-protected-user-list-admin"
 
   def addEntry(protectedUser: ProtectedUser)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] = {
     httpClient
       .POST[JsObject, Either[UpstreamErrorResponse, ProtectedUserRecord]](
-        s"$serviceUrl/$rootPath/add",
+        s"${backendConfig.endpoint}/${backendConfig.contextRoot}/add",
         Json.toJsObject(protectedUser)
       )
       .map {
