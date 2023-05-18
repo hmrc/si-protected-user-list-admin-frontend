@@ -14,7 +14,7 @@ lazy val microservice = Project("si-protected-user-list-admin-frontend", file(".
   )
   .configs(IntegrationTest)
   .settings(integrationTestSettings(): _*)
-  .settings(IntegrationTest / dependencyClasspath := (IntegrationTest / dependencyClasspath).value ++ (Test / exportedProducts).value)
+  .settings(IntegrationTest / dependencyClasspath ++= (Test / exportedProducts).value)
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings: _*)
   .settings(scalafmtOnCompile := true)
