@@ -38,7 +38,7 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
     ("Scenario", "Request fields", "Expected errors"),
     ("Nino regex fail when present and incorrect", allRequestFieldsPresent.updated("nino", "bad_nino"), Seq(FormError("nino", "form.nino.regex"))),
     ("No Nino regex failure when not entered", allRequestFieldsPresent.updated("nino", ""), Seq()),
-    ("sautur regex fails when present and incorrect", allRequestFieldsPresent.updated("sautr", "bad_sautr"), Seq(FormError("sautr", "form.sautr.regex"))),
+    ("sautr regex fails when present and incorrect", allRequestFieldsPresent.updated("sautr", "bad_sautr"), Seq(FormError("sautr", "form.sautr.regex"))),
     ("No sautr regex failure when not entered", allRequestFieldsPresent.updated("sautr", ""), Seq()),
     ("Nino or sautr is required when neither are present", missingNinoAndSautr, Seq(FormError("", "form.nino.sautr.required"))),
     ("identityProviderId must be present when action is LOCK", actionLockNoCredId, Seq(FormError("identityProviderId", "form.identityProviderId.required")))

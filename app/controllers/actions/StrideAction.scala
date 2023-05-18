@@ -21,8 +21,8 @@ import config.AuthStrideEnrolmentsConfig
 import play.api.Logging
 import play.api.mvc.Results.{Redirect, Unauthorized}
 import play.api.mvc.{ActionRefiner, Request, Result}
+import uk.gov.hmrc.auth.core.AuthProvider.PrivilegedApplication
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.clientId
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
@@ -41,9 +41,7 @@ class StrideAction @Inject() (val authConnector: AuthConnector, strideEnrolments
   def refine[A](request: Request[A]): Future[Either[Result, StrideRequest[A]]] = {
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
-    val hasRequiredRole = (strideEnrolmentsConfig.strideEnrolments fold EmptyPredicate)(_ or _)
-
-    authorised(hasRequiredRole)
+    authorised(AuthProviders(PrivilegedApplication))
       .retrieve(clientId) { clientIdOpt =>
         logger.debug("User Authenticated with Stride auth")
         Future.successful(Right(StrideRequest(request, clientIdOpt)))
