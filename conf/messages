@@ -1,7 +1,9 @@
 service.name = Si Applications Dashboard
 service.text = This is your new service
-home.page.title = MDTP User Admin - SI Protected User List
+service.unavailable.title = Service is unavailable
+service.unavailable.header = This service is shuttered and currently unavailable
 
+home.page.title = MDTP User Admin - SI Protected Users
 home.page.header = SI Protected User List Admin
 home.page.button = Add to Allowlist
 home.page.delete.button = Remove from Allowlist
