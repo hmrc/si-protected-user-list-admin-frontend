@@ -23,7 +23,7 @@ import play.api.mvc.Results.{Redirect, Unauthorized}
 import play.api.mvc.{ActionRefiner, Request, Result}
 import uk.gov.hmrc.auth.core.AuthProvider.PrivilegedApplication
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
+import uk.gov.hmrc.auth.core.authorise.{EmptyPredicate, Predicate}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.clientId
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
@@ -42,7 +42,7 @@ class StrideAction @Inject() (val authConnector: AuthConnector, strideEnrolments
   def refine[A](request: Request[A]): Future[Either[Result, StrideRequest[A]]] = {
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
-    val hasAnyOfRequiredEnrolments = (strideEnrolmentsConfig.strideEnrolments fold EmptyPredicate)(_ or _)
+    val hasAnyOfRequiredEnrolments = strideEnrolmentsConfig.strideEnrolments.reduceOption[Predicate](_ or _).getOrElse(EmptyPredicate)
 
     authorised(AuthProviders(PrivilegedApplication).and(hasAnyOfRequiredEnrolments))
       .retrieve(clientId) { clientIdOpt =>

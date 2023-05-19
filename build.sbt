@@ -18,3 +18,5 @@ lazy val microservice = Project("si-protected-user-list-admin-frontend", file(".
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings: _*)
   .settings(scalafmtOnCompile := true)
+  .settings(PlayKeys.playDefaultPort := 8508)
+

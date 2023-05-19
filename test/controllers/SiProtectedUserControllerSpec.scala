@@ -16,7 +16,6 @@
 
 package controllers
 
-import config.SiProtectedUserConfig
 import controllers.actions.StrideAction
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.mvc._
@@ -46,9 +45,8 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
     val views = inject[Views]
 
-    def siProtectedUserController(siProtectedUserConfig: SiProtectedUserConfig = defaultSiProtectedUserConfig): SiProtectedUserController =
+    def siProtectedUserController(): SiProtectedUserController =
       new SiProtectedUserController(
-        siProtectedUserConfig,
         views,
         Stubs.stubMessagesControllerComponents(),
         new StrideAction(mockAuthConnector, defaultAuthStrideEnrolmentsConfigGen, appName)

@@ -21,15 +21,17 @@
 @import views.html.Layout
 @import views.html.fragments.Heading1
 
+
 @this(
         mainLayout: Layout,
         button: GovukButton,
-        h1: Heading1
+        h1: Heading1,
+        siProtectedUserConfig: SiProtectedUserConfig
 )
 
-@(config: SiProtectedUserConfig)(implicit request: Request[_], messages: Messages)
+@()(implicit request: Request[_], messages: Messages)
 
-@if(config.shutterService) {
+@if(siProtectedUserConfig.shutterService) {
     @mainLayout(pageTitle = Messages("service.unavailable.title")) {
         @h1("service.unavailable.header")
     }

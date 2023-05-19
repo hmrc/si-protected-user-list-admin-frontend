@@ -43,29 +43,32 @@ class AddEntryController @Inject() (siProtectedUserConfig: SiProtectedUserConfig
 
   def showAddEntryPage(): Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
     if (!siProtectedUserConfig.shutterService) {
-      Future.successful(Ok(views.add(entryForm, siProtectedUserConfig)))
+      Future.successful(Ok(views.add(entryForm)))
     } else {
-      Future.successful(Ok(views.home(siProtectedUserConfig)))
+      Future.successful(Ok(views.home()))
     }
   }
 
   def submit(): Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
-    entryForm
-      .bindFromRequest()
-      .fold(
-        errorForm => {
-          Future.successful(BadRequest(views.add(errorForm, siProtectedUserConfig)))
-        },
-        entry => {
-          val entryWithUserId = entry.copy(addedByUser = Some(request.clientId))
-          siProtectedUserListService
-            .addEntry(entryWithUserId)
-            .map(protectedUserRecord => Created(views.addConfirmation(entry, protectedUserRecord)))
-            .recoverWith { case _: ConflictException =>
-              Future.successful(Conflict(views.add(entryForm.fill(entry).withGlobalError(Messages("error.conflict")), siProtectedUserConfig)))
-            }
-        }
-      )
-
+    if (!siProtectedUserConfig.shutterService) {
+      entryForm
+        .bindFromRequest()
+        .fold(
+          errorForm => {
+            Future.successful(BadRequest(views.add(errorForm)))
+          },
+          entry => {
+            val entryWithUserId = entry.copy(addedByUser = Some(request.clientId))
+            siProtectedUserListService
+              .addEntry(entryWithUserId)
+              .map(protectedUserRecord => Created(views.addConfirmation(entry, protectedUserRecord)))
+              .recoverWith { case _: ConflictException =>
+                Future.successful(Conflict(views.add(entryForm.fill(entry).withGlobalError(Messages("error.conflict")))))
+              }
+          }
+        )
+    } else {
+      Future.successful(Ok(views.home()))
+    }
   }
 }

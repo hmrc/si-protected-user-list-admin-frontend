@@ -18,10 +18,10 @@
 @import play.api.mvc.RequestHeader
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.backlink.BackLink
 @import uk.gov.hmrc.hmrcfrontend.views.html.helpers._
-@import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage.{HmrcStandardPageParams, TemplateOverrides}
+@import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage.{HmrcStandardPageParams, ServiceURLs, TemplateOverrides}
 
 @this(
-        hmrcLayout: HmrcStandardPage,
+        hmrcStandardPage: HmrcStandardPage,
 )
 
 @(
@@ -32,9 +32,10 @@
         backLink: Option[BackLink] = None
 )(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
 
-@hmrcLayout(
+@hmrcStandardPage(
     HmrcStandardPageParams(
         pageTitle = Some(pageTitle),
+        serviceURLs = ServiceURLs(serviceUrl = Some(controllers.routes.SiProtectedUserController.homepage().url)),
         templateOverrides = TemplateOverrides(
             additionalHeadBlock = headBlock,
             beforeContentBlock = beforeContentBlock,

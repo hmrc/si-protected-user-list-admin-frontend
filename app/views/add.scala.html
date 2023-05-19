@@ -31,10 +31,11 @@
         govukErrorSummary: GovukErrorSummary,
         govukSelect: GovukSelect,
         govukButton: GovukButton,
-        mainLayout: Layout
+        mainLayout: Layout,
+        siProtectedUserConfig: SiProtectedUserConfig
 )
 
-@(form: Form[Entry], siProtectedUserConfig: SiProtectedUserConfig)(implicit request: Request[_], messages: Messages)
+@(form: Form[Entry])(implicit request: Request[_], messages: Messages)
 
 @mainLayout(
     pageTitle = Messages("add.page.title"),

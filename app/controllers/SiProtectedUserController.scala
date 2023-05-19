@@ -16,7 +16,6 @@
 
 package controllers
 
-import config.SiProtectedUserConfig
 import controllers.actions.StrideAction
 import play.api.Logging
 import play.api.i18n.I18nSupport
@@ -28,12 +27,12 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUserConfig, views: Views, mcc: MessagesControllerComponents, strideAction: StrideAction)(implicit
+class SiProtectedUserController @Inject() (views: Views, mcc: MessagesControllerComponents, strideAction: StrideAction)(implicit
   ec: ExecutionContext
 ) extends FrontendController(mcc)
     with Logging
     with I18nSupport {
 
-  def homepage(): Action[AnyContent] = (Action andThen strideAction)(implicit request => Ok(views.home(siProtectedUserConfig)))
+  def homepage(): Action[AnyContent] = (Action andThen strideAction)(implicit request => Ok(views.home()))
 
 }
