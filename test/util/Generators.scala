@@ -17,16 +17,19 @@
 package util
 
 import config.{AuthStrideEnrolmentsConfig, SiProtectedUserConfig}
+import models.InputForms.groupMaxLength
 import models._
 import org.scalacheck.Gen
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.domain.{Generator, Nino, SaUtr, SaUtrGenerator}
 
 trait Generators {
-  val nonEmptyStringGen = for {
+  val nonEmptyStringGen: Gen[String] = for {
     length <- Gen.chooseNum(1, 50)
     str    <- Gen.listOfN(length, Gen.alphaChar).map(_.mkString)
   } yield str
+
+  def nonEmptyStringOfGen(length: Int): Gen[String] = Gen.listOfN(length, Gen.alphaChar).map(_.mkString)
 
   val ninoGen: Gen[Nino] = Gen.const(new Generator().nextNino)
 
@@ -39,7 +42,7 @@ trait Generators {
     sautr              <- Gen.some(sautrGen.map(_.utr))
     identityProvider   <- Gen.some(nonEmptyStringGen)
     identityProviderId <- Gen.some(nonEmptyStringGen)
-    group              <- Gen.some(nonEmptyStringGen)
+    group              <- Gen.some(nonEmptyStringOfGen(groupMaxLength))
     addedByTeam        <- Gen.some(nonEmptyStringGen)
     updatedByTeam      <- Gen.some(nonEmptyStringGen)
     updatedByUser      <- Gen.some(nonEmptyStringGen)

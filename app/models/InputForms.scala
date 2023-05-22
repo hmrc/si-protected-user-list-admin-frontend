@@ -26,6 +26,7 @@ object InputForms {
   val addEntryActionBlock = "BLOCK"
   val addEntryActionLock = "LOCK"
   val addEntryActions = Seq(addEntryActionBlock, addEntryActionLock)
+  val groupMaxLength = 12
   val entryForm: Form[Entry] = Form(
     mapping(
       "entryId"            -> ignored(Option.empty[String]),
@@ -36,7 +37,7 @@ object InputForms {
       "sautr"              -> optional(nonEmptyText.verifying("form.sautr.regex", _.matches(saUtrRegex))),
       "identityProvider"   -> mandatoryIfEqual("action", addEntryActionLock, nonEmptyText),
       "identityProviderId" -> mandatoryIfEqual("action", addEntryActionLock, text.verifying("form.identityProviderId.required", !_.trim.isEmpty)),
-      "group"              -> optional(nonEmptyText),
+      "group"              -> optional(nonEmptyText(maxLength = groupMaxLength)),
       "addedByTeam"        -> optional(nonEmptyText),
       "updatedByTeam"      -> optional(nonEmptyText)
     )(Entry.apply)(Entry.unapply)

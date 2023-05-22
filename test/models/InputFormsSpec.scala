@@ -16,6 +16,7 @@
 
 package models
 
+import models.InputForms.groupMaxLength
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.wordspec.AnyWordSpec
@@ -28,18 +29,20 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
     "sautr"              -> sautrGen.sample.get.utr,
     "identityProvider"   -> nonEmptyStringGen.sample.get,
     "identityProviderId" -> nonEmptyStringGen.sample.get,
-    "group"              -> nonEmptyStringGen.sample.get,
+    "group"              -> nonEmptyStringOfGen(groupMaxLength).sample.get,
     "addedByTeam"        -> nonEmptyStringGen.sample.get
   )
 
   val missingNinoAndSautr = allRequestFieldsPresent.updated("sautr", "").updated("nino", "")
   val actionLockNoCredId = allRequestFieldsPresent.updated("action", InputForms.addEntryActionLock).updated("identityProviderId", "")
+  val groupIsLongerThanAllowed = allRequestFieldsPresent.updated("group", nonEmptyStringOfGen(groupMaxLength + 1).sample.get)
   val table = Table(
     ("Scenario", "Request fields", "Expected errors"),
     ("Nino regex fail when present and incorrect", allRequestFieldsPresent.updated("nino", "bad_nino"), Seq(FormError("nino", "form.nino.regex"))),
     ("No Nino regex failure when not entered", allRequestFieldsPresent.updated("nino", ""), Seq()),
     ("sautr regex fails when present and incorrect", allRequestFieldsPresent.updated("sautr", "bad_sautr"), Seq(FormError("sautr", "form.sautr.regex"))),
     ("No sautr regex failure when not entered", allRequestFieldsPresent.updated("sautr", ""), Seq()),
+    ("Group is longer than allowed", groupIsLongerThanAllowed, Seq(FormError("group", "error.maxLength", Seq(groupMaxLength)))),
     ("Nino or sautr is required when neither are present", missingNinoAndSautr, Seq(FormError("", "form.nino.sautr.required"))),
     ("identityProviderId must be present when action is LOCK", actionLockNoCredId, Seq(FormError("identityProviderId", "form.identityProviderId.required")))
   )
