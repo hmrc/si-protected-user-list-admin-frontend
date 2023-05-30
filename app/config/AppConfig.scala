@@ -18,23 +18,67 @@ package config
 
 import play.api.Configuration
 import uk.gov.hmrc.auth.core.Enrolment
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
 
 @Singleton
-class AppConfig @Inject() (val runModeConfiguration: Configuration) {
-  private def loadConfig(key: String) = runModeConfiguration.get[String](key)
+class AppConfig @Inject() (val configuration: Configuration, servicesConfig: ServicesConfig) {
+  private def getString(key: String) = configuration.get[String](key)
+  private def getBoolean(key: String) = configuration.get[Boolean](key)
+  private def getInt(key: String) = configuration.get[Int](key)
 
-  lazy val appName: String = loadConfig("appName")
+  lazy val appName: String = getString("appName")
 
-  lazy val analyticsToken: String = loadConfig(s"google-analytics.token")
-  lazy val analyticsHost: String = loadConfig(s"google-analytics.host")
+  lazy val analyticsConfig: AnalyticsConfig = AnalyticsConfig(analyticsToken = getString(s"google-analytics.token"), analyticsHost = getString(s"google-analytics.host"))
 
-  lazy val strideEnrolments: Set[Enrolment] =
-    runModeConfiguration
-      .get[Seq[String]]("authentication.stride.enrolments")
-      .map(Enrolment.apply)
-      .toSet
-  lazy val strideLoginBaseUrl: String = loadConfig("authentication.stride.loginBaseUrl")
-  lazy val strideSuccessUrl: String = loadConfig("authentication.stride.successReturnUrl")
+  lazy val authStrideEnrolments: AuthStrideEnrolmentsConfig =
+    AuthStrideEnrolmentsConfig(
+      strideLoginBaseUrl = getString("authentication.stride.loginBaseUrl"),
+      strideSuccessUrl = getString("authentication.stride.successReturnUrl"),
+      strideEnrolments = configuration
+        .get[Seq[String]]("authentication.stride.enrolments")
+        .map(Enrolment.apply)
+        .toSet
+    )
+
+  lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
+    bulkUploadScreenEnabled = getBoolean("si-protected-user.allow-list.bulk-upload.screen-enabled"),
+    bulkUploadRowLimit = getInt("si-protected-user.allow-list.bulk-upload.file.row-limit"),
+    bulkUploadBatchSize = getInt("si-protected-user.allow-list.bulk-upload.insert.batch-size"),
+    bulkUploadBatchDelaySecs = getInt("si-protected-user.allow-list.bulk-upload.insert.batch-delay-secs"),
+    showAllEnabled = getBoolean("si-protected-user.allow-list.show-all-enabled"),
+    shutterService = getBoolean("si-protected-user.allow-list.shutter-service"),
+    listScreenRowLimit = getInt("si-protected-user.allow-list.list-screen.row-limit"),
+    identityProviders = configuration.get[Seq[String]]("si-protected-user.add-entry.identity-providers"),
+    addedByTeams = configuration.get[Seq[String]]("si-protected-user.add-entry.added-by-teams")
+  )
+
+  lazy val backendConfig = BackendConfig(
+    endpoint = servicesConfig.baseUrl("si-protected-user-list-admin"),
+    contextRoot = servicesConfig.getConfString(s"si-protected-user-list-admin.context-root",
+                                               throw new RuntimeException(s"Could not find config key 'si-protected-user-list-admin.context-root'")
+                                              )
+  )
+
+  lazy val sessionCacheConfig = SessionCacheConfig(
+    baseUri = servicesConfig.baseUrl("cacheable.session-cache"),
+    domain = servicesConfig.getConfString("cacheable.session-cache.domain", throw new RuntimeException("missing required config cacheable.session-cache.domain"))
+  )
 }
+
+case class AnalyticsConfig(analyticsToken: String, analyticsHost: String)
+case class AuthStrideEnrolmentsConfig(strideLoginBaseUrl: String, strideSuccessUrl: String, strideEnrolments: Set[Enrolment])
+case class SiProtectedUserConfig(
+  bulkUploadScreenEnabled: Boolean,
+  bulkUploadRowLimit: Int,
+  bulkUploadBatchSize: Int,
+  bulkUploadBatchDelaySecs: Int,
+  showAllEnabled: Boolean,
+  shutterService: Boolean,
+  listScreenRowLimit: Int,
+  identityProviders: Seq[String],
+  addedByTeams: Seq[String]
+)
+case class SessionCacheConfig(baseUri: String, domain: String)
+case class BackendConfig(endpoint: String, contextRoot: String)

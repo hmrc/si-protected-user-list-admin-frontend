@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@this(
-        mainTemplate: main_template
-)
+package models
 
-@()(implicit request: Request[_], messages: Messages)
+import play.api.libs.json.{Json, OFormat}
 
-@mainTemplate(title = Messages("home.page.title")) {
-    <h1 class="govuk-heading-l">@Messages("delete.complete.header")</h1>
-    <div class="govuk-body">@Messages("delete.complete.desc")</div>
+case class IdentityProviderId(name: String, value: String)
 
-    <form action="@routes.SiProtectedUserController.homepage">
-        <button class="govuk-button" type="submit">@Messages("delete.complete.button")</button>
-    </form>
+object IdentityProviderId {
+  implicit val format: OFormat[IdentityProviderId] = Json.format
 }

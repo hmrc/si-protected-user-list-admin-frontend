@@ -19,14 +19,8 @@ package views
 import javax.inject.Inject
 
 class Views @Inject() (
-  val add: views.html.add,
-  val deleteComplete: views.html.delete_complete,
-  val deleteConfirmation: views.html.delete_confirmation,
-  val deleteForm: views.html.delete_form,
-  val errorTemplate: views.html.error_template,
-  val fileUpload: views.html.file_upload,
-  val fileUploadTime: views.html.file_upload_time,
   val home: views.html.home,
-  val showAll: views.html.show_all,
-  val showAllSorted: views.html.show_all_sorted
+  val add: views.html.add,
+  val addConfirmation: views.html.add_confirmation,
+  val errorTemplate: views.html.error_template
 )

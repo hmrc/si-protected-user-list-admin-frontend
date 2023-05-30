@@ -18,8 +18,8 @@ package models
 
 import play.api.libs.json.{Json, OFormat}
 
-case class User(username: String, organisationName: String, requesterEmail: String)
+case class TaxIdentifier(name: TaxIdentifierType, value: String)
 
-object User {
-  implicit val formats: OFormat[User] = Json.format[User]
+object TaxIdentifier {
+  implicit val format: OFormat[TaxIdentifier] = Json.format
 }

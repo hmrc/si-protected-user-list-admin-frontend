@@ -14,74 +14,62 @@
  * limitations under the License.
  *@
 
-@import models.User
+@import config.SiProtectedUserConfig
+@import play.api.data.Form
+@import play.api.i18n.Messages
+@import play.api.mvc.Request
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.govukfrontend.views.html.components.implicits._
+@import uk.gov.hmrc.hmrcfrontend.views.Implicits.RichErrorSummary
+@import views.html.Layout
+@import views.html.fragments.Heading1
 
 @this(
         formTemplate: FormWithCSRF,
+        h1: Heading1,
         input: GovukInput,
-        mainTemplate: main_template,
-        govukTable: GovukTable
+        govukErrorSummary: GovukErrorSummary,
+        govukSelect: GovukSelect,
+        govukButton: GovukButton,
+        mainLayout: Layout,
+        siProtectedUserConfig: SiProtectedUserConfig
 )
 
-@(form: Form[_], allowlisted: List[User], notice: Option[String])(implicit request: Request[_], messages: Messages)
+@(form: Form[Entry])(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(title = Messages("home.page.title")) {
-    <h1 class="govuk-heading-l">@Messages("page.header")</h1>
-
-    @formTemplate(action = controllers.routes.SiProtectedUserController.submit, args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
-
-        <fieldset class="form-field-group govuk-fieldset">
-            <div class="govuk-form-group">
-            @input(Input(label = Label(content = Text(Messages("page.scp")))).withFormFieldWithErrorAsHtml(form("name")))
-            </div>
-
-
-            <div class="govuk-form-group">
-            @input(Input(label = Label(content = Text(Messages("page.org")))).withFormFieldWithErrorAsHtml(form("org")))
-            </div>
-
-
-            <div class="govuk-form-group">
-            @input(Input(label = Label(content = Text(Messages("page.requester.email")))).withFormFieldWithErrorAsHtml(form("requester_email")))
-            </div>
-
-            <div class="govuk-form-group">
-
-                <button class="govuk-button" type="submit">@Messages("page.add")</button>
-                <a class="govuk-button govuk-button--secondary" type="button" href="@routes.SiProtectedUserController.reload">
-                @Messages("clear.button")
-                </a>
-                <a class="govuk-button govuk-button--secondary" type="button" href="@routes.SiProtectedUserController.homepage">
-                @Messages("delete.complete.button")
-                </a>
-            </div>
-        </fieldset>
+@mainLayout(
+    pageTitle = Messages("add.page.title"),
+    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
+) {
+    @h1("add.page.header")
+    @formTemplate(action = controllers.routes.AddEntryController.submit(), args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
+        @if(form.errors.nonEmpty) {
+            @govukErrorSummary(ErrorSummary().withFormErrorsAsText(form))
+        }
+        @govukSelect(Select(
+            id = "action",
+            name = "action",
+            items = InputForms.addEntryActions.map(action => SelectItem(value = Some(action), text = Messages(s"add.page.action.select.$action"))),
+            label = Label(content = Text(messages("add.page.action")), classes = "govuk-!-font-weight-bold"),
+        ).withFormField(form("action")))
+        @input(Input(label = Label(content = Text(Messages("add.page.nino")), classes = "govuk-!-font-weight-bold"), hint = Some(Hint(content = Text(Messages("add.page.nino.hint"))))).withFormFieldWithErrorAsHtml(form("nino")))
+        @input(Input(label = Label(content = Text(Messages("add.page.sautr")), classes = "govuk-!-font-weight-bold"), hint = Some(Hint(content = Text(Messages("add.page.sautr.hint"))))).withFormFieldWithErrorAsHtml(form("sautr")))
+        @govukSelect(Select(
+            id = "identityProvider",
+            name = "identityProvider",
+            items = siProtectedUserConfig.identityProviders.map(identityProvider => SelectItem(Some(identityProvider), identityProvider)),
+            label = Label(content = Text(messages("add.page.identityProvider")), classes = "govuk-!-font-weight-bold")
+        ).withFormField(form("identityProvider")))
+        @input(Input(label = Label(content = Text(Messages("add.page.identityProviderId")), classes = "govuk-!-font-weight-bold")).withFormFieldWithErrorAsHtml(form("identityProviderId")))
+        @input(Input(label = Label(content = Text(Messages("add.page.group")), classes = "govuk-!-font-weight-bold"), hint = Some(Hint(content = Text(Messages("add.page.group.hint"))))).withFormFieldWithErrorAsHtml(form("group")))
+        @govukSelect(Select(
+            id = "addedByTeam",
+            name = "addedByTeam",
+            items = siProtectedUserConfig.addedByTeams.map(team => SelectItem(Some(team), team)),
+            label = Label(content = Text(messages("add.page.addedByTeam")), classes = "govuk-!-font-weight-bold")
+        ).withFormField(form("addedByTeam")))
+        @govukButton(Button(content = Text(Messages("add.page.add"))))
+        @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("add.page.cancel.button")), classes = "govuk-button govuk-button--secondary"))
     }
 
-    @notice.map { msg =>
-        <p class="govuk-body" id="notice">@msg</p>
-    }
-
-    @if(allowlisted.nonEmpty) {
-        @govukTable(
-            Table(
-                rows = allowlisted.map { user =>
-                    Seq(
-                        TableRow(content = Text(user.username)),
-                        TableRow(content = Text(user.organisationName)),
-                        TableRow(content = Text(user.requesterEmail))
-                    )
-                },
-                head = Some(Seq(
-                    HeadCell(content = Text(Messages("page.name"))),
-                    HeadCell(content = Text(Messages("page.org"))),
-                    HeadCell(content = Text(Messages("page.requester.email"))),
-                )),
-                caption = None,
-                firstCellIsHeader = false
-            )
-        )
-    }
 }

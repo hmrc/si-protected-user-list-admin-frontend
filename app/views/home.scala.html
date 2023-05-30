@@ -14,40 +14,31 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+@import config.SiProtectedUserConfig
+@import play.api.i18n.Messages
+@import play.api.mvc.Request
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+@import views.html.Layout
+@import views.html.fragments.Heading1
+
 
 @this(
-    config: ServicesConfig,
-    mainTemplate: main_template
+        mainLayout: Layout,
+        button: GovukButton,
+        h1: Heading1,
+        siProtectedUserConfig: SiProtectedUserConfig
 )
 
 @()(implicit request: Request[_], messages: Messages)
 
-    @if(config.getBoolean("siprotecteduser.allowlist.shutter.service")) {
-        @mainTemplate(title = Messages("Service is unavailable")) {
-            <h1>This service is shuttered and currently unavailable</h1>
-        }
-    } else {
-        @mainTemplate(title = Messages("home.page.title")) {
-
-            <h1 class="govuk-heading-l">MDTP User Admin - Si Protected Users</h1>
-
-            <div class="govuk-form-group">
-                <a class="govuk-button" href=@controllers.routes.SiProtectedUserController.reload>@Messages("home.page.button")</a>
-            </div>
-
-            <div class="govuk-form-group">
-                <a class="govuk-button" href=@controllers.routes.SiProtectedUserController.fileUploadPage()>@Messages("home.page.bulk.button")</a>
-            </div>
-
-            <div class="govuk-form-group">
-                <a class="govuk-button" href=@controllers.routes.SiProtectedUserController.showSearchForm()>@Messages("home.page.delete.button")</a>
-            </div>
-
-            <div class="govuk-form-group">
-                <a class="govuk-button" href=@controllers.routes.SiProtectedUserController.sortAllAllowlistedUsers()>@Messages("home.page.get.all")</a>
-            </div>
-
-        }
+@if(siProtectedUserConfig.shutterService) {
+    @mainLayout(pageTitle = Messages("service.unavailable.title")) {
+        @h1("service.unavailable.header")
     }
+} else {
+    @mainLayout(pageTitle = Messages("home.page.title")) {
+        @h1("home.page.header")
+        @button(Button(href = Some(controllers.routes.AddEntryController.showAddEntryPage().url), content = Text(Messages("home.page.button"))))
+    }
+}
 

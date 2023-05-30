@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,32 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@import play.twirl.api.HtmlFormat
+package models
 
-@this()
+import play.api.libs.json._
 
-@(article: Html = HtmlFormat.empty,
-    mainClass: Option[String] = None,
-    mainDataAttributes: Option[Html] = None,
-    mainContentHeader: Html = HtmlFormat.empty,
-    actingAttorneyBanner: Html = HtmlFormat.empty,
-    sidebar: Html = HtmlFormat.empty,
-    getHelpForm: Html = HtmlFormat.empty)
+case class ProtectedUserRecord(
+  entryId: String,
+  firstCreated: Long,
+  lastUpdated: Option[Long],
+  body: ProtectedUser
+)
 
-<div @if(mainClass.isDefined) { class ="@{mainClass.get}" } @mainDataAttributes>
-<div id ="content">
-
-  @actingAttorneyBanner
-
-  @mainContentHeader
-
-  @article
-
-  @sidebar
-
-  @getHelpForm
-
-</div>
-</div>
+object ProtectedUserRecord {
+  implicit val format: OFormat[ProtectedUserRecord] = Json.format
+}

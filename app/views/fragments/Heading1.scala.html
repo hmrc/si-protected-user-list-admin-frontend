@@ -16,10 +16,13 @@
 
 @this()
 
-@(content: Html,
-    includeGridWrapper: Boolean = false,
-    articleClasses: Option[String] = None)
+@(key: String, classes: Option[String] = None, id: Option[String] = None)(implicit msgs: Messages)
 
-<article class="content__body@if( includeGridWrapper ){ grid-wrapper}@if(articleClasses.isDefined){ @articleClasses.get }">
-@content
-</article>
+@cls = @{"govuk-heading-l ".concat(classes.getOrElse(""))}
+
+<h1 class="@cls">@Html(msgs(key))</h1>
+
+
+
+
+
