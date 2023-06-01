@@ -21,15 +21,15 @@
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage.{HmrcStandardPageParams, ServiceURLs, TemplateOverrides}
 
 @this(
-        hmrcStandardPage: HmrcStandardPage,
+    hmrcStandardPage: HmrcStandardPage,
 )
 
 @(
-        pageTitle: String,
-        headBlock: Option[Html] = None,
-        beforeContentBlock: Option[Html] = None,
-        scripts: Option[Html] = None,
-        backLink: Option[BackLink] = None
+    pageTitle: String,
+    headBlock: Option[Html] = None,
+    beforeContentBlock: Option[Html] = None,
+    scripts: Option[Html] = None,
+    backLink: Option[BackLink] = None
 )(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
 
 @hmrcStandardPage(

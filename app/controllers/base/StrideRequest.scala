@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package views
+package controllers.base
 
-import javax.inject.Inject
+import play.api.mvc.{MessagesRequest, WrappedRequest}
 
-class Views @Inject() (
-  val add: views.html.add,
-  val view: views.html.view_entry,
-  val deleteConfirmation: views.html.delete_entry_confirmation,
-  val deleteSuccess: views.html.delete_entry_success,
-  val errorTemplate: views.html.error_template
-)
+final case class StrideRequest[A](
+  underlying: MessagesRequest[A],
+  userPidOpt: Option[String]
+) extends WrappedRequest[A](underlying) {
+  def getUserPid: String = userPidOpt getOrElse "Unknown_User_Pid"
+}

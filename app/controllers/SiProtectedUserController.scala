@@ -16,44 +16,32 @@
 
 package controllers
 
-import _root_.config.SiProtectedUserConfig
-import controllers.actions.StrideAction
-import play.api.Logging
-import play.api.i18n.I18nSupport
+import controllers.base.StrideController
 import play.api.mvc._
 import services.SiProtectedUserListService
-import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import views.Views
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 @Singleton
-class SiProtectedUserController @Inject() (siProtectedUserConfig: SiProtectedUserConfig,
-                                           siProtectedUserListService: SiProtectedUserListService,
-                                           views: Views,
-                                           mcc: MessagesControllerComponents,
-                                           strideAction: StrideAction
-                                          )(implicit
-  ec: ExecutionContext
-) extends FrontendController(mcc)
-    with Logging
-    with I18nSupport {
+class SiProtectedUserController @Inject() (
+  siProtectedUserListService: SiProtectedUserListService,
+  homeView: views.html.Home,
+  views: Views,
+  mcc: MessagesControllerComponents
+)(implicit ec: ExecutionContext)
+    extends StrideController(mcc) {
 
-  def homepage(): Action[AnyContent] = (Action andThen strideAction)(implicit request => Ok(views.home()))
+  def homepage(): Action[AnyContent] = StrideAction(implicit request => Ok(homeView()))
 
-  def view(entryId: String): Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
-    if (!siProtectedUserConfig.shutterService) {
-      siProtectedUserListService
-        .findEntry(entryId)
-        .map {
-          case Some(protectedUser) => Ok(views.view(protectedUser))
-          case None                => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
-        }
-        .recover { case exception => InternalServerError(views.errorTemplate("error.internal_server_error", "error.internal_server_error", exception.getMessage)) }
-    } else {
-      Future.successful(Ok(views.home()))
-    }
+  def view(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
+    siProtectedUserListService
+      .findEntry(entryId)
+      .map {
+        case Some(protectedUser) => Ok(views.view(protectedUser))
+        case None                => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
+      }
+      .recover { case exception => InternalServerError(views.errorTemplate("error.internal_server_error", "error.internal_server_error", exception.getMessage)) }
   }
-
 }

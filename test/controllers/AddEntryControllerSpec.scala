@@ -17,7 +17,7 @@
 package controllers
 
 import config.SiProtectedUserConfig
-import controllers.actions.StrideAction
+import controllers.base.StrideAction
 import models.Entry
 import org.jsoup.Jsoup
 import org.scalatest.concurrent.ScalaFutures
@@ -48,13 +48,12 @@ class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPer
     val mockSiProtectedUserListService = mock[SiProtectedUserListService]
     val mockAuthConnector = mock[AuthConnector]
     val views = inject[Views]
-    def addEntryController(siProtectedUserConfig: SiProtectedUserConfig = defaultSiProtectedUserConfig) = {
+    def addEntryController = {
       new AddEntryController(
-        siProtectedUserConfig,
         mockSiProtectedUserListService,
         views,
         Stubs.stubMessagesControllerComponents(),
-        new StrideAction(mockAuthConnector, defaultAuthStrideEnrolmentsConfigGen, appName)
+        new StrideAction(appName, defaultAuthStrideEnrolmentsConfigGen, mockAuthConnector)
       )
     }
     def expectStrideAuthenticated(): Unit = {
@@ -91,7 +90,7 @@ class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPer
     "forward to the add entry view when GET /add is called" in new Setup {
       expectStrideAuthenticated()
 
-      val result = addEntryController().showAddEntryPage()(FakeRequest().withMethod("GET")).futureValue
+      val result = addEntryController.showAddEntryPage()(FakeRequest().withMethod("GET")).futureValue
       status(result) shouldBe OK
 
       val body = contentAsString(result)

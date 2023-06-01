@@ -17,17 +17,22 @@
 package config
 
 import com.google.inject.{AbstractModule, Provides, Singleton}
+import controllers.base.StrideAction
+import play.api.{Configuration, Environment}
 
-class AppConfigModule extends AbstractModule {
+class AppConfigModule(environment: Environment, configuration: Configuration) extends AbstractModule {
   override def configure(): Unit = {
-
     bind(classOf[AppConfig]).asEagerSingleton()
+
+    if (configuration.get[Boolean]("si-protected-user.allow-list.shutter-service"))
+      bind(classOf[StrideAction]).to(classOf[StrideAction.Shuttered])
   }
+
   @Provides @Singleton
   def analyticsConfig(appConfig: AppConfig): AnalyticsConfig = appConfig.analyticsConfig
 
   @Provides @Singleton
-  def authStrideEnrolmentsConfig(appConfig: AppConfig): AuthStrideEnrolmentsConfig = appConfig.authStrideEnrolments
+  def authStrideEnrolmentsConfig(appConfig: AppConfig): StrideConfig = appConfig.authStrideEnrolments
 
   @Provides @Singleton
   def siProtectedUserConfig(appConfig: AppConfig): SiProtectedUserConfig = appConfig.siProtectedUserConfig
@@ -37,5 +42,4 @@ class AppConfigModule extends AbstractModule {
 
   @Provides @Singleton
   def backendConfig(appConfig: AppConfig): BackendConfig = appConfig.backendConfig
-
 }

@@ -16,59 +16,43 @@
 
 package controllers
 
-import config.SiProtectedUserConfig
-import controllers.actions.StrideAction
+import controllers.base.{StrideAction, StrideController}
 import models.InputForms.entryForm
-import play.api.Logging
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.Messages
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.SiProtectedUserListService
 import uk.gov.hmrc.http.ConflictException
-import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import views.Views
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AddEntryController @Inject() (siProtectedUserConfig: SiProtectedUserConfig,
-                                    siProtectedUserListService: SiProtectedUserListService,
-                                    views: Views,
-                                    mcc: MessagesControllerComponents,
-                                    strideAction: StrideAction
-                                   )(implicit ec: ExecutionContext)
-    extends FrontendController(mcc)
-    with Logging
-    with I18nSupport {
+class AddEntryController @Inject() (
+  siProtectedUserListService: SiProtectedUserListService,
+  views: Views,
+  mcc: MessagesControllerComponents,
+  val strideAction: StrideAction
+)(implicit ec: ExecutionContext)
+    extends StrideController(mcc) {
 
-  def showAddEntryPage(): Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
-    if (!siProtectedUserConfig.shutterService) {
-      Future.successful(Ok(views.add(entryForm)))
-    } else {
-      Future.successful(Ok(views.home()))
-    }
-  }
+  def showAddEntryPage(): Action[AnyContent] = StrideAction(implicit request => Ok(views.add(entryForm)))
 
-  def submit(): Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
-    if (!siProtectedUserConfig.shutterService) {
-      entryForm
-        .bindFromRequest()
-        .fold(
-          errorForm => {
-            Future.successful(BadRequest(views.add(errorForm)))
-          },
-          entry => {
-            val entryWithUserId = entry.copy(addedByUser = Some(request.getUserPid))
-            siProtectedUserListService
-              .addEntry(entryWithUserId)
-              .map(protectedUserRecord => Redirect(controllers.routes.SiProtectedUserController.view(protectedUserRecord.entryId)))
-              .recoverWith { case _: ConflictException =>
-                Future.successful(Conflict(views.add(entryForm.fill(entry).withGlobalError(Messages("add.error.conflict")))))
-              }
-          }
-        )
-    } else {
-      Future.successful(Ok(views.home()))
-    }
+  def submit(): Action[AnyContent] = StrideAction.async { implicit request =>
+    entryForm
+      .bindFromRequest()
+      .fold(
+        errorForm => Future.successful(BadRequest(views.add(errorForm))),
+        entry => {
+          val entryWithUserId = entry.copy(addedByUser = Some(request.getUserPid))
+
+          siProtectedUserListService
+            .addEntry(entryWithUserId)
+            .map(protectedUserRecord => Redirect(controllers.routes.SiProtectedUserController.view(protectedUserRecord.entryId)))
+            .recover { case _: ConflictException =>
+              Conflict(views.add(entryForm.fill(entry).withGlobalError(Messages("add.error.conflict"))))
+            }
+        }
+      )
   }
 }

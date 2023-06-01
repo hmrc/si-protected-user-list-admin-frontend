@@ -16,7 +16,7 @@
 
 package util
 
-import config.{AuthStrideEnrolmentsConfig, SiProtectedUserConfig}
+import config.{SiProtectedUserConfig, StrideConfig}
 import models.InputForms.groupMaxLength
 import models._
 import org.scalacheck.Gen
@@ -86,11 +86,11 @@ trait Generators {
     addedByTeams = addedByTeams
   )
 
-  val authStrideEnrolmentsConfigGen: Gen[AuthStrideEnrolmentsConfig] = for {
+  val authStrideEnrolmentsConfigGen: Gen[StrideConfig] = for {
     strideLoginBaseUrl <- nonEmptyStringGen
     strideSuccessUrl   <- nonEmptyStringGen
     strideEnrolments   <- Gen.const(Set.empty[Enrolment])
-  } yield AuthStrideEnrolmentsConfig(strideLoginBaseUrl = strideLoginBaseUrl, strideSuccessUrl = strideSuccessUrl, strideEnrolments = strideEnrolments)
+  } yield StrideConfig(strideLoginBaseUrl = strideLoginBaseUrl, strideSuccessUrl = strideSuccessUrl, strideEnrolments = strideEnrolments)
 
   val taxIdTypeGen: Gen[TaxIdentifierType] = Gen.oneOf(TaxIdentifierType.values)
 

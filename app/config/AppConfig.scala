@@ -24,16 +24,14 @@ import javax.inject.{Inject, Singleton}
 
 @Singleton
 class AppConfig @Inject() (val configuration: Configuration, servicesConfig: ServicesConfig) {
-  private def getString(key: String) = configuration.get[String](key)
-  private def getBoolean(key: String) = configuration.get[Boolean](key)
-  private def getInt(key: String) = configuration.get[Int](key)
+  import configuration.underlying._
 
   lazy val appName: String = getString("appName")
 
   lazy val analyticsConfig: AnalyticsConfig = AnalyticsConfig(analyticsToken = getString(s"google-analytics.token"), analyticsHost = getString(s"google-analytics.host"))
 
-  lazy val authStrideEnrolments: AuthStrideEnrolmentsConfig =
-    AuthStrideEnrolmentsConfig(
+  lazy val authStrideEnrolments: StrideConfig = {
+    StrideConfig(
       strideLoginBaseUrl = getString("authentication.stride.loginBaseUrl"),
       strideSuccessUrl = getString("authentication.stride.successReturnUrl"),
       strideEnrolments = configuration
@@ -41,6 +39,7 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
         .map(Enrolment.apply)
         .toSet
     )
+  }
 
   lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
     bulkUploadScreenEnabled = getBoolean("si-protected-user.allow-list.bulk-upload.screen-enabled"),
@@ -48,7 +47,6 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
     bulkUploadBatchSize = getInt("si-protected-user.allow-list.bulk-upload.insert.batch-size"),
     bulkUploadBatchDelaySecs = getInt("si-protected-user.allow-list.bulk-upload.insert.batch-delay-secs"),
     showAllEnabled = getBoolean("si-protected-user.allow-list.show-all-enabled"),
-    shutterService = getBoolean("si-protected-user.allow-list.shutter-service"),
     listScreenRowLimit = getInt("si-protected-user.allow-list.list-screen.row-limit"),
     identityProviders = configuration.get[Seq[String]]("si-protected-user.add-entry.identity-providers"),
     addedByTeams = configuration.get[Seq[String]]("si-protected-user.add-entry.added-by-teams")
@@ -68,14 +66,13 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
 }
 
 case class AnalyticsConfig(analyticsToken: String, analyticsHost: String)
-case class AuthStrideEnrolmentsConfig(strideLoginBaseUrl: String, strideSuccessUrl: String, strideEnrolments: Set[Enrolment])
+case class StrideConfig(strideLoginBaseUrl: String, strideSuccessUrl: String, strideEnrolments: Set[Enrolment])
 case class SiProtectedUserConfig(
   bulkUploadScreenEnabled: Boolean,
   bulkUploadRowLimit: Int,
   bulkUploadBatchSize: Int,
   bulkUploadBatchDelaySecs: Int,
   showAllEnabled: Boolean,
-  shutterService: Boolean,
   listScreenRowLimit: Int,
   identityProviders: Seq[String],
   addedByTeams: Seq[String]

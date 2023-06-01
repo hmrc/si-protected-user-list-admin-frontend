@@ -14,31 +14,20 @@
  * limitations under the License.
  *@
 
-@import config.SiProtectedUserConfig
-@import play.api.i18n.Messages
-@import play.api.mvc.Request
+@import controllers.base.StrideRequest
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import views.html.Layout
 @import views.html.fragments.Heading1
 
-
 @this(
-        mainLayout: Layout,
-        button: GovukButton,
-        h1: Heading1,
-        siProtectedUserConfig: SiProtectedUserConfig
+    mainLayout: Layout,
+    h1: Heading1,
+    button: GovukButton
 )
 
-@()(implicit request: Request[_], messages: Messages)
+@()(implicit req: StrideRequest[_], messages: Messages)
 
-@if(siProtectedUserConfig.shutterService) {
-    @mainLayout(pageTitle = Messages("service.unavailable.title")) {
-        @h1("service.unavailable.header")
-    }
-} else {
-    @mainLayout(pageTitle = Messages("home.page.title")) {
-        @h1("home.page.header")
-        @button(Button(href = Some(controllers.routes.AddEntryController.showAddEntryPage().url), content = Text(Messages("home.page.button"))))
-    }
+@mainLayout(pageTitle = messages("home.page.title")) {
+    @h1("home.page.header")
+    @button(Button(href = Some(controllers.routes.AddEntryController.showAddEntryPage().url), content = Text(messages("home.page.button"))))
 }
-
