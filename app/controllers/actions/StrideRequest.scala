@@ -16,11 +16,11 @@
 
 package controllers.actions
 
-import play.api.mvc.{Request, WrappedRequest}
+import play.api.mvc.{MessagesRequest, WrappedRequest}
 
 final case class StrideRequest[A](
-  underlying: Request[A],
-  clientIdOpt: Option[String]
+  underlying: MessagesRequest[A],
+  userPidOpt: Option[String]
 ) extends WrappedRequest[A](underlying) {
-  def clientId: String = clientIdOpt getOrElse "UnknownUserId"
+  def getUserPid: String = userPidOpt getOrElse "Unknown_User_Pid"
 }

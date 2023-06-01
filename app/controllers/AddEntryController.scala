@@ -58,7 +58,7 @@ class AddEntryController @Inject() (siProtectedUserConfig: SiProtectedUserConfig
             Future.successful(BadRequest(views.add(errorForm)))
           },
           entry => {
-            val entryWithUserId = entry.copy(addedByUser = Some(request.clientId))
+            val entryWithUserId = entry.copy(addedByUser = Some(request.getUserPid))
             siProtectedUserListService
               .addEntry(entryWithUserId)
               .map(protectedUserRecord => Redirect(controllers.routes.SiProtectedUserController.view(protectedUserRecord.entryId)))
