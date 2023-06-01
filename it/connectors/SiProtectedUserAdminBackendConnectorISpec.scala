@@ -61,5 +61,31 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
         result shouldBe a[ConflictException]
       }
     }
+
+    "Return a ProtectedUserRecord for valid tax id" in new Setup {
+      forAll(protectedUserRecordGen) { protectedUser =>
+        protectedUser.body.taxId.name.toString
+        stubFor(
+          get(urlEqualTo(s"$backendBaseUrl/entry-id/${protectedUser.entryId}"))
+            .willReturn(ok(Json.toJsObject(protectedUser).toString()))
+        )
+
+        val result = siProtectedUserAdminBackendConnector.findEntry(protectedUser.entryId).futureValue
+        result shouldBe Some(protectedUser)
+      }
+    }
+
+    "Return None when api returns 404" in new Setup {
+      forAll(protectedUserRecordGen) { protectedUser =>
+        protectedUser.body.taxId.name.toString
+        stubFor(
+          get(urlEqualTo(s"$backendBaseUrl/entry-id/${protectedUser.entryId}"))
+            .willReturn(aResponse().withStatus(NOT_FOUND))
+        )
+
+        val result = siProtectedUserAdminBackendConnector.findEntry(protectedUser.entryId).futureValue
+        result shouldBe None
+      }
+    }
   }
 }

@@ -30,7 +30,7 @@ class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Gener
 
   "AddEntryController" should {
 
-    "return CREATED  when add is successful" in new Setup {
+    "return CREATED when add is successful" in new Setup {
       forAll(validRequestEntryGen, protectedUserRecordGen, nonEmptyStringGen) { (entry, protectedUserRecord, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(addedByUser = Some(pid))
@@ -41,10 +41,11 @@ class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Gener
           .url(resource(s"$backendBaseUrl/add"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
+          .withFollowRedirects(false)
           .post(toRequestFields(expectedEntry).toMap)
           .futureValue
 
-        response.status shouldBe CREATED
+        response.status shouldBe SEE_OTHER
       }
     }
 
@@ -64,7 +65,6 @@ class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Gener
         response.status shouldBe CONFLICT
       }
     }
-
   }
 
   trait Setup {

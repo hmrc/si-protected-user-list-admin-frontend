@@ -42,4 +42,16 @@ class SiProtectedUserAdminBackendConnector @Inject() (backendConfig: BackendConf
         case Right(user)                               => user
       }
   }
+
+  def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
+    httpClient
+      .GET[Either[UpstreamErrorResponse, ProtectedUserRecord]](
+        url = s"${backendConfig.endpoint}/${backendConfig.contextRoot}/entry-id/$entryId"
+      )
+      .flatMap {
+        case Right(user)                               => Future.successful(Some(user))
+        case Left(UpstreamErrorResponse(_, 404, _, _)) => Future.successful(None)
+        case Left(err)                                 => Future.failed(err)
+      }
+  }
 }

@@ -61,9 +61,9 @@ class AddEntryController @Inject() (siProtectedUserConfig: SiProtectedUserConfig
             val entryWithUserId = entry.copy(addedByUser = Some(request.clientId))
             siProtectedUserListService
               .addEntry(entryWithUserId)
-              .map(protectedUserRecord => Created(views.addConfirmation(entry, protectedUserRecord)))
+              .map(protectedUserRecord => Redirect(controllers.routes.SiProtectedUserController.view(protectedUserRecord.entryId)))
               .recoverWith { case _: ConflictException =>
-                Future.successful(Conflict(views.add(entryForm.fill(entry).withGlobalError(Messages("error.conflict")))))
+                Future.successful(Conflict(views.add(entryForm.fill(entry).withGlobalError(Messages("add.error.conflict")))))
               }
           }
         )
