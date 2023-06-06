@@ -36,7 +36,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
         expectFindEntryToBeSuccessful(protectedUserRecord)
 
         val response = wsClient
-          .url(resource(s"$backendBaseUrl/view-entry/${protectedUserRecord.entryId}"))
+          .url(resource(s"$frontEndBaseUrl/view-entry/${protectedUserRecord.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .get()
@@ -52,7 +52,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
         expectFindEntryToFailWithNotFound(protectedUserRecord)
 
         val response = wsClient
-          .url(resource(s"$backendBaseUrl/view-entry/${protectedUserRecord.entryId}"))
+          .url(resource(s"$frontEndBaseUrl/view-entry/${protectedUserRecord.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .get()
