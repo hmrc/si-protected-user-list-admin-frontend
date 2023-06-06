@@ -30,7 +30,7 @@ object TaxIdentifierType {
 
   def from(string: String): Either[String, TaxIdentifierType] =
     values
-      .find(_.toString.toLowerCase == string)
+      .find(_.toString.toLowerCase == string.toLowerCase)
       .toRight(parseErr(string))
 
   private val reads: Reads[TaxIdentifierType] =

@@ -18,12 +18,23 @@ package models
 
 import play.api.libs.json._
 
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, LocalDateTime, ZoneId}
+
 case class ProtectedUserRecord(
   entryId: String,
   firstCreated: Long,
   lastUpdated: Option[Long],
   body: ProtectedUser
-)
+) {
+  def formattedFirstCreated(): String = {
+    LocalDateTime.ofInstant(Instant.ofEpochMilli(firstCreated), ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+  }
+
+  def formattedLastUpdated(): Option[String] = {
+    lastUpdated.map(lu => LocalDateTime.ofInstant(Instant.ofEpochMilli(lu), ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+  }
+}
 
 object ProtectedUserRecord {
   implicit val format: OFormat[ProtectedUserRecord] = Json.format

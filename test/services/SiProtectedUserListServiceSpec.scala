@@ -18,6 +18,7 @@ package services
 
 import connectors.SiProtectedUserAdminBackendConnector
 import org.mockito.scalatest.MockitoSugar
+import org.scalatest.OptionValues._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Millis, Seconds, Span}
@@ -27,7 +28,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import util.Generators
 
 import scala.concurrent.Future
-
 class SiProtectedUserListServiceSpec extends AnyWordSpec with Matchers with Generators with ScalaCheckDrivenPropertyChecks with ScalaFutures with MockitoSugar {
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
@@ -47,6 +47,15 @@ class SiProtectedUserListServiceSpec extends AnyWordSpec with Matchers with Gene
 
         result shouldBe protectedUserRecord
         verify(mockBackendConnector).addEntry(expectedProtectedUser)
+      }
+    }
+
+    "Call findEntry on the connector when finding" in new Setup {
+      forAll(protectedUserRecordGen) { protectedUserRecord =>
+        when(mockBackendConnector.findEntry(protectedUserRecord.entryId)).thenReturn(Future.successful(Some(protectedUserRecord)))
+
+        val result = siProtectedUserListService.findEntry(protectedUserRecord.entryId).futureValue.value
+        result shouldBe protectedUserRecord
       }
     }
   }

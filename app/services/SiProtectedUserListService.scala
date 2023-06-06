@@ -29,4 +29,8 @@ class SiProtectedUserListService @Inject() (siProtectedUserAdminBackendConnector
   def addEntry(entry: Entry)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] = {
     siProtectedUserAdminBackendConnector.addEntry(entry.toProtectedUser())
   }
+
+  def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
+    siProtectedUserAdminBackendConnector.findEntry(entryId)
+  }
 }

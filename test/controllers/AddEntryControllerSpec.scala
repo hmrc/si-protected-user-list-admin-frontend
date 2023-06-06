@@ -107,18 +107,12 @@ class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPer
         when(mockSiProtectedUserListService.addEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(protectedUserRecord))
 
         val result = addEntryController().submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
-        val body = contentAsString(result)
 
-        status(result) shouldBe CREATED
+        status(result) shouldBe SEE_OTHER
+        redirectLocation(result) shouldBe Some(
+          controllers.routes.SiProtectedUserController.view(protectedUserRecord.entryId).url
+        )
         verify(mockSiProtectedUserListService).addEntry(eqTo(expectedEntry))(*)
-        body should include("add.confirm.title")
-        body should include("add.confirm.header")
-        body should include("add.confirm.entryId")
-        body should include("add.confirm.status")
-        body should include("add.confirm.identityProvider")
-        body should include("add.confirm.identityProviderId")
-        body should include("add.confirm.group")
-        body should include("add.confirm.addedByTeam")
       }
     }
 

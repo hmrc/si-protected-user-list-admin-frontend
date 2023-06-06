@@ -101,12 +101,12 @@ trait Generators {
 
   val taxIdGen: Gen[TaxIdentifier] = for {
     typeName <- Gen oneOf TaxIdentifierType.values
-    value    <- Gen.alphaNumStr
+    value    <- nonEmptyStringGen
   } yield TaxIdentifier(typeName, value)
 
   val protectedUserGen: Gen[ProtectedUser] = for {
     taxIdType          <- taxIdTypeGen
-    taxIdValue         <- Gen.alphaNumStr
+    taxIdValue         <- nonEmptyStringGen
     identityProviderId <- Gen.some(taxIdProviderIdGen)
     group              <- nonEmptyStringGen
     addedByUser        <- Gen.some(nonEmptyStringGen)
