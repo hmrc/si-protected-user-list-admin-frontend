@@ -28,6 +28,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.filters.crypto.SessionCookieCrypto
 
 trait BaseISpec extends WireMockSpec with GuiceOneServerPerSuite with Injecting {
   val backendBaseUrl = "/si-protected-user-list-admin"
+  val frontEndBaseUrl = "/account-protection-tools/protected-user-list"
   implicit val mp: MessagesProvider = MessagesImpl(Lang("en"), inject[MessagesApi])
 
   def mockSessionCookie = {

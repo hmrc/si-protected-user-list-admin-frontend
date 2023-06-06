@@ -38,7 +38,7 @@ class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Gener
         expectAddEntryToBeSuccessful(protectedUserRecord, expectedEntry.toProtectedUser())
 
         val response = wsClient
-          .url(resource(s"$backendBaseUrl/add"))
+          .url(resource(s"$frontEndBaseUrl/add"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .post(toRequestFields(expectedEntry).toMap)
@@ -55,7 +55,7 @@ class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Gener
 
         expectAddEntryToFailWithConflictStatus(expectedEntry.toProtectedUser())
         val response = wsClient
-          .url(resource(s"$backendBaseUrl/add"))
+          .url(resource(s"$frontEndBaseUrl/add"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .post(toRequestFields(expectedEntry).toMap)
