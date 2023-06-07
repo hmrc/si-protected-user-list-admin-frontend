@@ -70,7 +70,7 @@ class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPer
       body should include("add.page.identityProviderId")
       body should include("add.page.addedByTeam")
       body should include("add.page.add")
-      body should include("add.page.cancel.button")
+      body should include("cancel.button")
     }
 
     def toRequestFields(entry: Entry): Seq[(String, String)] = {

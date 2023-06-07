@@ -18,18 +18,26 @@ package services
 
 import connectors.SiProtectedUserAdminBackendConnector
 import org.mockito.scalatest.MockitoSugar
-import org.scalatest.EitherValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.{EitherValues, OptionValues}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.Status
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import util.Generators
 
 import scala.concurrent.Future
-class SiProtectedUserListServiceSpec extends AnyWordSpec with Matchers with Generators with ScalaCheckDrivenPropertyChecks with ScalaFutures with MockitoSugar with EitherValues {
+class SiProtectedUserListServiceSpec
+    extends AnyWordSpec
+    with Matchers
+    with Generators
+    with ScalaCheckDrivenPropertyChecks
+    with ScalaFutures
+    with MockitoSugar
+    with EitherValues
+    with OptionValues {
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   trait Setup {
@@ -55,7 +63,7 @@ class SiProtectedUserListServiceSpec extends AnyWordSpec with Matchers with Gene
       forAll(protectedUserRecordGen) { protectedUserRecord =>
         when(mockBackendConnector.findEntry(protectedUserRecord.entryId)).thenReturn(Future.successful(Some(protectedUserRecord)))
 
-        val result = siProtectedUserListService.findEntry(protectedUserRecord.entryId).futureValue
+        val result = siProtectedUserListService.findEntry(protectedUserRecord.entryId).futureValue.value
         result shouldBe protectedUserRecord
       }
     }

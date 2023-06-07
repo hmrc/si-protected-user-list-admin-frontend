@@ -25,7 +25,6 @@ import services.SiProtectedUserListService
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.gg.test.UnitSpec
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
 import util.Generators
 import views.Views

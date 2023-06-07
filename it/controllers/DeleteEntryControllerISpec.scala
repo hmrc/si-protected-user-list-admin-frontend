@@ -46,7 +46,7 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors with Ge
       }
     }
 
-    "return OK when no entry is deleted" in new Setup {
+    "return OK when entry is deleted" in new Setup {
       forAll(protectedUserRecordGen, nonEmptyStringGen) { (protectedUserRecord, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         expectDeleteEntryToBeSuccessful(protectedUserRecord)
@@ -55,7 +55,7 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors with Ge
           .url(resource(s"$frontEndBaseUrl/delete-entry/${protectedUserRecord.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
-          .delete()
+          .get()
           .futureValue
 
         response.status shouldBe OK
