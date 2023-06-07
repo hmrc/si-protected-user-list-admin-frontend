@@ -22,5 +22,7 @@ class Views @Inject() (
   val home: views.html.home,
   val add: views.html.add,
   val view: views.html.view_entry,
+  val deleteConfirmation: views.html.delete_entry_confirmation,
+  val deleteSuccess: views.html.delete_entry_success,
   val errorTemplate: views.html.error_template
 )

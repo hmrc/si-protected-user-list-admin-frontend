@@ -43,7 +43,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
     val mockAuthConnector: AuthConnector = mock[AuthConnector]
     when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some("stride-pid")))
-    val mockAudit = mock[AuditConnector]
     val mockProtectedUserService = mock[SiProtectedUserListService]
     val views = inject[Views]
 

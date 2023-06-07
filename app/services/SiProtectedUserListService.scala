@@ -18,7 +18,7 @@ package services
 
 import connectors.SiProtectedUserAdminBackendConnector
 import models.{Entry, ProtectedUserRecord}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
@@ -32,5 +32,9 @@ class SiProtectedUserListService @Inject() (siProtectedUserAdminBackendConnector
 
   def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
     siProtectedUserAdminBackendConnector.findEntry(entryId)
+  }
+
+  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
+    siProtectedUserAdminBackendConnector.deleteEntry(entryId)
   }
 }

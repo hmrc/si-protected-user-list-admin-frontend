@@ -20,7 +20,7 @@ import config.BackendConfig
 import models.{ProtectedUser, ProtectedUserRecord}
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorResponse}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -53,5 +53,12 @@ class SiProtectedUserAdminBackendConnector @Inject() (backendConfig: BackendConf
         case Left(UpstreamErrorResponse(_, 404, _, _)) => Future.successful(None)
         case Left(err)                                 => Future.failed(err)
       }
+  }
+
+  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
+    httpClient
+      .DELETE[Either[UpstreamErrorResponse, HttpResponse]](
+        url = s"${backendConfig.endpoint}/${backendConfig.contextRoot}/entry-id/$entryId"
+      )
   }
 }

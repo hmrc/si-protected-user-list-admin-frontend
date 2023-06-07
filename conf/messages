@@ -6,6 +6,11 @@ error.not.found = Not Found
 error.bad.request = Bad Request
 error.internal_server_error = Internal Error
 
+cancel.button = Cancel
+continue.button = Continue
+home.button = Home
+delete.button = Delete
+
 home.page.title = MDTP User Admin - SI Protected Users
 home.page.header = SI Protected User List Admin
 home.page.button = Add to Allowlist
@@ -31,7 +36,6 @@ add.page.group.hint = Optional way to tag this entry
 add.page.identityProvider = Identity Provider
 add.page.identityProviderId = Identity Provider Id
 add.page.addedByTeam = Added by team
-add.page.cancel.button = Cancel
 add.page.action.select.LOCK = Lock a NINO or SA UTR to the credential ID provided.
 add.page.action.select.BLOCK = Block a NINO or SA UTR from being used.
 
@@ -69,18 +73,15 @@ search.header =SI Protected User List - Search for Allowlisted User
 search.search = Search
 search.scp = User ID
 
-delete.button = Delete Entry
-delete.confirm.title = Admin Console
-delete.confirm.header = SI Protected User List - Remove from Allowlist
-delete.confirm.confirm = Remove
+confirm.delete.entry.title = Confirm deletion
+confirm.delete.entry.header = Confirm deletion
+confirm.delete.warning = Check the details above before you delete this entry
 
-delete.complete.title = Admin Console
-delete.complete.header = User Successfully Removed
-delete.complete.desc = User has been successfully removed from the allowlist
-delete.complete.button = Home
-delete.complete.scp = User ID
-delete.complete.org = Organisation Name
-
+delete.entry.success.title = Entry Successfully Removed
+delete.entry.success.header = Entry Successfully Removed
+delete.entry.success.body = Entry has been successfully removed from the protected user list.
+delete.entry.not.found = Entry not found
+delete.entry.already.deleted = This entry has already been deleted, no action taken
 
 all.users.header =SI Protected User List - List of entries in Allowlist
 all.users.desc =A list of all entries that are on the allowlist

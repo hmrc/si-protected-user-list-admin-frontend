@@ -23,17 +23,20 @@
         mainLayout: Layout,
         h1: Heading1,
         details: ProtectedUserRecordDetails,
-        govukButton: GovukButton
+        govukButton: GovukButton,
+        govukWarningText: GovukWarningText
 )
 
 @(protectedUserRecord: ProtectedUserRecord)(implicit request: Request[_], messages: Messages)
 
-    @mainLayout(
-        pageTitle = Messages("view.entry.title"),
-        backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
-    ) {
-        @h1("view.entry.header")
-        @details(protectedUserRecord)
-        @govukButton(Button(content = Text(Messages("edit.button"))))
-        @govukButton(Button(href = Some(controllers.routes.DeleteEntryController.showConfirmDeletePage(protectedUserRecord.entryId).url), content = Text(Messages("delete.button")), classes = "govuk-button govuk-button--warning"))
-    }
+@mainLayout(
+    pageTitle = Messages("confirm.delete.entry.title"),
+    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
+) {
+    @h1("confirm.delete.entry.header")
+    @details(protectedUserRecord)
+    @govukWarningText(WarningText(content = Text(Messages("confirm.delete.warning"))))
+    @govukButton(Button(href = Some(controllers.routes.DeleteEntryController.delete(protectedUserRecord.entryId).url),  content = Text(Messages("continue.button"))))
+    @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("cancel.button")), classes = "govuk-button govuk-button--secondary"))
+
+}
