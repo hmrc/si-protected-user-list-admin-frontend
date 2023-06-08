@@ -25,7 +25,6 @@ import services.SiProtectedUserListService
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.gg.test.UnitSpec
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
 import util.Generators
 import views.Views
@@ -43,7 +42,6 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
 
     val mockAuthConnector: AuthConnector = mock[AuthConnector]
     when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some("stride-pid")))
-    val mockAudit = mock[AuditConnector]
     val mockProtectedUserService = mock[SiProtectedUserListService]
     val views = inject[Views]
 

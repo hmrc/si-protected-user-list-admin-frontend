@@ -14,23 +14,27 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.govukfrontend.views.viewmodels.backlink.BackLink
-@this(mainLayout: Layout)
+@import play.api.i18n.Messages
+@import play.api.mvc.Request
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+@import views.html.Layout
+@import views.html.fragments.{Heading1, ProtectedUserRecordDetails}
+@this(
+        mainLayout: Layout,
+        h1: Heading1,
+        details: ProtectedUserRecordDetails,
+        govukButton: GovukButton,
 
-@(title: String, heading: String, message: String)(implicit request: Request[_], messages: Messages)
+)
 
-@contentHeader = {
-    <h1 class="govuk-heading-l">@Messages(heading)</h1>
-}
-
-@mainContent = {
-    <p class="govuk-body">@Messages(message)</p>
-}
+@()(implicit request: Request[_], messages: Messages)
 
 @mainLayout(
-    pageTitle = Messages(title),
+    pageTitle = messages("delete.entry.success.title"),
     backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
 ) {
-    @contentHeader
-    @mainContent
+    @h1("delete.entry.success.header")
+    <p class="govuk-body"> @messages("delete.entry.success.body")</p>
+    @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(messages("home.button"))))
+
 }

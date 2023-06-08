@@ -69,7 +69,7 @@
             label = Label(content = Text(messages("add.page.addedByTeam")), classes = "govuk-!-font-weight-bold")
         ).withFormField(form("addedByTeam")))
         @govukButton(Button(content = Text(Messages("add.page.add"))))
-        @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("add.page.cancel.button")), classes = "govuk-button govuk-button--secondary"))
+        @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("cancel.button")), classes = "govuk-button govuk-button--secondary"))
     }
 
 }

@@ -18,17 +18,26 @@ package services
 
 import connectors.SiProtectedUserAdminBackendConnector
 import org.mockito.scalatest.MockitoSugar
-import org.scalatest.OptionValues._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.{EitherValues, OptionValues}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import uk.gov.hmrc.http.HeaderCarrier
+import play.api.http.Status
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import util.Generators
 
 import scala.concurrent.Future
-class SiProtectedUserListServiceSpec extends AnyWordSpec with Matchers with Generators with ScalaCheckDrivenPropertyChecks with ScalaFutures with MockitoSugar {
+class SiProtectedUserListServiceSpec
+    extends AnyWordSpec
+    with Matchers
+    with Generators
+    with ScalaCheckDrivenPropertyChecks
+    with ScalaFutures
+    with MockitoSugar
+    with EitherValues
+    with OptionValues {
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   trait Setup {
@@ -56,6 +65,16 @@ class SiProtectedUserListServiceSpec extends AnyWordSpec with Matchers with Gene
 
         val result = siProtectedUserListService.findEntry(protectedUserRecord.entryId).futureValue.value
         result shouldBe protectedUserRecord
+      }
+    }
+
+    "Call deleteEntry on the connector when deleting" in new Setup {
+      forAll(protectedUserRecordGen) { protectedUserRecord =>
+        val expectedResponse = HttpResponse(Status.NO_CONTENT, "")
+        when(mockBackendConnector.deleteEntry(protectedUserRecord.entryId)).thenReturn(Future.successful(Right(expectedResponse)))
+
+        val result = siProtectedUserListService.deleteEntry(protectedUserRecord.entryId).futureValue.value
+        result shouldBe expectedResponse
       }
     }
   }

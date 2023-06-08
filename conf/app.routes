@@ -1,13 +1,15 @@
 # microservice specific routes
 
 
-GET         /                           controllers.SiProtectedUserController.homepage()
+GET         /                               controllers.SiProtectedUserController.homepage()
 
-GET         /add                        controllers.AddEntryController.showAddEntryPage()
-POST        /add                        controllers.AddEntryController.submit()
-GET         /view-entry/:entryId        controllers.SiProtectedUserController.view(entryId)
+GET         /add                            controllers.AddEntryController.showAddEntryPage()
+POST        /add                            controllers.AddEntryController.submit()
+GET         /view-entry/:entryId            controllers.SiProtectedUserController.view(entryId)
+GET         /confirm-delete/:entryId        controllers.DeleteEntryController.showConfirmDeletePage(entryId)
+GET         /delete-entry/:entryId          controllers.DeleteEntryController.delete(entryId)
 
-GET         /clear                      controllers.AddEntryController.showAddEntryPage()
+GET         /clear                          controllers.AddEntryController.showAddEntryPage()
 
 
-->          /hmrc-frontend              hmrcfrontend.Routes
+->          /hmrc-frontend                  hmrcfrontend.Routes
