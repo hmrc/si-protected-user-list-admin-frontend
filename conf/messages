@@ -26,24 +26,31 @@ otpafe.site.error.page.header = There are errors on the page.
 add.page.title = Add Entry
 add.page.header = Add Entry
 add.page.add = Add
-add.page.action = What are you trying to do?
-add.page.nino = National Insurance Number
-add.page.nino.hint = Optional if SA UTR provided
-add.page.sautr = Self Assessment Unique Tax Reference
-add.page.sautr.hint = Optional if NINO provided
-add.page.group = Group
-add.page.group.hint = Optional way to tag this entry
-add.page.identityProvider = Identity Provider
-add.page.identityProviderId = Identity Provider Id
-add.page.addedByTeam = Added by team
-add.page.action.select.LOCK = Lock a NINO or SA UTR to the credential ID provided.
-add.page.action.select.BLOCK = Block a NINO or SA UTR from being used.
+add.submit.button = Add
+
+entry.form.action = What are you trying to do?
+entry.form.nino = National Insurance Number
+entry.form.nino.hint = Optional if SA UTR provided
+entry.form.sautr = Self Assessment Unique Tax Reference
+entry.form.sautr.hint = Optional if NINO provided
+entry.form.group = Group
+entry.form.group.hint = Optional way to tag this entry
+entry.form.identityProvider = Identity Provider
+entry.form.identityProviderId = Identity Provider Id
+entry.form.addedByTeam = Added by team
+entry.form.action.select.LOCK = Lock a NINO or SA UTR to the credential ID provided.
+entry.form.action.select.BLOCK = Block a NINO or SA UTR from being used.
 
 add.confirm.title = Confirm new entry
 add.confirm.header = Confirm new entry
 add.error.conflict = There is already an existing entry for these details
 
-edit.button = Edit entry
+edit.entry.title = Edit Entry
+edit.entry.header = Edit Entry
+edit.button = Edit
+edit.submit.button = Update
+edit.not.found = Entry not found
+edit.already.deleted = This entry has already been deleted, no action taken
 
 form.nino.regex = Invalid Nino
 form.sautr.regex = Invalid SA UTR

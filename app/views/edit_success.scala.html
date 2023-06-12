@@ -14,36 +14,27 @@
  * limitations under the License.
  *@
 
-@import config.SiProtectedUserConfig
-@import play.api.data.Form
 @import play.api.i18n.Messages
 @import play.api.mvc.Request
 @import uk.gov.hmrc.govukfrontend.views.html.components._
-@import uk.gov.hmrc.govukfrontend.views.html.components.implicits._
-@import uk.gov.hmrc.hmrcfrontend.views.Implicits.RichErrorSummary
 @import views.html.Layout
-@import views.html.fragments.Heading1
-
-@import views.html.fragments.EntryForm
+@import views.html.fragments.{Heading1, ProtectedUserRecordDetails}
 @this(
-formTemplate: FormWithCSRF,
-h1: Heading1,
-input: GovukInput,
-govukErrorSummary: GovukErrorSummary,
-govukSelect: GovukSelect,
-govukButton: GovukButton,
-mainLayout: Layout,
-entryForm: EntryForm,
-siProtectedUserConfig: SiProtectedUserConfig
+        mainLayout: Layout,
+        h1: Heading1,
+        details: ProtectedUserRecordDetails,
+        govukButton: GovukButton,
+
 )
 
-@(form: Form[Entry])(implicit request: Request[_], messages: Messages)
+@()(implicit request: Request[_], messages: Messages)
 
 @mainLayout(
-    pageTitle = Messages("add.page.title"),
+    pageTitle = messages("edit.success.title"),
     backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
 ) {
-    @h1("add.page.header")
-    @entryForm(form,controllers.routes.AddEntryController.submit(),"add.submit.button")
+    @h1("entry.success.header")
+    <p class="govuk-body"> @messages("edit.success.body")</p>
+    @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(messages("home.button"))))
 
 }

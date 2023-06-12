@@ -28,7 +28,6 @@ import play.api.test.{FakeRequest, Injecting}
 import services.SiProtectedUserListService
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.gg.test.UnitSpec
-import uk.gov.hmrc.http.ConflictException
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
 import util.Generators
 import views.Views
@@ -36,7 +35,7 @@ import views.Views
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPerSuite with Generators with ScalaFutures with ScalaCheckDrivenPropertyChecks {
+class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPerSuite with Generators with ScalaFutures with ScalaCheckDrivenPropertyChecks {
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   trait Setup {
@@ -48,8 +47,8 @@ class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPer
     val mockSiProtectedUserListService = mock[SiProtectedUserListService]
     val mockAuthConnector = mock[AuthConnector]
     val views = inject[Views]
-    def addEntryController(siProtectedUserConfig: SiProtectedUserConfig = defaultSiProtectedUserConfig) = {
-      new AddEntryController(
+    def editEntryController(siProtectedUserConfig: SiProtectedUserConfig = defaultSiProtectedUserConfig) = {
+      new EditEntryController(
         siProtectedUserConfig,
         mockSiProtectedUserListService,
         views,
@@ -61,20 +60,22 @@ class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPer
       when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some(stridePid)))
     }
 
-    def assertAddPageContainsFormFields(body: String): Unit = {
-      body should include("add.page.title")
+    def assertEditPageContainsFormFields(body: String): Unit = {
+      body should include("edit.page.title")
+      body should include("edit.page.header")
       body should include("entry.form.action")
       body should include("entry.form.nino")
       body should include("entry.form.sautr")
       body should include("entry.form.identityProvider")
       body should include("entry.form.identityProviderId")
       body should include("entry.form.addedByTeam")
-      body should include("add.submit.button")
+      body should include("edit.submit.button")
       body should include("cancel.button")
     }
 
-    def toRequestFields(entry: Entry): Seq[(String, String)] = {
+    def toEditRequestFields(entry: Entry): Seq[(String, String)] = {
       Seq(
+        entry.entryId.map(e => "entryId" -> e),
         Some("action" -> entry.action),
         entry.nino.map(n => "nino" -> n),
         entry.sautr.map(s => "sautr" -> s),
@@ -87,56 +88,56 @@ class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPer
     }
   }
 
-  "AddEntryController" should {
-    "forward to the add entry view when GET /add is called" in new Setup {
-      expectStrideAuthenticated()
-
-      val result = addEntryController().showAddEntryPage()(FakeRequest().withMethod("GET")).futureValue
-      status(result) shouldBe OK
-
-      val body = contentAsString(result)
-      assertAddPageContainsFormFields(body)
-    }
-
-    "Forward to confirmation page when add is successful" in new Setup {
-      forAll(validRequestEntryGen, protectedUserRecordGen) { (entry, protectedUserRecord) =>
+  "EditEntryController" should {
+    "forward to the edit entry view when GET /add is called" in new Setup {
+      forAll(validEditEntryGen, protectedUserRecordGen) { (entry, protectedUserRecord) =>
         expectStrideAuthenticated()
-        val requestFields = toRequestFields(entry)
-        val expectedEntry = entry.copy(addedByUser = Some(stridePid))
+        when(mockSiProtectedUserListService.findEntry(eqTo(entry.entryId.value))(*)).thenReturn(Future.successful(Some(protectedUserRecord)))
+        val result = editEntryController().showEditEntryPage(entry.entryId.value)(FakeRequest().withMethod("GET")).futureValue
+        status(result) shouldBe OK
 
-        when(mockSiProtectedUserListService.addEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(protectedUserRecord))
-
-        val result = addEntryController().submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
-
-        status(result) shouldBe SEE_OTHER
-        redirectLocation(result) shouldBe Some(
-          controllers.routes.SiProtectedUserController.view(protectedUserRecord.entryId).url
-        )
-        verify(mockSiProtectedUserListService).addEntry(eqTo(expectedEntry))(*)
-      }
-    }
-
-    "Return CONFLICT when upstream api indicates a conflict" in new Setup {
-      forAll(validRequestEntryGen) { entry =>
-        expectStrideAuthenticated()
-        val requestFields = toRequestFields(entry)
-        val expectedEntry = entry.copy(addedByUser = Some(stridePid))
-
-        when(mockSiProtectedUserListService.addEntry(eqTo(expectedEntry))(*)).thenReturn(Future.failed(new ConflictException("test conflict")))
-
-        val result = addEntryController().submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
         val body = contentAsString(result)
-
-        status(result) shouldBe CONFLICT
-        val html = Jsoup.parse(body)
-        val errors = html.select(".govuk-error-summary__list").html()
-        errors should include("error.conflict")
+        assertEditPageContainsFormFields(body)
       }
     }
 
-    "Return BAD_REQUEST when POST /add is called with invalid fields" in new Setup {
+    "Forward to confirmation page when edit is successful" in new Setup {
+      forAll(validEditEntryGen, protectedUserRecordGen) { (entry, protectedUserRecord) =>
+        expectStrideAuthenticated()
+        val requestFields = toEditRequestFields(entry)
+        val expectedEntry = entry.copy(updatedByUser = Some(stridePid), updatedByTeam = entry.addedByTeam)
+
+        when(mockSiProtectedUserListService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(Some(protectedUserRecord)))
+
+        val result = editEntryController().submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+
+        status(result) shouldBe OK
+        val body = contentAsString(result)
+        body should include("edit.success.title")
+        body should include("edit.success.body")
+      }
+    }
+
+    "Return not found when entry to update has been deleted" in new Setup {
+      forAll(validEditEntryGen) { entry =>
+        expectStrideAuthenticated()
+        val requestFields = toEditRequestFields(entry)
+        val expectedEntry = entry.copy(updatedByUser = Some(stridePid), updatedByTeam = entry.addedByTeam)
+
+        when(mockSiProtectedUserListService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(None))
+
+        val result = editEntryController().submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+
+        status(result) shouldBe NOT_FOUND
+        val body = contentAsString(result)
+        body should include("edit.entry.not.found")
+        body should include("edit.entry.already.deleted")
+      }
+    }
+
+    "Return BAD_REQUEST when POST /edit is called with invalid fields" in new Setup {
       expectStrideAuthenticated()
-      val result = addEntryController().submit()(FakeRequest().withFormUrlEncodedBody())
+      val result = editEntryController().submit()(FakeRequest().withFormUrlEncodedBody())
       status(result) shouldBe BAD_REQUEST
 
       val body = contentAsString(result)

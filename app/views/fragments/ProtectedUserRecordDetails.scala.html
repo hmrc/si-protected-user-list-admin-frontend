@@ -22,21 +22,19 @@
 )
 @(protectedUserRecord: ProtectedUserRecord)(implicit messages: Messages)
 
-@defining(protectedUserRecord.body.identityProviderId.map(_ => "LOCK").getOrElse("BLOCK")) { action =>
-    @govukSummaryList(
-        SummaryList(
-            Seq(
-                SummaryListRow(key = Key(Text(Messages("protectedUser.details.entryId"))), value = Value(content = Text(protectedUserRecord.entryId))),
-                SummaryListRow(key = Key(Text(Messages("protectedUser.details.status"))), value = Value(content = Text(Messages(s"protectedUser.details.action.${action}")))),
-                SummaryListRow(key = Key(Text(protectedUserRecord.body.taxId.name.toString)), value = Value(content = Text(protectedUserRecord.body.taxId.value))),
-                SummaryListRow(key = Key(Text(Messages("protectedUser.details.identityProvider"))), value = Value(content = Text(protectedUserRecord.body.identityProviderId.map(_.name).getOrElse("")))),
-                SummaryListRow(key = Key(Text(Messages("protectedUser.details.identityProviderId"))), value = Value(content = Text(protectedUserRecord.body.identityProviderId.map(_.value).getOrElse("")))),
-                SummaryListRow(key = Key(Text(Messages("protectedUser.details.group"))), value = Value(content = Text(protectedUserRecord.body.group))),
-                SummaryListRow(key = Key(Text(Messages("protectedUser.details.addedByTeam"))), value = Value(content = Text(protectedUserRecord.body.addedByTeam.getOrElse("")))),
-                SummaryListRow(key = Key(Text(Messages("protectedUser.details.addedOn"))), value = Value(content = Text(protectedUserRecord.formattedFirstCreated()))),
-                SummaryListRow(key = Key(Text(Messages("protectedUser.details.updatedOn"))), value = Value(content = Text(protectedUserRecord.formattedLastUpdated().getOrElse("")))),
-            )
+@govukSummaryList(
+    SummaryList(
+        Seq(
+            SummaryListRow(key = Key(Text(Messages("protectedUser.details.entryId"))), value = Value(content = Text(protectedUserRecord.entryId))),
+            SummaryListRow(key = Key(Text(Messages("protectedUser.details.status"))), value = Value(content = Text(Messages(s"protectedUser.details.action.${protectedUserRecord.action}")))),
+            SummaryListRow(key = Key(Text(protectedUserRecord.body.taxId.name.toString)), value = Value(content = Text(protectedUserRecord.body.taxId.value))),
+            SummaryListRow(key = Key(Text(Messages("protectedUser.details.identityProvider"))), value = Value(content = Text(protectedUserRecord.body.identityProviderId.map(_.name).getOrElse("")))),
+            SummaryListRow(key = Key(Text(Messages("protectedUser.details.identityProviderId"))), value = Value(content = Text(protectedUserRecord.body.identityProviderId.map(_.value).getOrElse("")))),
+            SummaryListRow(key = Key(Text(Messages("protectedUser.details.group"))), value = Value(content = Text(protectedUserRecord.body.group))),
+            SummaryListRow(key = Key(Text(Messages("protectedUser.details.addedByTeam"))), value = Value(content = Text(protectedUserRecord.body.addedByTeam.getOrElse("")))),
+            SummaryListRow(key = Key(Text(Messages("protectedUser.details.addedOn"))), value = Value(content = Text(protectedUserRecord.formattedFirstCreated()))),
+            SummaryListRow(key = Key(Text(Messages("protectedUser.details.updatedOn"))), value = Value(content = Text(protectedUserRecord.formattedLastUpdated().getOrElse("")))),
         )
     )
-}
+)
 

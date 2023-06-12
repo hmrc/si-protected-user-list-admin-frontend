@@ -53,4 +53,19 @@ object Entry {
       )
     }
   }
+  def from(protectedUserRecord: ProtectedUserRecord): Entry = {
+    Entry(
+      entryId = Some(protectedUserRecord.entryId),
+      addedByUser = protectedUserRecord.body.addedByUser,
+      updatedByUser = protectedUserRecord.body.updatedByUser,
+      action = protectedUserRecord.action,
+      nino = protectedUserRecord.nino,
+      sautr = protectedUserRecord.sautr,
+      identityProvider = protectedUserRecord.body.identityProviderId.map(_.name),
+      identityProviderId = protectedUserRecord.body.identityProviderId.map(_.value),
+      group = Some(protectedUserRecord.body.group),
+      addedByTeam = protectedUserRecord.body.addedByTeam,
+      updatedByTeam = protectedUserRecord.body.updatedByTeam
+    )
+  }
 }

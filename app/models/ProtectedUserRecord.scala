@@ -34,6 +34,15 @@ case class ProtectedUserRecord(
   def formattedLastUpdated(): Option[String] = {
     lastUpdated.map(lu => LocalDateTime.ofInstant(Instant.ofEpochMilli(lu), ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
   }
+  val action: String = body.identityProviderId.map(_ => "LOCK").getOrElse("BLOCK")
+  val nino: Option[String] = body.taxId.name match {
+    case TaxIdentifierType.NINO => Some(body.taxId.value)
+    case _                      => None
+  }
+  val sautr: Option[String] = body.taxId.name match {
+    case TaxIdentifierType.SAUTR => Some(body.taxId.value)
+    case _                       => None
+  }
 }
 
 object ProtectedUserRecord {
