@@ -16,9 +16,9 @@
 
 package controllers
 
-import controllers.base.StrideController
+import connectors.SiProtectedUserAdminBackendConnector
+import controllers.base.{StrideAction, StrideController}
 import play.api.mvc._
-import services.SiProtectedUserListService
 import views.Views
 
 import javax.inject.{Inject, Singleton}
@@ -26,17 +26,22 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class SiProtectedUserController @Inject() (
-  siProtectedUserListService: SiProtectedUserListService,
+  val strideAction: StrideAction,
+  backendConnector: SiProtectedUserAdminBackendConnector,
   homeView: views.html.Home,
   views: Views,
   mcc: MessagesControllerComponents
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
-  def homepage(): Action[AnyContent] = StrideAction(implicit request => Ok(homeView()))
+  def homepage(): Action[AnyContent] = StrideAction.async { implicit request =>
+    backendConnector
+      .findEntries()
+      .map(entries => Ok(homeView(entries)))
+  }
 
   def view(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
-    siProtectedUserListService
+    backendConnector
       .findEntry(entryId)
       .map {
         case Some(protectedUser) => Ok(views.view(protectedUser))

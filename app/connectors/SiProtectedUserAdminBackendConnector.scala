@@ -18,7 +18,6 @@ package connectors
 
 import config.BackendConfig
 import models.{ProtectedUser, ProtectedUserRecord}
-import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorResponse}
 
@@ -26,22 +25,22 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SiProtectedUserAdminBackendConnector @Inject() (backendConfig: BackendConfig, httpClient: HttpClient)(implicit
-  ec: ExecutionContext
-) {
+class SiProtectedUserAdminBackendConnector @Inject() (
+  backendConfig: BackendConfig,
+  httpClient: HttpClient
+)(implicit ec: ExecutionContext) {
+  private val backendUrl = backendConfig.endpoint + "/" + backendConfig.contextRoot
 
-  def addEntry(protectedUser: ProtectedUser)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] = {
+  def addEntry(protectedUser: ProtectedUser)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
     httpClient
-      .POST[JsObject, Either[UpstreamErrorResponse, ProtectedUserRecord]](
-        s"${backendConfig.endpoint}/${backendConfig.contextRoot}/add",
-        Json.toJsObject(protectedUser)
+      .POST[ProtectedUser, ProtectedUserRecord](s"$backendUrl/add", protectedUser)
+      .transform(
+        identity,
+        {
+          case UpstreamErrorResponse(_, 409, _, _) => new ConflictException("Conflict")
+          case err                                 => err
+        }
       )
-      .map {
-        case Left(UpstreamErrorResponse(_, 409, _, _)) => throw new ConflictException("Conflict")
-        case Left(err)                                 => throw err
-        case Right(user)                               => user
-      }
-  }
 
   def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
     httpClient
@@ -61,4 +60,8 @@ class SiProtectedUserAdminBackendConnector @Inject() (backendConfig: BackendConf
         url = s"${backendConfig.endpoint}/${backendConfig.contextRoot}/entry-id/$entryId"
       )
   }
+
+  def findEntries()(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] =
+    httpClient
+      .GET[Seq[ProtectedUserRecord]](s"$backendUrl/retrieve-all/")
 }

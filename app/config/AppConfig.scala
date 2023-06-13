@@ -21,6 +21,7 @@ import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
+import scala.util.Try
 
 @Singleton
 class AppConfig @Inject() (val configuration: Configuration, servicesConfig: ServicesConfig) {
@@ -30,16 +31,14 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
 
   lazy val analyticsConfig: AnalyticsConfig = AnalyticsConfig(analyticsToken = getString(s"google-analytics.token"), analyticsHost = getString(s"google-analytics.host"))
 
-  lazy val authStrideEnrolments: StrideConfig = {
-    StrideConfig(
-      strideLoginBaseUrl = getString("authentication.stride.loginBaseUrl"),
-      strideSuccessUrl = getString("authentication.stride.successReturnUrl"),
-      strideEnrolments = configuration
-        .get[Seq[String]]("authentication.stride.enrolments")
-        .map(Enrolment.apply)
-        .toSet
-    )
-  }
+  lazy val authStrideEnrolments: StrideConfig = StrideConfig(
+    strideLoginBaseUrl = getString("authentication.stride.loginBaseUrl"),
+    strideSuccessUrl = getString("authentication.stride.successReturnUrl"),
+    strideEnrolments = configuration
+      .get[Seq[String]]("authentication.stride.enrolments")
+      .map(Enrolment.apply)
+      .toSet
+  )
 
   lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
     bulkUploadScreenEnabled = getBoolean("si-protected-user.allow-list.bulk-upload.screen-enabled"),
@@ -48,6 +47,7 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
     bulkUploadBatchDelaySecs = getInt("si-protected-user.allow-list.bulk-upload.insert.batch-delay-secs"),
     showAllEnabled = getBoolean("si-protected-user.allow-list.show-all-enabled"),
     listScreenRowLimit = getInt("si-protected-user.allow-list.list-screen.row-limit"),
+    dashboardUrl = Try(servicesConfig.baseUrl("account-protection-tools-dashboard")) getOrElse "http://gov.uk",
     identityProviders = configuration.get[Seq[String]]("si-protected-user.add-entry.identity-providers"),
     addedByTeams = configuration.get[Seq[String]]("si-protected-user.add-entry.added-by-teams")
   )
@@ -74,6 +74,7 @@ case class SiProtectedUserConfig(
   bulkUploadBatchDelaySecs: Int,
   showAllEnabled: Boolean,
   listScreenRowLimit: Int,
+  dashboardUrl: String,
   identityProviders: Seq[String],
   addedByTeams: Seq[String]
 )
