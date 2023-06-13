@@ -29,8 +29,12 @@ class SiProtectedUserListService @Inject() (siProtectedUserAdminBackendConnector
   def addEntry(entry: Entry)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] = {
     siProtectedUserAdminBackendConnector.addEntry(entry.toProtectedUser())
   }
-  def updateEntry(entry: Entry)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
-    ???
+  def updateEntry(entry: Entry)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] = {
+    entry.entryId match {
+      case Some(entryId) => siProtectedUserAdminBackendConnector.updateEntry(entryId, entry.toProtectedUser())
+      case None          => Future.failed(new IllegalArgumentException("entryId not present for update"))
+    }
+
   }
 
   def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {

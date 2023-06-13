@@ -28,6 +28,7 @@ import play.api.test.{FakeRequest, Injecting}
 import services.SiProtectedUserListService
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.gg.test.UnitSpec
+import uk.gov.hmrc.http.{ConflictException, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
 import util.Generators
 import views.Views
@@ -107,7 +108,7 @@ class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPe
         val requestFields = toEditRequestFields(entry)
         val expectedEntry = entry.copy(updatedByUser = Some(stridePid), updatedByTeam = entry.addedByTeam)
 
-        when(mockSiProtectedUserListService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(Some(protectedUserRecord)))
+        when(mockSiProtectedUserListService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(protectedUserRecord))
 
         val result = editEntryController().submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 
@@ -118,20 +119,36 @@ class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPe
       }
     }
 
-    "Return not found when entry to update has been deleted" in new Setup {
+    "Return not found when entry to update is not found" in new Setup {
       forAll(validEditEntryGen) { entry =>
         expectStrideAuthenticated()
         val requestFields = toEditRequestFields(entry)
         val expectedEntry = entry.copy(updatedByUser = Some(stridePid), updatedByTeam = entry.addedByTeam)
 
-        when(mockSiProtectedUserListService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(None))
+        when(mockSiProtectedUserListService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.failed(new NotFoundException("not found")))
 
         val result = editEntryController().submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 
         status(result) shouldBe NOT_FOUND
         val body = contentAsString(result)
-        body should include("edit.entry.not.found")
-        body should include("edit.entry.already.deleted")
+        body should include("edit.error.not.found")
+        body should include("edit.error.already.deleted")
+      }
+    }
+
+    "Return CONFLICT when /edit results in a conflict exception" in new Setup {
+      forAll(validEditEntryGen) { entry =>
+        expectStrideAuthenticated()
+        val requestFields = toEditRequestFields(entry)
+        val expectedEntry = entry.copy(updatedByUser = Some(stridePid), updatedByTeam = entry.addedByTeam)
+
+        when(mockSiProtectedUserListService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.failed(new ConflictException("conflict")))
+
+        val result = editEntryController().submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+
+        status(result) shouldBe CONFLICT
+        val body = contentAsString(result)
+        body should include("edit.error.conflict")
       }
     }
 

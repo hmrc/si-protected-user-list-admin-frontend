@@ -59,6 +59,26 @@ class SiProtectedUserListServiceSpec
       }
     }
 
+    "Call update on the connector when updating" in new Setup {
+      forAll(entryGen, protectedUserRecordGen) { (entry, protectedUserRecord) =>
+        val expectedProtectedUser = entry.toProtectedUser()
+        when(mockBackendConnector.updateEntry(entry.entryId.value, expectedProtectedUser)).thenReturn(Future.successful(protectedUserRecord))
+
+        val result = siProtectedUserListService.updateEntry(entry).futureValue
+
+        result shouldBe protectedUserRecord
+        verify(mockBackendConnector).updateEntry(entry.entryId.value, expectedProtectedUser)
+      }
+    }
+
+    "Fails when no entryId present for updateEntry" in new Setup {
+      forAll(entryGen, protectedUserRecordGen) { (entry, protectedUserRecord) =>
+        val result = siProtectedUserListService.updateEntry(entry.copy(entryId = None)).failed.futureValue
+
+        result shouldBe a[IllegalArgumentException]
+      }
+    }
+
     "Call findEntry on the connector when finding" in new Setup {
       forAll(protectedUserRecordGen) { protectedUserRecord =>
         when(mockBackendConnector.findEntry(protectedUserRecord.entryId)).thenReturn(Future.successful(Some(protectedUserRecord)))

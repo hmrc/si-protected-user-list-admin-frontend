@@ -23,7 +23,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.{ConflictException, HeaderCarrier}
+import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, NotFoundException}
 import util.Generators
 
 class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generators with ScalaCheckDrivenPropertyChecks with ScalaFutures with EitherValues {
@@ -60,6 +60,46 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
 
         val result = siProtectedUserAdminBackendConnector.addEntry(user).failed.futureValue
         result shouldBe a[ConflictException]
+      }
+    }
+
+    "return a ProtectedUserRecord when updateEntry is successful" in new Setup {
+      forAll(protectedUserRecordGen) { userRecord =>
+        stubFor(
+          patch(urlEqualTo(s"$backendBaseUrl/update/${userRecord.entryId}"))
+            .withRequestBody(equalToJson(Json.toJsObject(userRecord.body).toString()))
+            .willReturn(ok(Json.toJsObject(userRecord).toString()))
+        )
+
+        val result = siProtectedUserAdminBackendConnector.updateEntry(userRecord.entryId, userRecord.body).futureValue
+
+        result shouldBe userRecord
+      }
+    }
+
+    "Fail with conflict exception for updateEntry when 409 conflict is returned from the backend api" in new Setup {
+      forAll(protectedUserRecordGen) { protectedUserRecord =>
+        stubFor(
+          patch(urlEqualTo(s"$backendBaseUrl/update/${protectedUserRecord.entryId}"))
+            .withRequestBody(equalToJson(Json.toJsObject(protectedUserRecord.body).toString()))
+            .willReturn(aResponse().withStatus(CONFLICT))
+        )
+
+        val result = siProtectedUserAdminBackendConnector.updateEntry(protectedUserRecord.entryId, protectedUserRecord.body).failed.futureValue
+        result shouldBe a[ConflictException]
+      }
+    }
+
+    "Fail with not found exception for updateEntry when 404 not found is returned from the backend api" in new Setup {
+      forAll(protectedUserRecordGen) { protectedUserRecord =>
+        stubFor(
+          patch(urlEqualTo(s"$backendBaseUrl/update/${protectedUserRecord.entryId}"))
+            .withRequestBody(equalToJson(Json.toJsObject(protectedUserRecord.body).toString()))
+            .willReturn(aResponse().withStatus(NOT_FOUND))
+        )
+
+        val result = siProtectedUserAdminBackendConnector.updateEntry(protectedUserRecord.entryId, protectedUserRecord.body).failed.futureValue
+        result shouldBe a[NotFoundException]
       }
     }
 

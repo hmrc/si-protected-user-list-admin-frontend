@@ -21,9 +21,10 @@ import controllers.actions.StrideAction
 import models.Entry
 import models.InputForms.entryForm
 import play.api.Logging
-import play.api.i18n.I18nSupport
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.SiProtectedUserListService
+import uk.gov.hmrc.http.{ConflictException, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import views.Views
 
@@ -68,11 +69,12 @@ class EditEntryController @Inject() (siProtectedUserConfig: SiProtectedUserConfi
           entry => {
             siProtectedUserListService
               .updateEntry(entry.copy(updatedByUser = Some(request.clientId), updatedByTeam = entry.addedByTeam))
-              .map {
-                case Some(_) => Ok(views.editSuccess())
-                case None    => NotFound(views.errorTemplate("edit.not.found", "edit.not.found", "edit.already.deleted"))
+              .map(_ => Ok(views.editSuccess()))
+              .recover {
+                case ex: NotFoundException => NotFound(views.errorTemplate("edit.error.not.found", "edit.error.not.found", "edit.error.already.deleted"))
+                case ex: ConflictException => Conflict(views.edit(entryForm.fill(entry).withGlobalError(Messages("edit.error.conflict"))))
+                case exception             => InternalServerError(views.errorTemplate("error.internal_server_error", "error.internal_server_error", exception.getMessage))
               }
-              .recover { case exception => InternalServerError(views.errorTemplate("error.internal_server_error", "error.internal_server_error", exception.getMessage)) }
           }
         )
     } else {

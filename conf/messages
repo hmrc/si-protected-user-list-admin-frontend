@@ -49,8 +49,9 @@ edit.entry.title = Edit Entry
 edit.entry.header = Edit Entry
 edit.button = Edit
 edit.submit.button = Update
-edit.not.found = Entry not found
-edit.already.deleted = This entry has already been deleted, no action taken
+edit.error.not.found = Entry not found
+edit.error.already.deleted = This entry has already been deleted, no action taken
+edit.error.conflict = There is already an existing entry for these details
 
 form.nino.regex = Invalid Nino
 form.sautr.regex = Invalid SA UTR

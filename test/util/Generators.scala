@@ -62,7 +62,7 @@ trait Generators {
   )
 
   val validRequestEntryGen = entryGen.map(_.copy(entryId = None, addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
-  val validEditEntryGen = entryGen.map(_.copy( addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
+  val validEditEntryGen = entryGen.map(_.copy(addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
 
   val siProtectedUserConfigGen: Gen[SiProtectedUserConfig] = for {
     bulkUploadScreenEnabled  <- Gen.const(true)
