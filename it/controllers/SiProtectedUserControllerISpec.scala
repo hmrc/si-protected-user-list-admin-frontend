@@ -26,12 +26,14 @@ import play.api.test.ResultExtractors
 import util.Generators
 
 class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors with Generators with ScalaFutures with ScalaCheckDrivenPropertyChecks {
+  import org.scalacheck.Arbitrary.arbitrary
+
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   "SiProtectedUserController" should {
 
     "return OK when view is successful" in new Setup {
-      forAll(protectedUserRecordGen, nonEmptyStringGen) { (protectedUserRecord, pid) =>
+      forAll(arbitrary, nonEmptyStringGen) { (protectedUserRecord, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         expectFindEntryToBeSuccessful(protectedUserRecord)
 
@@ -47,7 +49,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
     }
 
     "return NOT_FOUND when entry doesnt exist" in new Setup {
-      forAll(protectedUserRecordGen, nonEmptyStringGen) { (protectedUserRecord, pid) =>
+      forAll(arbitrary, nonEmptyStringGen) { (protectedUserRecord, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         expectFindEntryToFailWithNotFound(protectedUserRecord)
 

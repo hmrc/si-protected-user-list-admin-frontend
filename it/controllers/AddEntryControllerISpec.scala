@@ -26,12 +26,13 @@ import play.api.test.ResultExtractors
 import util.Generators
 
 class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Generators with ScalaFutures with ScalaCheckDrivenPropertyChecks {
+  import org.scalacheck.Arbitrary.arbitrary
+
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   "AddEntryController" should {
-
     "return CREATED when add is successful" in new Setup {
-      forAll(validRequestEntryGen, protectedUserRecordGen, nonEmptyStringGen) { (entry, protectedUserRecord, pid) =>
+      forAll(validRequestEntryGen, arbitrary, nonEmptyStringGen) { (entry, protectedUserRecord, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(addedByUser = Some(pid))
 

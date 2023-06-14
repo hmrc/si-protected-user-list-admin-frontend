@@ -26,12 +26,14 @@ import play.api.test.ResultExtractors
 import util.Generators
 
 class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors with Generators with ScalaFutures with ScalaCheckDrivenPropertyChecks {
+  import org.scalacheck.Arbitrary.arbitrary
+
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   "SiProtectedUserController" should {
 
     "return OK when confirm-delete successful" in new Setup {
-      forAll(protectedUserRecordGen, nonEmptyStringGen) { (protectedUserRecord, pid) =>
+      forAll(arbitrary, nonEmptyStringGen) { (protectedUserRecord, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         expectFindEntryToBeSuccessful(protectedUserRecord)
 
@@ -47,7 +49,7 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors with Ge
     }
 
     "return OK when entry is deleted" in new Setup {
-      forAll(protectedUserRecordGen, nonEmptyStringGen) { (protectedUserRecord, pid) =>
+      forAll(arbitrary, nonEmptyStringGen) { (protectedUserRecord, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         expectDeleteEntryToBeSuccessful(protectedUserRecord)
 
@@ -63,7 +65,7 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors with Ge
     }
 
     "return NOT_FOUND when no entry is found to delete" in new Setup {
-      forAll(protectedUserRecordGen, nonEmptyStringGen) { (protectedUserRecord, pid) =>
+      forAll(arbitrary, nonEmptyStringGen) { (protectedUserRecord, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         expectDeleteEntryToFailWithNotFound(protectedUserRecord)
 

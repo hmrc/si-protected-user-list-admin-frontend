@@ -16,8 +16,8 @@
 
 package controllers
 
-import config.SiProtectedUserConfig
-import controllers.actions.StrideAction
+import controllers.base.StrideAction
+import models.ProtectedUserRecord
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -39,7 +39,6 @@ class DeleteEntryControllerSpec extends UnitSpec with Injecting with GuiceOneApp
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   trait Setup {
-    val defaultSiProtectedUserConfig = siProtectedUserConfigGen.sample.get
     val defaultAuthStrideEnrolmentsConfigGen = authStrideEnrolmentsConfigGen.sample.get
     val appName = nonEmptyStringGen.sample.get
     val stridePid = nonEmptyStringGen.sample.get
@@ -48,13 +47,12 @@ class DeleteEntryControllerSpec extends UnitSpec with Injecting with GuiceOneApp
     val mockAuthConnector = mock[AuthConnector]
     val views = inject[Views]
 
-    def deleteEntryController(siProtectedUserConfig: SiProtectedUserConfig = defaultSiProtectedUserConfig) = {
+    val deleteEntryController = {
       new DeleteEntryController(
-        siProtectedUserConfig,
         mockSiProtectedUserListService,
         views,
         Stubs.stubMessagesControllerComponents(),
-        new StrideAction(mockAuthConnector, defaultAuthStrideEnrolmentsConfigGen, appName)
+        new StrideAction(appName, defaultAuthStrideEnrolmentsConfigGen, mockAuthConnector)
       )
     }
 
@@ -64,11 +62,11 @@ class DeleteEntryControllerSpec extends UnitSpec with Injecting with GuiceOneApp
   }
   "DeleteEntryController" should {
     "forward to the delete confirmation page view when GET /add is called" in new Setup {
-      forAll(protectedUserRecordGen) { protectedUserRecord =>
+      forAll { protectedUserRecord: ProtectedUserRecord =>
         expectStrideAuthenticated()
         when(mockSiProtectedUserListService.findEntry(eqTo(protectedUserRecord.entryId))(*)).thenReturn(Future.successful(Some(protectedUserRecord)))
 
-        val result = deleteEntryController().showConfirmDeletePage(protectedUserRecord.entryId)(FakeRequest().withMethod("GET")).futureValue
+        val result = deleteEntryController.showConfirmDeletePage(protectedUserRecord.entryId)(FakeRequest().withMethod("GET")).futureValue
         status(result) shouldBe OK
 
         val body = contentAsString(result)
@@ -89,11 +87,11 @@ class DeleteEntryControllerSpec extends UnitSpec with Injecting with GuiceOneApp
     }
 
     "Forward to delete success page when delete is successful" in new Setup {
-      forAll(protectedUserRecordGen) { protectedUserRecord =>
+      forAll { protectedUserRecord: ProtectedUserRecord =>
         expectStrideAuthenticated()
         when(mockSiProtectedUserListService.deleteEntry(eqTo(protectedUserRecord.entryId))(*)).thenReturn(Future.successful(Right(HttpResponse(Status.NO_CONTENT, ""))))
 
-        val result = deleteEntryController().delete(protectedUserRecord.entryId)(FakeRequest().withMethod("DELETE"))
+        val result = deleteEntryController.delete(protectedUserRecord.entryId)(FakeRequest().withMethod("DELETE"))
 
         status(result) shouldBe OK
         val body = contentAsString(result)
@@ -105,11 +103,11 @@ class DeleteEntryControllerSpec extends UnitSpec with Injecting with GuiceOneApp
     }
 
     "Forward to error page when delete is unsuccessful" in new Setup {
-      forAll(protectedUserRecordGen) { protectedUserRecord =>
+      forAll { protectedUserRecord: ProtectedUserRecord =>
         expectStrideAuthenticated()
         when(mockSiProtectedUserListService.deleteEntry(eqTo(protectedUserRecord.entryId))(*)).thenReturn(Future.successful(Left(UpstreamErrorResponse("not found", NOT_FOUND))))
 
-        val result = deleteEntryController().delete(protectedUserRecord.entryId)(FakeRequest().withMethod("DELETE"))
+        val result = deleteEntryController.delete(protectedUserRecord.entryId)(FakeRequest().withMethod("DELETE"))
 
         status(result) shouldBe NOT_FOUND
         val body = contentAsString(result)

@@ -16,54 +16,40 @@
 
 package controllers
 
-import config.SiProtectedUserConfig
-import controllers.actions.StrideAction
-import play.api.Logging
-import play.api.i18n.I18nSupport
+import controllers.base.{StrideAction, StrideController}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.SiProtectedUserListService
 import uk.gov.hmrc.http.UpstreamErrorResponse
-import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import views.Views
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 @Singleton
-class DeleteEntryController @Inject() (siProtectedUserConfig: SiProtectedUserConfig,
-                                       siProtectedUserListService: SiProtectedUserListService,
-                                       views: Views,
-                                       mcc: MessagesControllerComponents,
-                                       strideAction: StrideAction
-                                      )(implicit ec: ExecutionContext)
-    extends FrontendController(mcc)
-    with Logging
-    with I18nSupport {
+class DeleteEntryController @Inject() (
+  siProtectedUserListService: SiProtectedUserListService,
+  views: Views,
+  mcc: MessagesControllerComponents,
+  val strideAction: StrideAction
+)(implicit ec: ExecutionContext)
+    extends StrideController(mcc) {
 
-  def showConfirmDeletePage(entryId: String): Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
-    if (!siProtectedUserConfig.shutterService) {
-      siProtectedUserListService
-        .findEntry(entryId)
-        .map {
-          case Some(protectedUser) => Ok(views.deleteConfirmation(protectedUser))
-          case None                => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
-        }
-    } else {
-      Future.successful(Ok(views.home()))
-    }
+  def showConfirmDeletePage(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
+    siProtectedUserListService
+      .findEntry(entryId)
+      .map {
+        case Some(protectedUser) => Ok(views.deleteConfirmation(protectedUser))
+        case None                => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
+      }
   }
 
-  def delete(entryId: String): Action[AnyContent] = (Action andThen strideAction).async { implicit request =>
-    if (!siProtectedUserConfig.shutterService) {
-      siProtectedUserListService
-        .deleteEntry(entryId)
-        .map {
-          case Right(_)                                  => Ok(views.deleteSuccess())
-          case Left(UpstreamErrorResponse(_, 404, _, _)) => NotFound(views.errorTemplate("delete.entry.not.found", "delete.entry.not.found", "delete.entry.already.deleted"))
-          case Left(err)                                 => InternalServerError(views.errorTemplate("error.internal_server_error", "error.internal_server_error", err.getMessage))
-        }
-    } else {
-      Future.successful(Ok(views.home()))
-    }
+  def delete(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
+    siProtectedUserListService
+      .deleteEntry(entryId)
+      .map {
+        case Right(_)                                  => Ok(views.deleteSuccess())
+        case Left(UpstreamErrorResponse(_, 404, _, _)) => NotFound(views.errorTemplate("delete.entry.not.found", "delete.entry.not.found", "delete.entry.already.deleted"))
+        case Left(err)                                 => InternalServerError(views.errorTemplate("error.internal_server_error", "error.internal_server_error", err.getMessage))
+      }
   }
 }

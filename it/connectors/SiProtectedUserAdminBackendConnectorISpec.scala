@@ -18,26 +18,23 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.BaseISpec
+import models.ProtectedUserRecord
 import org.scalatest.EitherValues
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.{ConflictException, HeaderCarrier}
 import util.Generators
 
 class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generators with ScalaCheckDrivenPropertyChecks with ScalaFutures with EitherValues {
-  implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
+  import org.scalacheck.Arbitrary.arbitrary
 
-  trait Setup {
-    implicit val headerCarrier = HeaderCarrier()
-    val siProtectedUserAdminBackendConnector = inject[SiProtectedUserAdminBackendConnector]
-
-  }
+  implicit private val headerCarrier: HeaderCarrier = HeaderCarrier()
+  private val siProtectedUserAdminBackendConnector = inject[SiProtectedUserAdminBackendConnector]
 
   "SiProtectedUserAdminBackendConnector" should {
-    "return a ProtectedUserRecord when addEntry is successful" in new Setup {
-      forAll(protectedUserGen, protectedUserRecordGen) { (user, userRecord) =>
+    "return a ProtectedUserRecord when addEntry is successful" in {
+      forAll(protectedUserGen, arbitrary) { (user, userRecord) =>
         stubFor(
           post(urlEqualTo(s"$backendBaseUrl/add"))
             .withRequestBody(equalToJson(Json.toJsObject(user).toString()))
@@ -50,7 +47,7 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
       }
     }
 
-    "Fail with conflict exception for addEntry when 409 conflict is returned from the backend api" in new Setup {
+    "Fail with conflict exception for addEntry when 409 conflict is returned from the backend api" in {
       forAll(protectedUserGen) { user =>
         stubFor(
           post(urlEqualTo(s"$backendBaseUrl/add"))
@@ -63,8 +60,8 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
       }
     }
 
-    "Return a ProtectedUserRecord for findEntry valid tax id" in new Setup {
-      forAll(protectedUserRecordGen) { protectedUser =>
+    "Return a ProtectedUserRecord for findEntry valid tax id" in {
+      forAll { protectedUser: ProtectedUserRecord =>
         protectedUser.body.taxId.name.toString
         stubFor(
           get(urlEqualTo(s"$backendBaseUrl/entry-id/${protectedUser.entryId}"))
@@ -76,8 +73,8 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
       }
     }
 
-    "Return None for findEntry when api returns 404" in new Setup {
-      forAll(protectedUserRecordGen) { protectedUser =>
+    "Return None for findEntry when api returns 404" in {
+      forAll { protectedUser: ProtectedUserRecord =>
         protectedUser.body.taxId.name.toString
         stubFor(
           get(urlEqualTo(s"$backendBaseUrl/entry-id/${protectedUser.entryId}"))
@@ -89,8 +86,8 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
       }
     }
 
-    "Return NO_CONTENT http response for deleteEntry when successful" in new Setup {
-      forAll(protectedUserRecordGen) { protectedUser =>
+    "Return NO_CONTENT http response for deleteEntry when successful" in {
+      forAll { protectedUser: ProtectedUserRecord =>
         protectedUser.body.taxId.name.toString
         stubFor(
           delete(urlEqualTo(s"$backendBaseUrl/entry-id/${protectedUser.entryId}"))
@@ -102,8 +99,8 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
       }
     }
 
-    "Return UpstreamErrorResponse with 404 response when deleteEntry returns 404" in new Setup {
-      forAll(protectedUserRecordGen) { protectedUser =>
+    "Return UpstreamErrorResponse with 404 response when deleteEntry returns 404" in {
+      forAll { protectedUser: ProtectedUserRecord =>
         protectedUser.body.taxId.name.toString
         stubFor(
           delete(urlEqualTo(s"$backendBaseUrl/entry-id/${protectedUser.entryId}"))
@@ -114,6 +111,5 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
         result.statusCode shouldBe NOT_FOUND
       }
     }
-
   }
 }

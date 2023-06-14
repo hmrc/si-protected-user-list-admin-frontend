@@ -17,10 +17,10 @@
 package services
 
 import connectors.SiProtectedUserAdminBackendConnector
+import models.ProtectedUserRecord
 import org.mockito.scalatest.MockitoSugar
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.{EitherValues, OptionValues}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -35,20 +35,15 @@ class SiProtectedUserListServiceSpec
     with Generators
     with ScalaCheckDrivenPropertyChecks
     with ScalaFutures
-    with MockitoSugar
+    with IntegrationPatience
     with EitherValues
     with OptionValues {
-  implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
-
-  trait Setup {
-    val mockBackendConnector = mock[SiProtectedUserAdminBackendConnector]
-    val siProtectedUserListService = new SiProtectedUserListService(mockBackendConnector)
-    implicit val headerCarrier = HeaderCarrier()
-  }
+  import SiProtectedUserListServiceSpec._
+  import org.scalacheck.Arbitrary.arbitrary
 
   "SiProtectedUserListService" should {
-    "Call add on the connector when adding" in new Setup {
-      forAll(entryGen, protectedUserRecordGen) { (entry, protectedUserRecord) =>
+    "Call add on the connector when adding" in {
+      forAll(entryGen, arbitrary) { (entry, protectedUserRecord) =>
         val expectedProtectedUser = entry.toProtectedUser()
         when(mockBackendConnector.addEntry(expectedProtectedUser)).thenReturn(Future.successful(protectedUserRecord))
 
@@ -59,8 +54,8 @@ class SiProtectedUserListServiceSpec
       }
     }
 
-    "Call findEntry on the connector when finding" in new Setup {
-      forAll(protectedUserRecordGen) { protectedUserRecord =>
+    "Call findEntry on the connector when finding" in {
+      forAll { protectedUserRecord: ProtectedUserRecord =>
         when(mockBackendConnector.findEntry(protectedUserRecord.entryId)).thenReturn(Future.successful(Some(protectedUserRecord)))
 
         val result = siProtectedUserListService.findEntry(protectedUserRecord.entryId).futureValue.value
@@ -68,8 +63,8 @@ class SiProtectedUserListServiceSpec
       }
     }
 
-    "Call deleteEntry on the connector when deleting" in new Setup {
-      forAll(protectedUserRecordGen) { protectedUserRecord =>
+    "Call deleteEntry on the connector when deleting" in {
+      forAll { protectedUserRecord: ProtectedUserRecord =>
         val expectedResponse = HttpResponse(Status.NO_CONTENT, "")
         when(mockBackendConnector.deleteEntry(protectedUserRecord.entryId)).thenReturn(Future.successful(Right(expectedResponse)))
 
@@ -78,4 +73,10 @@ class SiProtectedUserListServiceSpec
       }
     }
   }
+}
+object SiProtectedUserListServiceSpec extends MockitoSugar {
+  private val mockBackendConnector = mock[SiProtectedUserAdminBackendConnector]
+  private val siProtectedUserListService = new SiProtectedUserListService(mockBackendConnector)
+
+  implicit private val headerCarrier: HeaderCarrier = HeaderCarrier()
 }

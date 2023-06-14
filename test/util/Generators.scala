@@ -19,7 +19,7 @@ package util
 import config.{SiProtectedUserConfig, StrideConfig}
 import models.InputForms.groupMaxLength
 import models._
-import org.scalacheck.Gen
+import org.scalacheck.{Arbitrary, Gen}
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.domain.{Generator, Nino, SaUtr, SaUtrGenerator}
 
@@ -61,7 +61,7 @@ trait Generators {
     addedByUser = addedByUser
   )
 
-  val validRequestEntryGen = entryGen.map(_.copy(entryId = None, addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
+  val validRequestEntryGen: Gen[Entry] = entryGen.map(_.copy(entryId = None, addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
 
   val siProtectedUserConfigGen: Gen[SiProtectedUserConfig] = for {
     bulkUploadScreenEnabled  <- Gen.const(true)
@@ -69,7 +69,6 @@ trait Generators {
     bulkUploadBatchSize      <- Gen.chooseNum(1, 100)
     bulkUploadBatchDelaySecs <- Gen.chooseNum(1, 100)
     showAllEnabled           <- Gen.const(true)
-    shutterService           <- Gen.const(false)
     listScreenRowLimit       <- Gen.chooseNum(1, 1500)
     num                      <- Gen.chooseNum(1, 10)
     addedByTeams             <- Gen.listOfN(num, nonEmptyStringGen)
@@ -80,8 +79,8 @@ trait Generators {
     bulkUploadBatchSize = bulkUploadBatchSize,
     bulkUploadBatchDelaySecs = bulkUploadBatchDelaySecs,
     showAllEnabled = showAllEnabled,
-    shutterService = shutterService,
     listScreenRowLimit = listScreenRowLimit,
+    dashboardUrl = "http://gov.uk",
     identityProviders = identityProviders,
     addedByTeams = addedByTeams
   )
@@ -123,16 +122,17 @@ trait Generators {
     updatedByTeam = updatedByTeam
   )
 
-  val protectedUserRecordGen: Gen[ProtectedUserRecord] = for {
-    entryId      <- nonEmptyStringGen
-    firstCreated <- Gen.posNum[Long]
-    lastUpdated  <- Gen.option(Gen.posNum[Long])
-    body         <- protectedUserGen
-
-  } yield ProtectedUserRecord(
-    entryId = entryId,
-    firstCreated = firstCreated,
-    lastUpdated = lastUpdated,
-    body = body
+  implicit val arbProtectedUserRecord: Arbitrary[ProtectedUserRecord] = Arbitrary(
+    for {
+      entryId      <- nonEmptyStringGen
+      firstCreated <- Gen.posNum[Long]
+      lastUpdated  <- Gen.option(Gen.posNum[Long])
+      body         <- protectedUserGen
+    } yield ProtectedUserRecord(
+      entryId = entryId,
+      firstCreated = firstCreated,
+      lastUpdated = lastUpdated,
+      body = body
+    )
   )
 }

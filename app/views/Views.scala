@@ -19,6 +19,7 @@ package views
 import javax.inject.Inject
 
 class Views @Inject() (
+  val home: views.html.Home,
   val add: views.html.add,
   val view: views.html.view_entry,
   val deleteConfirmation: views.html.delete_entry_confirmation,

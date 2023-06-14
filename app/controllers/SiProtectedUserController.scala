@@ -28,7 +28,6 @@ import scala.concurrent.ExecutionContext
 class SiProtectedUserController @Inject() (
   val strideAction: StrideAction,
   backendConnector: SiProtectedUserAdminBackendConnector,
-  homeView: views.html.Home,
   views: Views,
   mcc: MessagesControllerComponents
 )(implicit ec: ExecutionContext)
@@ -37,7 +36,7 @@ class SiProtectedUserController @Inject() (
   def homepage(): Action[AnyContent] = StrideAction.async { implicit request =>
     backendConnector
       .findEntries()
-      .map(entries => Ok(homeView(entries)))
+      .map(entries => Ok(views.home(entries)))
   }
 
   def view(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>

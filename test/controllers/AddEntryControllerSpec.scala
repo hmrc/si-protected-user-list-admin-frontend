@@ -16,10 +16,10 @@
 
 package controllers
 
-import config.SiProtectedUserConfig
 import controllers.base.StrideAction
 import models.Entry
 import org.jsoup.Jsoup
+import org.scalacheck.Arbitrary
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -37,6 +37,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPerSuite with Generators with ScalaFutures with ScalaCheckDrivenPropertyChecks {
+  import Arbitrary.arbitrary
+
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   trait Setup {
@@ -98,14 +100,14 @@ class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPer
     }
 
     "Forward to confirmation page when add is successful" in new Setup {
-      forAll(validRequestEntryGen, protectedUserRecordGen) { (entry, protectedUserRecord) =>
+      forAll(validRequestEntryGen, arbitrary) { (entry, protectedUserRecord) =>
         expectStrideAuthenticated()
         val requestFields = toRequestFields(entry)
         val expectedEntry = entry.copy(addedByUser = Some(stridePid))
 
         when(mockSiProtectedUserListService.addEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(protectedUserRecord))
 
-        val result = addEntryController().submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+        val result = addEntryController.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 
         status(result) shouldBe SEE_OTHER
         redirectLocation(result) shouldBe Some(
@@ -123,7 +125,7 @@ class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPer
 
         when(mockSiProtectedUserListService.addEntry(eqTo(expectedEntry))(*)).thenReturn(Future.failed(new ConflictException("test conflict")))
 
-        val result = addEntryController().submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+        val result = addEntryController.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
         val body = contentAsString(result)
 
         status(result) shouldBe CONFLICT
@@ -135,7 +137,7 @@ class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPer
 
     "Return BAD_REQUEST when POST /add is called with invalid fields" in new Setup {
       expectStrideAuthenticated()
-      val result = addEntryController().submit()(FakeRequest().withFormUrlEncodedBody())
+      val result = addEntryController.submit()(FakeRequest().withFormUrlEncodedBody())
       status(result) shouldBe BAD_REQUEST
 
       val body = contentAsString(result)

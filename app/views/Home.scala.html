@@ -70,7 +70,7 @@
                 },
                 label = Label(content = Text(messages("home.page.filterBy"))),
                 classes = "govuk-input--width-3",
-                attributes = Map( "style" -> "min-width: 3.75em;" )
+                attributes = Map( "style" -> "min-width: 0;" )
             ))
             @input(Input(
                 id = "search-query",
@@ -94,7 +94,7 @@
         @table(Table(
             head = Some(
                 "entryId,saUtr,nino,idp,idpId,status,group,addedBy"
-                    .split(",")
+                    .split(",").toIndexedSeq
                     .map( prop => HeadCell(Text(messages(s"protectedUser.$prop"))) )
             ),
             rows = records map { record =>

@@ -7,7 +7,7 @@ lazy val microservice = Project("si-protected-user-list-admin-frontend", file(".
   .settings(
     majorVersion := 0,
     scalaVersion := "2.13.8",
-    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
+    libraryDependencies ++= AppDependencies(),
     // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
     // suppress warnings in generated routes files
     scalacOptions += "-Wconf:src=routes/.*:s",
