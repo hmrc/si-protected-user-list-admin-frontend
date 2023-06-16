@@ -38,6 +38,7 @@
     @if(form.errors.nonEmpty) {
         @govukErrorSummary(ErrorSummary().withFormErrorsAsText(form))
     }
+    @input(Input(id="entryId", name="entryId", inputType = "hidden").withFormField(form("entryId")))
     @govukSelect(Select(
         id = "action",
         name = "action",
