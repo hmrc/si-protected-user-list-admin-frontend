@@ -35,7 +35,7 @@
     table: GovukTable
 )
 
-@(records: Seq[ProtectedUserRecord], filterByTeam: Option[String], searchQuery: String)(implicit req: StrideRequest[_], messages: Messages)
+@(records: Seq[ProtectedUserRecord], filterByTeam: Option[String], searchQuery: Option[String])(implicit req: StrideRequest[_], messages: Messages)
 
 @layout(
     pageTitle = Some(messages("home.page.title")),
@@ -45,9 +45,12 @@
 ) {
     <style>
         #actions { display: table; width: 100%; }
+
         #actions > .action { display: table-cell; vertical-align: bottom; }
-        #actions > .action > [class|="govuk"] { display: inline-block; }
         #actions > .action:last-child { text-align: right; }
+
+        #actions > .action > [class|="govuk"] { display: inline-block; }
+        #actions > .action > * + [class|="govuk"] { margin-left: 1em; }
     </style>
     @backLink(BackLink(href = config.dashboardUrl))
     @h1("home.page.header")
@@ -67,7 +70,10 @@
                 },
                 label = Label(content = Text(messages("home.page.filterBy"))),
                 classes = "govuk-input--width-3",
-                attributes = Map( "style" -> "min-width: 0;" ),
+                attributes = Map(
+                    "oninput" -> "this.form.submit()",
+                    "style"   -> "min-width: 0;"
+                ),
                 value = filterByTeam
             ))
             @input(Input(
@@ -82,12 +88,12 @@
                         ))
                     )
                 )),
-                value = Some(searchQuery)
+                value = searchQuery
             ))
         </form>
     </div>
-    @if(records.isEmpty){
-        <p>No results found.</p>
+    @if(records.isEmpty) {
+        <p class="govuk-body">No results found@for(team <- filterByTeam){ for team <b>@team</b>}@for(str <- searchQuery){ containing <b>@str</b>}.</p>
     } else {
         @table(Table(
             head = Some(

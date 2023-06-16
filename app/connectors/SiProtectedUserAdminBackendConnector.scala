@@ -60,9 +60,16 @@ class SiProtectedUserAdminBackendConnector @Inject() (
         url = s"${backendConfig.endpoint}/${backendConfig.contextRoot}/entry-id/$entryId"
       )
 
-  def findEntries(teamOpt: Option[String], searchString: String)(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] = {
-    var queryString = s"query=$searchString"
-    for (team <- teamOpt) queryString += s"&byTeam=$team"
-    httpClient.GET[Seq[ProtectedUserRecord]](s"$backendUrl/record/?$queryString")
+  def findEntries(teamOpt: Option[String], queryOpt: Option[String])(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] = {
+    var queryString = Map(
+      "filterByTeam" -> teamOpt,
+      "searchQuery"  -> queryOpt
+    )
+      .collect { case (key, Some(value)) => s"$key=$value" }
+      .mkString("&")
+
+    if (queryString.nonEmpty) queryString = s"?$queryString"
+
+    httpClient.GET[Seq[ProtectedUserRecord]](s"$backendUrl/record/$queryString")
   }
 }
