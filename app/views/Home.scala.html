@@ -35,7 +35,7 @@
     table: GovukTable
 )
 
-@(records: Seq[ProtectedUserRecord])(implicit req: StrideRequest[_], messages: Messages)
+@(records: Seq[ProtectedUserRecord], filterByTeam: Option[String], searchQuery: String)(implicit req: StrideRequest[_], messages: Messages)
 
 @layout(
     pageTitle = Some(messages("home.page.title")),
@@ -45,48 +45,46 @@
 ) {
     <style>
         #actions { display: table; width: 100%; }
-        #actions > div { display: table-cell; vertical-align: bottom; }
-        #actions > div > [class|="govuk"] { display: inline-block; }
-        #actions > div + div { text-align: right; }
+        #actions > .action { display: table-cell; vertical-align: bottom; }
+        #actions > .action > [class|="govuk"] { display: inline-block; }
+        #actions > .action:last-child { text-align: right; }
     </style>
     @backLink(BackLink(href = config.dashboardUrl))
     @h1("home.page.header")
     <div id="actions">
-        <div>
+        <div class="action">
             @button(Button(
                 href = Some(controllers.routes.AddEntryController.showAddEntryPage().url),
                 content = Text(messages("home.page.add"))
             ))
         </div>
-        <div>
+        <form class="action">
             @select(Select(
-                id = "filter-by",
-                name = "filter-by",
+                id = "filterByTeam",
+                name = "filterByTeam",
                 items = "All" +: config.addedByTeams map { team =>
-                    SelectItem(
-                        value = Some(team),
-                        text = team
-                    )
+                    SelectItem(text = team, value = Some(team))
                 },
                 label = Label(content = Text(messages("home.page.filterBy"))),
                 classes = "govuk-input--width-3",
-                attributes = Map( "style" -> "min-width: 0;" )
+                attributes = Map( "style" -> "min-width: 0;" ),
+                value = filterByTeam
             ))
             @input(Input(
-                id = "search-query",
-                name = "search-query",
+                id = "searchQuery",
+                name = "searchQuery",
                 classes = "govuk-input--width-10",
                 suffix = Some(PrefixOrSuffix(
                     attributes = Map( "style" -> "border: 0; padding: 0;" ),
                     content = HtmlContent(
                         button(Button(
-                            href = Some(controllers.routes.AddEntryController.showAddEntryPage().url),
                             content = Text(messages("home.page.search"))
                         ))
                     )
-                ))
+                )),
+                value = Some(searchQuery)
             ))
-        </div>
+        </form>
     </div>
     @if(records.isEmpty){
         <p>No results found.</p>

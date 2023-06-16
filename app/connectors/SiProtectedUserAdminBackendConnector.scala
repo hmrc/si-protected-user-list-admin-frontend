@@ -54,14 +54,15 @@ class SiProtectedUserAdminBackendConnector @Inject() (
       }
   }
 
-  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
+  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] =
     httpClient
       .DELETE[Either[UpstreamErrorResponse, HttpResponse]](
         url = s"${backendConfig.endpoint}/${backendConfig.contextRoot}/entry-id/$entryId"
       )
-  }
 
-  def findEntries()(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] =
-    httpClient
-      .GET[Seq[ProtectedUserRecord]](s"$backendUrl/retrieve-all/")
+  def findEntries(teamOpt: Option[String], searchString: String)(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] = {
+    var queryString = s"query=$searchString"
+    for (team <- teamOpt) queryString += s"&byTeam=$team"
+    httpClient.GET[Seq[ProtectedUserRecord]](s"$backendUrl/record/?$queryString")
+  }
 }

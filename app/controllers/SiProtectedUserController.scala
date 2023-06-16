@@ -33,10 +33,10 @@ class SiProtectedUserController @Inject() (
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
-  def homepage(): Action[AnyContent] = StrideAction.async { implicit request =>
+  def homepage(filterByTeam: Option[String], searchQuery: String): Action[AnyContent] = StrideAction.async { implicit request =>
     backendConnector
-      .findEntries()
-      .map(entries => Ok(views.home(entries)))
+      .findEntries(filterByTeam filterNot "all".equalsIgnoreCase, searchQuery)
+      .map(entries => Ok(views.home(entries, filterByTeam, searchQuery)))
   }
 
   def view(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
