@@ -65,24 +65,12 @@ trait Generators {
   val validEditEntryGen = entryGen.map(_.copy(addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
 
   val siProtectedUserConfigGen: Gen[SiProtectedUserConfig] = for {
-    bulkUploadScreenEnabled  <- Gen.const(true)
-    bulkUploadRowLimit       <- Gen.chooseNum(1, 4000)
-    bulkUploadBatchSize      <- Gen.chooseNum(1, 100)
-    bulkUploadBatchDelaySecs <- Gen.chooseNum(1, 100)
-    showAllEnabled           <- Gen.const(true)
-    shutterService           <- Gen.const(false)
-    listScreenRowLimit       <- Gen.chooseNum(1, 1500)
-    num                      <- Gen.chooseNum(1, 10)
-    addedByTeams             <- Gen.listOfN(num, nonEmptyStringGen)
-    identityProviders        <- Gen.listOfN(num, nonEmptyStringGen)
+    shutterService    <- Gen.const(false)
+    num               <- Gen.chooseNum(1, 10)
+    addedByTeams      <- Gen.listOfN(num, nonEmptyStringGen)
+    identityProviders <- Gen.listOfN(num, nonEmptyStringGen)
   } yield SiProtectedUserConfig(
-    bulkUploadScreenEnabled = bulkUploadScreenEnabled,
-    bulkUploadRowLimit = bulkUploadRowLimit,
-    bulkUploadBatchSize = bulkUploadBatchSize,
-    bulkUploadBatchDelaySecs = bulkUploadBatchDelaySecs,
-    showAllEnabled = showAllEnabled,
     shutterService = shutterService,
-    listScreenRowLimit = listScreenRowLimit,
     identityProviders = identityProviders,
     addedByTeams = addedByTeams
   )

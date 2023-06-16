@@ -43,15 +43,9 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
     )
 
   lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
-    bulkUploadScreenEnabled = getBoolean("si-protected-user.allow-list.bulk-upload.screen-enabled"),
-    bulkUploadRowLimit = getInt("si-protected-user.allow-list.bulk-upload.file.row-limit"),
-    bulkUploadBatchSize = getInt("si-protected-user.allow-list.bulk-upload.insert.batch-size"),
-    bulkUploadBatchDelaySecs = getInt("si-protected-user.allow-list.bulk-upload.insert.batch-delay-secs"),
-    showAllEnabled = getBoolean("si-protected-user.allow-list.show-all-enabled"),
-    shutterService = getBoolean("si-protected-user.allow-list.shutter-service"),
-    listScreenRowLimit = getInt("si-protected-user.allow-list.list-screen.row-limit"),
-    identityProviders = configuration.get[Seq[String]]("si-protected-user.add-entry.identity-providers"),
-    addedByTeams = configuration.get[Seq[String]]("si-protected-user.add-entry.added-by-teams")
+    shutterService = getBoolean("si-protected-user.shutter-service"),
+    identityProviders = configuration.get[Seq[String]]("si-protected-user.identity-providers"),
+    addedByTeams = configuration.get[Seq[String]]("si-protected-user.added-by-teams")
   )
 
   lazy val backendConfig = BackendConfig(
@@ -70,13 +64,7 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
 case class AnalyticsConfig(analyticsToken: String, analyticsHost: String)
 case class AuthStrideEnrolmentsConfig(strideLoginBaseUrl: String, strideSuccessUrl: String, strideEnrolments: Set[Enrolment])
 case class SiProtectedUserConfig(
-  bulkUploadScreenEnabled: Boolean,
-  bulkUploadRowLimit: Int,
-  bulkUploadBatchSize: Int,
-  bulkUploadBatchDelaySecs: Int,
-  showAllEnabled: Boolean,
   shutterService: Boolean,
-  listScreenRowLimit: Int,
   identityProviders: Seq[String],
   addedByTeams: Seq[String]
 )

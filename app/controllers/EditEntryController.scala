@@ -71,9 +71,9 @@ class EditEntryController @Inject() (siProtectedUserConfig: SiProtectedUserConfi
               .updateEntry(entry.copy(updatedByUser = Some(request.clientId), updatedByTeam = entry.addedByTeam))
               .map(_ => Ok(views.editSuccess()))
               .recover {
-                case ex: NotFoundException => NotFound(views.errorTemplate("edit.error.not.found", "edit.error.not.found", "edit.error.already.deleted"))
-                case ex: ConflictException => Conflict(views.edit(entryForm.fill(entry).withGlobalError(Messages("edit.error.conflict"))))
-                case exception             => InternalServerError(views.errorTemplate("error.internal_server_error", "error.internal_server_error", exception.getMessage))
+                case _: NotFoundException => NotFound(views.errorTemplate("edit.error.not.found", "edit.error.not.found", "edit.error.already.deleted"))
+                case _: ConflictException => Conflict(views.edit(entryForm.fill(entry).withGlobalError(Messages("edit.error.conflict"))))
+                case exception            => InternalServerError(views.errorTemplate("error.internal_server_error", "error.internal_server_error", exception.getMessage))
               }
           }
         )
