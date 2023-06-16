@@ -62,8 +62,8 @@ class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPe
     }
 
     def assertEditPageContainsFormFields(body: String): Unit = {
-      body should include("edit.page.title")
-      body should include("edit.page.header")
+      body should include("edit.entry.title")
+      body should include("edit.entry.header")
       body should include("entry.form.action")
       body should include("entry.form.nino")
       body should include("entry.form.sautr")

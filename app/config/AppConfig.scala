@@ -26,7 +26,6 @@ import javax.inject.{Inject, Singleton}
 class AppConfig @Inject() (val configuration: Configuration, servicesConfig: ServicesConfig) {
   private def getString(key: String) = configuration.get[String](key)
   private def getBoolean(key: String) = configuration.get[Boolean](key)
-  private def getInt(key: String) = configuration.get[Int](key)
 
   lazy val appName: String = getString("appName")
 
