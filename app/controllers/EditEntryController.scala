@@ -51,8 +51,6 @@ class EditEntryController @Inject() (siProtectedUserConfig: SiProtectedUserConfi
           case None                      => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
 
         }
-        .recover { case exception => InternalServerError(views.errorTemplate("error.internal_server_error", "error.internal_server_error", exception.getMessage)) }
-
     } else {
       Future.successful(Ok(views.home()))
     }
@@ -73,7 +71,6 @@ class EditEntryController @Inject() (siProtectedUserConfig: SiProtectedUserConfi
               .recover {
                 case _: NotFoundException => NotFound(views.errorTemplate("edit.error.not.found", "edit.error.not.found", "edit.error.already.deleted"))
                 case _: ConflictException => Conflict(views.edit(entryForm.fill(entry).withGlobalError(Messages("edit.error.conflict"))))
-                case exception            => InternalServerError(views.errorTemplate("error.internal_server_error", "error.internal_server_error", exception.getMessage))
               }
           }
         )

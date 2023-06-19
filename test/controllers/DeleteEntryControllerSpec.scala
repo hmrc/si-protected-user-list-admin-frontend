@@ -104,7 +104,7 @@ class DeleteEntryControllerSpec extends UnitSpec with Injecting with GuiceOneApp
       }
     }
 
-    "Forward to error page when delete is unsuccessful" in new Setup {
+    "Forward to error page when delete is unsuccessful with NOT_FOUND" in new Setup {
       forAll(protectedUserRecordGen) { protectedUserRecord =>
         expectStrideAuthenticated()
         when(mockSiProtectedUserListService.deleteEntry(eqTo(protectedUserRecord.entryId))(*)).thenReturn(Future.successful(Left(UpstreamErrorResponse("not found", NOT_FOUND))))
@@ -115,6 +115,20 @@ class DeleteEntryControllerSpec extends UnitSpec with Injecting with GuiceOneApp
         val body = contentAsString(result)
         body should include("delete.entry.not.found")
         body should include("delete.entry.already.deleted")
+      }
+    }
+
+    "Forward to error page when delete is unsuccessful" in new Setup {
+      forAll(protectedUserRecordGen) { protectedUserRecord =>
+        expectStrideAuthenticated()
+        when(mockSiProtectedUserListService.deleteEntry(eqTo(protectedUserRecord.entryId))(*))
+          .thenReturn(Future.successful(Left(UpstreamErrorResponse("internal server error", INTERNAL_SERVER_ERROR))))
+
+        val result = deleteEntryController().delete(protectedUserRecord.entryId)(FakeRequest().withMethod("DELETE"))
+
+        status(result) shouldBe INTERNAL_SERVER_ERROR
+        val body = contentAsString(result)
+        body should include("error.internal_server_error")
       }
     }
 

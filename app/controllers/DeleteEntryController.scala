@@ -48,7 +48,6 @@ class DeleteEntryController @Inject() (siProtectedUserConfig: SiProtectedUserCon
           case Some(protectedUser) => Ok(views.deleteConfirmation(protectedUser))
           case None                => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
         }
-        .recover { case exception => InternalServerError(views.errorTemplate("error.internal_server_error", "error.internal_server_error", exception.getMessage)) }
     } else {
       Future.successful(Ok(views.home()))
     }
