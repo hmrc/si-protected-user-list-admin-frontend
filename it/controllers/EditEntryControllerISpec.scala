@@ -19,19 +19,21 @@ package controllers
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.{Entry, ProtectedUser, ProtectedUserRecord}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.ResultExtractors
 import util.Generators
 
+import scala.concurrent.duration.DurationInt
+
 class EditEntryControllerISpec extends BaseISpec with ResultExtractors with Generators with ScalaFutures with ScalaCheckDrivenPropertyChecks {
-  implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
+  import org.scalacheck.Arbitrary.arbitrary
+
+  private implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 5.millis)
 
   "EditEntryController" should {
-
-    "return OK when edit is successful" in new Setup {
-      forAll(validEditEntryGen, protectedUserRecordGen, nonEmptyStringGen) { (entry, protectedUserRecord, pid) =>
+    "return OK when edit is successful" in
+      forAll(validEditEntryGen, arbitrary, nonEmptyStringGen) { (entry, protectedUserRecord, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
 
@@ -47,9 +49,8 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors with Gene
 
         response.status shouldBe OK
       }
-    }
 
-    "Return NOT_FOUND when upstream api return not found" in new Setup {
+    "Return NOT_FOUND when upstream api return not found" in
       forAll(validEditEntryGen, nonEmptyStringGen) { (entry, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
@@ -64,9 +65,8 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors with Gene
 
         response.status shouldBe NOT_FOUND
       }
-    }
 
-    "Return CONFLICT when upstream api indicates a conflict" in new Setup {
+    "Return CONFLICT when upstream api indicates a conflict" in
       forAll(validEditEntryGen, nonEmptyStringGen) { (entry, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
@@ -81,42 +81,39 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors with Gene
 
         response.status shouldBe CONFLICT
       }
-    }
   }
 
-  trait Setup {
+  private def expectUserToBeStrideAuthenticated(pid: String) = {
+    stubFor(post("/auth/authorise").willReturn(okJson(Json.obj("clientId" -> pid).toString())))
+  }
 
-    def expectUserToBeStrideAuthenticated(pid: String): Unit = {
-      stubFor(post("/auth/authorise").willReturn(okJson(Json.obj("clientId" -> pid).toString())))
-    }
+  private def expectEditEntryToBeSuccessful(entryId: String, protectedUserRecord: ProtectedUserRecord, protectedUser: ProtectedUser) = {
+    stubFor(
+      patch(urlEqualTo(s"$backendBaseUrl/update/$entryId"))
+        .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString()))
+        .willReturn(ok(Json.toJsObject(protectedUserRecord).toString()))
+    )
+  }
 
-    def expectEditEntryToBeSuccessful(entryId: String, protectedUserRecord: ProtectedUserRecord, protectedUser: ProtectedUser): Unit = {
-      stubFor(
-        patch(urlEqualTo(s"$backendBaseUrl/update/$entryId"))
-          .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString()))
-          .willReturn(ok(Json.toJsObject(protectedUserRecord).toString()))
-      )
-    }
-    def expectEditEntryToFailWithStatus(entryId: String, protectedUser: ProtectedUser, status: Int): Unit = {
-      stubFor(
-        patch(urlEqualTo(s"$backendBaseUrl/update/$entryId"))
-          .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString()))
-          .willReturn(aResponse().withStatus(status))
-      )
-    }
+  private def expectEditEntryToFailWithStatus(entryId: String, protectedUser: ProtectedUser, status: Int) = {
+    stubFor(
+      patch(urlEqualTo(s"$backendBaseUrl/update/$entryId"))
+        .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString()))
+        .willReturn(aResponse().withStatus(status))
+    )
+  }
 
-    def toEditRequestFields(entry: Entry): Seq[(String, String)] = {
-      Seq(
-        entry.entryId.map(e => "entryId" -> e),
-        Some("action" -> entry.action),
-        entry.nino.map(n => "nino" -> n),
-        entry.sautr.map(s => "sautr" -> s),
-        entry.identityProvider.map(s => "identityProvider" -> s),
-        entry.identityProviderId.map(s => "identityProviderId" -> s),
-        entry.group.map(s => "group" -> s),
-        entry.addedByTeam.map(s => "addedByTeam" -> s),
-        entry.updatedByTeam.map(s => "updatedByTeam" -> s)
-      ).flatten
-    }
+  private def toEditRequestFields(entry: Entry): Seq[(String, String)] = {
+    Seq(
+      entry.entryId.map(e => "entryId" -> e),
+      Some("action" -> entry.action),
+      entry.nino.map(n => "nino" -> n),
+      entry.sautr.map(s => "sautr" -> s),
+      entry.identityProvider.map(s => "identityProvider" -> s),
+      entry.identityProviderId.map(s => "identityProviderId" -> s),
+      entry.group.map(s => "group" -> s),
+      entry.addedByTeam.map(s => "addedByTeam" -> s),
+      entry.updatedByTeam.map(s => "updatedByTeam" -> s)
+    ).flatten
   }
 }

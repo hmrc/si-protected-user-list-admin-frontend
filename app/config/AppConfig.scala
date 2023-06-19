@@ -42,18 +42,19 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
 
   lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
     dashboardUrl = Try(servicesConfig.baseUrl("account-protection-tools-dashboard")) getOrElse "http://gov.uk",
-    identityProviders = configuration.get[Seq[String]]("si-protected-user.add-entry.identity-providers"),
-    addedByTeams = configuration.get[Seq[String]]("si-protected-user.add-entry.added-by-teams")
+    identityProviders = configuration.get[Seq[String]]("si-protected-user.identity-providers"),
+    addedByTeams = configuration.get[Seq[String]]("si-protected-user.added-by-teams")
   )
 
-  lazy val backendConfig = BackendConfig(
+  lazy val backendConfig: BackendConfig = BackendConfig(
     endpoint = servicesConfig.baseUrl("si-protected-user-list-admin"),
-    contextRoot = servicesConfig.getConfString(s"si-protected-user-list-admin.context-root",
-                                               throw new RuntimeException(s"Could not find config key 'si-protected-user-list-admin.context-root'")
-                                              )
+    contextRoot = servicesConfig.getConfString(
+      s"si-protected-user-list-admin.context-root",
+      throw new RuntimeException(s"Could not find config key 'si-protected-user-list-admin.context-root'")
+    )
   )
 
-  lazy val sessionCacheConfig = SessionCacheConfig(
+  lazy val sessionCacheConfig: SessionCacheConfig = SessionCacheConfig(
     baseUri = servicesConfig.baseUrl("cacheable.session-cache"),
     domain = servicesConfig.getConfString("cacheable.session-cache.domain", throw new RuntimeException("missing required config cacheable.session-cache.domain"))
   )

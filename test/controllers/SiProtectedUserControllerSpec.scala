@@ -48,10 +48,10 @@ class SiProtectedUserControllerSpec extends UnitSpec with GuiceOneAppPerSuite wi
     "display the correct html page" in {
       forAll { protectedUserRecords: Seq[ProtectedUserRecord] =>
         when {
-          mockBackendConnector.findEntries()(any[HeaderCarrier])
+          mockBackendConnector.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])
         } thenReturn Future(protectedUserRecords)
 
-        val result = await(siProtectedUserController.homepage()(FakeRequest()))
+        val result = await(siProtectedUserController.homepage(None, None)(FakeRequest()))
         status(result) shouldBe OK
         val body = contentAsString(result)
         body should include("home.page.title")
