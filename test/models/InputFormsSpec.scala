@@ -16,7 +16,7 @@
 
 package models
 
-import models.InputForms.groupMaxLength
+import models.InputForms.{entryForm, groupMaxLength}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.wordspec.AnyWordSpec
@@ -48,12 +48,19 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
   )
 
   "EntryForm" should {
-    "handle scenarios for table" in {
+    "handle validation scenarios for table" in {
       forAll(table) { (_, request, expectedErrors) =>
         val form = InputForms.entryForm
         val result = form.bind(request)
         result.errors should contain theSameElementsAs expectedErrors
       }
+    }
+
+    "Identity provider should be None when request field is empty string" in {
+      val noIdpFields = allRequestFieldsPresent.updated("identityProvider", "").updated("identityProviderId", "")
+      val result = entryForm.bind(noIdpFields).get
+      result.identityProvider   shouldBe None
+      result.identityProviderId shouldBe None
     }
   }
 }

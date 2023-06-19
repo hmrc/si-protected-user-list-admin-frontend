@@ -41,12 +41,6 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
   )
 
   lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
-    bulkUploadScreenEnabled = getBoolean("si-protected-user.allow-list.bulk-upload.screen-enabled"),
-    bulkUploadRowLimit = getInt("si-protected-user.allow-list.bulk-upload.file.row-limit"),
-    bulkUploadBatchSize = getInt("si-protected-user.allow-list.bulk-upload.insert.batch-size"),
-    bulkUploadBatchDelaySecs = getInt("si-protected-user.allow-list.bulk-upload.insert.batch-delay-secs"),
-    showAllEnabled = getBoolean("si-protected-user.allow-list.show-all-enabled"),
-    listScreenRowLimit = getInt("si-protected-user.allow-list.list-screen.row-limit"),
     dashboardUrl = Try(servicesConfig.baseUrl("account-protection-tools-dashboard")) getOrElse "http://gov.uk",
     identityProviders = configuration.get[Seq[String]]("si-protected-user.add-entry.identity-providers"),
     addedByTeams = configuration.get[Seq[String]]("si-protected-user.add-entry.added-by-teams")
@@ -68,12 +62,6 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
 case class AnalyticsConfig(analyticsToken: String, analyticsHost: String)
 case class StrideConfig(strideLoginBaseUrl: String, strideSuccessUrl: String, strideEnrolments: Set[Enrolment])
 case class SiProtectedUserConfig(
-  bulkUploadScreenEnabled: Boolean,
-  bulkUploadRowLimit: Int,
-  bulkUploadBatchSize: Int,
-  bulkUploadBatchDelaySecs: Int,
-  showAllEnabled: Boolean,
-  listScreenRowLimit: Int,
   dashboardUrl: String,
   identityProviders: Seq[String],
   addedByTeams: Seq[String]

@@ -23,7 +23,7 @@ import org.scalatest.EitherValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.{ConflictException, HeaderCarrier}
+import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, NotFoundException}
 import util.Generators
 
 class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generators with ScalaCheckDrivenPropertyChecks with ScalaFutures with EitherValues {
@@ -47,7 +47,7 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
       }
     }
 
-    "Fail with conflict exception for addEntry when 409 conflict is returned from the backend api" in {
+    "Fail with conflict exception for addEntry when 409 conflict is returned from the backend api" in
       forAll(protectedUserGen) { user =>
         stubFor(
           post(urlEqualTo(s"$backendBaseUrl/add"))
@@ -58,9 +58,45 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
         val result = siProtectedUserAdminBackendConnector.addEntry(user).failed.futureValue
         result shouldBe a[ConflictException]
       }
-    }
 
-    "Return a ProtectedUserRecord for findEntry valid tax id" in {
+    "return a ProtectedUserRecord when updateEntry is successful" in
+      forAll { userRecord: ProtectedUserRecord =>
+        stubFor(
+          patch(urlEqualTo(s"$backendBaseUrl/update/${userRecord.entryId}"))
+            .withRequestBody(equalToJson(Json.toJsObject(userRecord.body).toString()))
+            .willReturn(ok(Json.toJsObject(userRecord).toString()))
+        )
+
+        val result = siProtectedUserAdminBackendConnector.updateEntry(userRecord.entryId, userRecord.body).futureValue
+
+        result shouldBe userRecord
+      }
+
+    "Fail with conflict exception for updateEntry when 409 conflict is returned from the backend api" in
+      forAll { protectedUserRecord: ProtectedUserRecord =>
+        stubFor(
+          patch(urlEqualTo(s"$backendBaseUrl/update/${protectedUserRecord.entryId}"))
+            .withRequestBody(equalToJson(Json.toJsObject(protectedUserRecord.body).toString()))
+            .willReturn(aResponse().withStatus(CONFLICT))
+        )
+
+        val result = siProtectedUserAdminBackendConnector.updateEntry(protectedUserRecord.entryId, protectedUserRecord.body).failed.futureValue
+        result shouldBe a[ConflictException]
+      }
+
+    "Fail with not found exception for updateEntry when 404 not found is returned from the backend api" in
+      forAll { protectedUserRecord: ProtectedUserRecord =>
+        stubFor(
+          patch(urlEqualTo(s"$backendBaseUrl/update/${protectedUserRecord.entryId}"))
+            .withRequestBody(equalToJson(Json.toJsObject(protectedUserRecord.body).toString()))
+            .willReturn(aResponse().withStatus(NOT_FOUND))
+        )
+
+        val result = siProtectedUserAdminBackendConnector.updateEntry(protectedUserRecord.entryId, protectedUserRecord.body).failed.futureValue
+        result shouldBe a[NotFoundException]
+      }
+
+    "Return a ProtectedUserRecord for findEntry valid tax id" in
       forAll { protectedUser: ProtectedUserRecord =>
         protectedUser.body.taxId.name.toString
         stubFor(
@@ -71,9 +107,8 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
         val result = siProtectedUserAdminBackendConnector.findEntry(protectedUser.entryId).futureValue
         result shouldBe Some(protectedUser)
       }
-    }
 
-    "Return None for findEntry when api returns 404" in {
+    "Return None for findEntry when api returns 404" in
       forAll { protectedUser: ProtectedUserRecord =>
         protectedUser.body.taxId.name.toString
         stubFor(
@@ -84,9 +119,8 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
         val result = siProtectedUserAdminBackendConnector.findEntry(protectedUser.entryId).futureValue
         result shouldBe None
       }
-    }
 
-    "Return NO_CONTENT http response for deleteEntry when successful" in {
+    "Return NO_CONTENT http response for deleteEntry when successful" in
       forAll { protectedUser: ProtectedUserRecord =>
         protectedUser.body.taxId.name.toString
         stubFor(
@@ -97,9 +131,8 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
         val result = siProtectedUserAdminBackendConnector.deleteEntry(protectedUser.entryId).futureValue.value
         result.status shouldBe NO_CONTENT
       }
-    }
 
-    "Return UpstreamErrorResponse with 404 response when deleteEntry returns 404" in {
+    "Return UpstreamErrorResponse with 404 response when deleteEntry returns 404" in
       forAll { protectedUser: ProtectedUserRecord =>
         protectedUser.body.taxId.name.toString
         stubFor(
@@ -110,6 +143,5 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
         val result = siProtectedUserAdminBackendConnector.deleteEntry(protectedUser.entryId).futureValue.left.value
         result.statusCode shouldBe NOT_FOUND
       }
-    }
   }
 }

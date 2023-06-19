@@ -64,13 +64,13 @@ class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPer
 
     def assertAddPageContainsFormFields(body: String): Unit = {
       body should include("add.page.title")
-      body should include("add.page.action")
-      body should include("add.page.nino")
-      body should include("add.page.sautr")
-      body should include("add.page.identityProvider")
-      body should include("add.page.identityProviderId")
-      body should include("add.page.addedByTeam")
-      body should include("add.page.add")
+      body should include("entry.form.action")
+      body should include("entry.form.nino")
+      body should include("entry.form.sautr")
+      body should include("entry.form.identityProvider")
+      body should include("entry.form.identityProviderId")
+      body should include("entry.form.addedByTeam")
+      body should include("add.submit.button")
       body should include("cancel.button")
     }
 

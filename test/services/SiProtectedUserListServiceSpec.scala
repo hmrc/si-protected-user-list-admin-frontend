@@ -54,16 +54,33 @@ class SiProtectedUserListServiceSpec
       }
     }
 
-    "Call findEntry on the connector when finding" in {
+    "Call update on the connector when updating" in
+      forAll(entryGen, arbitrary) { (entry, protectedUserRecord) =>
+        val expectedProtectedUser = entry.toProtectedUser()
+        when(mockBackendConnector.updateEntry(entry.entryId.value, expectedProtectedUser)).thenReturn(Future.successful(protectedUserRecord))
+
+        val result = siProtectedUserListService.updateEntry(entry).futureValue
+
+        result shouldBe protectedUserRecord
+        verify(mockBackendConnector).updateEntry(entry.entryId.value, expectedProtectedUser)
+      }
+
+    "Fails when no entryId present for updateEntry" in
+      forAll(entryGen) { entry =>
+        val result = siProtectedUserListService.updateEntry(entry.copy(entryId = None)).failed.futureValue
+
+        result shouldBe a[IllegalArgumentException]
+      }
+
+    "Call findEntry on the connector when finding" in
       forAll { protectedUserRecord: ProtectedUserRecord =>
         when(mockBackendConnector.findEntry(protectedUserRecord.entryId)).thenReturn(Future.successful(Some(protectedUserRecord)))
 
         val result = siProtectedUserListService.findEntry(protectedUserRecord.entryId).futureValue.value
         result shouldBe protectedUserRecord
       }
-    }
 
-    "Call deleteEntry on the connector when deleting" in {
+    "Call deleteEntry on the connector when deleting" in
       forAll { protectedUserRecord: ProtectedUserRecord =>
         val expectedResponse = HttpResponse(Status.NO_CONTENT, "")
         when(mockBackendConnector.deleteEntry(protectedUserRecord.entryId)).thenReturn(Future.successful(Right(expectedResponse)))
@@ -71,7 +88,6 @@ class SiProtectedUserListServiceSpec
         val result = siProtectedUserListService.deleteEntry(protectedUserRecord.entryId).futureValue.value
         result shouldBe expectedResponse
       }
-    }
   }
 }
 object SiProtectedUserListServiceSpec extends MockitoSugar {

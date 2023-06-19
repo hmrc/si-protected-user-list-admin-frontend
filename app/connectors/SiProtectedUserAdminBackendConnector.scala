@@ -19,7 +19,7 @@ package connectors
 import config.BackendConfig
 import models.{ProtectedUser, ProtectedUserRecord}
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, HttpResponse, NotFoundException, UpstreamErrorResponse}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,6 +41,20 @@ class SiProtectedUserAdminBackendConnector @Inject() (
           case err                                 => err
         }
       )
+
+  def updateEntry(entryId: String, protectedUser: ProtectedUser)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] = {
+    httpClient
+      .PATCH[JsObject, Either[UpstreamErrorResponse, ProtectedUserRecord]](
+        s"${backendConfig.endpoint}/${backendConfig.contextRoot}/update/$entryId",
+        Json.toJsObject(protectedUser)
+      )
+      .map {
+        case Left(UpstreamErrorResponse(_, 409, _, _)) => throw new ConflictException("Conflict")
+        case Left(UpstreamErrorResponse(_, 404, _, _)) => throw new NotFoundException("Entry to update was already deleted")
+        case Left(err)                                 => throw err
+        case Right(user)                               => user
+      }
+  }
 
   def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
     httpClient
