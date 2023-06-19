@@ -26,7 +26,6 @@
     hmrcInternalHead: HmrcInternalHead,
     hmrcInternalHeader: HmrcInternalHeader,
     layout: GovukLayout,
-    fixedWidthPageLayout: FixedWidthPageLayout,
     backLink: GovukBackLink,
     h1: Heading1,
     button: GovukButton,
@@ -37,21 +36,17 @@
 
 @(records: Seq[ProtectedUserRecord], filterByTeam: Option[String], searchQuery: Option[String])(implicit req: StrideRequest[_], messages: Messages)
 
+@beforeContent = {
+    <link rel='stylesheet' href='@routes.Assets.at("application.css")'>
+}
+
 @layout(
     pageTitle = Some(messages("home.page.title")),
     headBlock = Some(hmrcInternalHead()),
     headerBlock = Some(hmrcInternalHeader(InternalHeader(serviceName = Some(messages("service.name"))))),
+    beforeContentBlock = Some(beforeContent),
     mainContentLayout = Some(identity)
 ) {
-    <style>
-        #actions { display: table; width: 100%; }
-
-        #actions > .action { display: table-cell; vertical-align: bottom; }
-        #actions > .action:last-child { text-align: right; }
-
-        #actions > .action > [class|="govuk"] { display: inline-block; }
-        #actions > .action > * + [class|="govuk"] { margin-left: 1em; }
-    </style>
     @backLink(BackLink(href = config.dashboardUrl))
     @h1("home.page.header")
     <div id="actions">
@@ -70,10 +65,7 @@
                 },
                 label = Label(content = Text(messages("home.page.filterBy"))),
                 classes = "govuk-input--width-3",
-                attributes = Map(
-                    "oninput" -> "this.form.submit()",
-                    "style"   -> "min-width: 0;"
-                ),
+                attributes = Map( "oninput" -> "this.form.submit()" ),
                 value = filterByTeam
             ))
             @input(Input(
@@ -81,10 +73,15 @@
                 name = "searchQuery",
                 classes = "govuk-input--width-10",
                 suffix = Some(PrefixOrSuffix(
-                    attributes = Map( "style" -> "border: 0; padding: 0;" ),
-                    content = HtmlContent(
+                    classes = "pul-btn-search",
+                    content = HtmlContent (
                         button(Button(
-                            content = Text(messages("home.page.search"))
+                            content = HtmlContent(
+                                <svg class="gem-c-search__icon" width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                                    <circle cx="12.0161" cy="11.0161" r="8.51613" stroke="currentColor" stroke-width="3"></circle>
+                                    <line x1="17.8668" y1="17.3587" x2="26.4475" y2="25.9393" stroke="currentColor" stroke-width="3"></line>
+                                </svg>.toString
+                            )
                         ))
                     )
                 )),

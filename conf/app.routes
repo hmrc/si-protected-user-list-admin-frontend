@@ -11,5 +11,6 @@ GET         /delete-entry/:entryId          controllers.DeleteEntryController.de
 
 GET         /clear                          controllers.AddEntryController.showAddEntryPage()
 
+GET         /assets/*file                   controllers.Assets.at(path="/public", file)
 
 ->          /hmrc-frontend                  hmrcfrontend.Routes
