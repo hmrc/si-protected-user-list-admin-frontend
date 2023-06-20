@@ -35,10 +35,10 @@ siProtectedUserConfig: SiProtectedUserConfig
 @(form: Form[Entry])(implicit request: Request[_], messages: Messages)
 
 @mainLayout(
-    pageTitle = Messages("add.page.title"),
+    pageTitle = Messages("edit.entry.title"),
     backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
 ) {
-    @h1("add.page.header")
-    @entryForm(form,controllers.routes.AddEntryController.submit(),"add.submit.button")
+    @h1("edit.entry.header")
+    @entryForm(form,controllers.routes.EditEntryController.submit(),"edit.submit.button")
 
 }

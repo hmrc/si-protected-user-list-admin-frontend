@@ -29,7 +29,7 @@ object InputForms {
   val groupMaxLength = 12
   val entryForm: Form[Entry] = Form(
     mapping(
-      "entryId"            -> ignored(Option.empty[String]),
+      "entryId"            -> optional(nonEmptyText),
       "addedByUser"        -> ignored(Option.empty[String]),
       "updatedByUser"      -> ignored(Option.empty[String]),
       "action"             -> nonEmptyText,
