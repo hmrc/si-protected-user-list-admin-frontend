@@ -16,41 +16,28 @@
 
 package controllers
 
-import controllers.base.StrideAction
 import models.Entry
 import org.jsoup.Jsoup
-import org.scalatest.Assertion
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import play.api.test.{FakeRequest, Injecting}
-import services.SiProtectedUserListService
-import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.gg.test.UnitSpec
+import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{ConflictException, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
-import util.Generators
-import views.Views
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPerSuite with Generators with ScalaCheckDrivenPropertyChecks {
-  private val mockSiProtectedUserListService = mock[SiProtectedUserListService]
-  private val mockAuthConnector = mock[AuthConnector]
-  private val views = inject[Views]
-
-  private val editEntryController = new EditEntryController(
-    mockSiProtectedUserListService,
-    views,
+class EditEntryControllerSpec extends BaseControllerSpec {
+  private def editEntryController = new EditEntryController(
+    mockBackendService,
+    injectViews,
     Stubs.stubMessagesControllerComponents(),
-    new StrideAction(appName, defaultAuthStrideEnrolmentsConfigGen, mockAuthConnector)
+    stubStrideActions.sample.get
   )
 
   "EditEntryController" should {
     "forward to the edit entry view when GET /add is called" in
       forAll(validEditEntryGen, protectedUserRecords) { (entry, record) =>
-        expectStrideAuthenticated { _ =>
-          when(mockSiProtectedUserListService.findEntry(eqTo(entry.entryId.value))(*)).thenReturn(Future.successful(Some(record)))
+        expectStrideAuthenticated {
+          when(mockBackendService.findEntry(eqTo(entry.entryId.value))(*)).thenReturn(Future.successful(Some(record)))
           val result = editEntryController.showEditEntryPage(entry.entryId.value)(FakeRequest().withMethod("GET"))
           status(result) shouldBe OK
 
@@ -65,7 +52,7 @@ class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPe
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
 
-          when(mockSiProtectedUserListService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(record))
+          when(mockBackendService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(record))
 
           val result = editEntryController.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 
@@ -82,7 +69,7 @@ class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPe
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
 
-          when(mockSiProtectedUserListService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.failed(new NotFoundException("not found")))
+          when(mockBackendService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.failed(new NotFoundException("not found")))
 
           val result = editEntryController.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 
@@ -99,7 +86,7 @@ class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPe
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
 
-          when(mockSiProtectedUserListService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.failed(new ConflictException("conflict")))
+          when(mockBackendService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.failed(new ConflictException("conflict")))
 
           val result = editEntryController.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 
@@ -110,7 +97,7 @@ class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPe
       }
 
     "Return BAD_REQUEST when POST /edit is called with invalid fields" in
-      expectStrideAuthenticated { _ =>
+      expectStrideAuthenticated {
         val result = editEntryController.submit()(FakeRequest().withFormUrlEncodedBody())
         status(result) shouldBe BAD_REQUEST
 
@@ -120,19 +107,6 @@ class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPe
         val errors = html.select(".govuk-error-summary__list").html()
         errors should include("error.required")
       }
-  }
-
-  private def defaultAuthStrideEnrolmentsConfigGen = authStrideEnrolmentsConfigGen.sample.get
-  private def appName = nonEmptyStringGen.sample.get
-
-  private def expectStrideAuthenticated(fun: String => Assertion) = {
-    val stridePid = nonEmptyStringGen.sample.get
-
-    when {
-      mockAuthConnector.authorise[Option[String]](any, any)(any, any)
-    } thenReturn Future.successful(Some(stridePid))
-
-    fun(stridePid)
   }
 
   private def assertEditPageContainsFormFields(body: String) = {

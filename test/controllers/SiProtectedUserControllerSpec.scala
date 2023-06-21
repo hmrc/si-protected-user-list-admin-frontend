@@ -16,33 +16,25 @@
 
 package controllers
 
-import controllers.base.StrideAction
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalacheck.Gen
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.test.FakeRequest
-import services.SiProtectedUserListService
-import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.gg.test.UnitSpec
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
-import util.Generators
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class SiProtectedUserControllerSpec extends UnitSpec with GuiceOneAppPerSuite with ScalaCheckDrivenPropertyChecks {
-  import SiProtectedUserControllerSpec._
+class SiProtectedUserControllerSpec extends BaseControllerSpec {
 
-  import concurrent.ExecutionContext.Implicits.global
-
-  private val siProtectedUserController =
+  private def siProtectedUserController =
     new SiProtectedUserController(
-      new StrideAction(appName, defaultAuthStrideEnrolmentsConfigGen, mockAuthConnector),
+      stubStrideActions.sample.get,
       mockBackendService,
-      app.injector.instanceOf[views.Views],
+      injectViews,
       Stubs.stubMessagesControllerComponents()
     )
+
+  when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)) thenReturn Future.successful(Some("stride-pid"))
 
   "homepage" should {
     "display the correct html page" in {
@@ -62,7 +54,9 @@ class SiProtectedUserControllerSpec extends UnitSpec with GuiceOneAppPerSuite wi
   "view" should {
     "Retrieve user and forward to details template" in {
       forAll(protectedUserRecords) { record =>
-        when(mockBackendService.findEntry(eqTo(record.entryId))(*)).thenReturn(Future.successful(Some(record)))
+        when {
+          mockBackendService.findEntry(eqTo(record.entryId))(*)
+        } thenReturn Future.successful(Some(record))
 
         val result = await(siProtectedUserController.view(entryId = record.entryId)(FakeRequest()))
         status(result) shouldBe OK
@@ -84,8 +78,11 @@ class SiProtectedUserControllerSpec extends UnitSpec with GuiceOneAppPerSuite wi
 
     "Forward to error page with NOT_FOUND when entry doesnt exist" in {
       forAll(protectedUserRecords) { record =>
-        when(mockBackendService.findEntry(eqTo(record.entryId))(*)).thenReturn(Future.successful(None))
-        val result = await(siProtectedUserController.view(record.entryId)(FakeRequest()))
+        when {
+          mockBackendService.findEntry(eqTo(record.entryId))(*)
+        } thenReturn Future.successful(None)
+
+        val result = siProtectedUserController.view(record.entryId)(FakeRequest())
         status(result) shouldBe NOT_FOUND
         val body = contentAsString(result)
         body should include("error.not.found")
@@ -95,21 +92,15 @@ class SiProtectedUserControllerSpec extends UnitSpec with GuiceOneAppPerSuite wi
 
     "Forward to error page with INTERNAL_SERVER_ERROR when there is an exception" in {
       forAll(protectedUserRecords) { record =>
-        when(mockBackendService.findEntry(eqTo(record.entryId))(*)).thenReturn(Future.failed(new Exception("some exception")))
-        val result = await(siProtectedUserController.view(record.entryId)(FakeRequest()))
-        status(result) shouldBe INTERNAL_SERVER_ERROR
-        val body = contentAsString(result)
-        body should include("error.internal_server_error")
+        when {
+          mockBackendService.findEntry(eqTo(record.entryId))(*)
+        } thenReturn Future.failed(new Exception("some exception"))
+
+        val result = siProtectedUserController.view(record.entryId)(FakeRequest())
+
+        status(result)        shouldBe INTERNAL_SERVER_ERROR
+        contentAsString(result) should include("error.internal_server_error")
       }
     }
   }
-}
-object SiProtectedUserControllerSpec extends MockitoSugar with ArgumentMatchersSugar with Generators {
-  private val defaultAuthStrideEnrolmentsConfigGen = authStrideEnrolmentsConfigGen.sample.get
-  private val appName = nonEmptyStringGen.sample.get
-
-  private val mockAuthConnector = mock[AuthConnector]
-  when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)) thenReturn Future.successful(Some("stride-pid"))
-
-  private val mockBackendService = mock[SiProtectedUserListService]
 }
