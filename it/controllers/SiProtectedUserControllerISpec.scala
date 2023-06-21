@@ -18,27 +18,18 @@ package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.ProtectedUserRecord
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.ResultExtractors
-import util.Generators
 
-class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors with Generators with ScalaFutures with ScalaCheckDrivenPropertyChecks {
-  import org.scalacheck.Arbitrary.arbitrary
-
-  implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
-
+class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors {
   "SiProtectedUserController" should {
-
     "return OK when view is successful" in new Setup {
-      forAll(arbitrary, nonEmptyStringGen) { (protectedUserRecord, pid) =>
+      forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
-        expectFindEntryToBeSuccessful(protectedUserRecord)
+        expectFindEntryToBeSuccessful(record)
 
         val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/view-entry/${protectedUserRecord.entryId}"))
+          .url(resource(s"$frontEndBaseUrl/view-entry/${record.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .get()
@@ -49,12 +40,12 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors wit
     }
 
     "return NOT_FOUND when entry doesnt exist" in new Setup {
-      forAll(arbitrary, nonEmptyStringGen) { (protectedUserRecord, pid) =>
+      forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
-        expectFindEntryToFailWithNotFound(protectedUserRecord)
+        expectFindEntryToFailWithNotFound(record)
 
         val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/view-entry/${protectedUserRecord.entryId}"))
+          .url(resource(s"$frontEndBaseUrl/view-entry/${record.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .get()

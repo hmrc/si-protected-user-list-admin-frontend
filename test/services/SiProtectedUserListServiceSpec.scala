@@ -17,75 +17,64 @@
 package services
 
 import connectors.SiProtectedUserAdminBackendConnector
-import models.ProtectedUserRecord
 import org.mockito.scalatest.MockitoSugar
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
-import org.scalatest.{EitherValues, OptionValues}
+import org.scalatest.EitherValues
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.Status
+import uk.gov.hmrc.gg.test.UnitSpec
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import util.Generators
 
 import scala.concurrent.Future
-class SiProtectedUserListServiceSpec
-    extends AnyWordSpec
-    with Matchers
-    with Generators
-    with ScalaCheckDrivenPropertyChecks
-    with ScalaFutures
-    with IntegrationPatience
-    with EitherValues
-    with OptionValues {
+
+class SiProtectedUserListServiceSpec extends UnitSpec with Generators with ScalaCheckDrivenPropertyChecks with EitherValues {
   import SiProtectedUserListServiceSpec._
-  import org.scalacheck.Arbitrary.arbitrary
 
   "SiProtectedUserListService" should {
     "Call add on the connector when adding" in {
-      forAll(entryGen, arbitrary) { (entry, protectedUserRecord) =>
+      forAll(entryGen, protectedUserRecords) { (entry, record) =>
         val expectedProtectedUser = entry.toProtectedUser()
-        when(mockBackendConnector.addEntry(expectedProtectedUser)).thenReturn(Future.successful(protectedUserRecord))
+        when(mockBackendConnector.addEntry(expectedProtectedUser)).thenReturn(Future.successful(record))
 
-        val result = siProtectedUserListService.addEntry(entry).futureValue
+        val result = await(siProtectedUserListService.addEntry(entry))
 
-        result shouldBe protectedUserRecord
+        result shouldBe record
         verify(mockBackendConnector).addEntry(expectedProtectedUser)
       }
     }
 
     "Call update on the connector when updating" in
-      forAll(entryGen, arbitrary) { (entry, protectedUserRecord) =>
+      forAll(entryGen, protectedUserRecords) { (entry, record) =>
         val expectedProtectedUser = entry.toProtectedUser()
-        when(mockBackendConnector.updateEntry(entry.entryId.value, expectedProtectedUser)).thenReturn(Future.successful(protectedUserRecord))
+        when(mockBackendConnector.updateEntry(entry.entryId.value, expectedProtectedUser)).thenReturn(Future.successful(record))
 
-        val result = siProtectedUserListService.updateEntry(entry).futureValue
+        val result = await(siProtectedUserListService.updateEntry(entry))
 
-        result shouldBe protectedUserRecord
+        result shouldBe record
         verify(mockBackendConnector).updateEntry(entry.entryId.value, expectedProtectedUser)
       }
 
     "Fails when no entryId present for updateEntry" in
       forAll(entryGen) { entry =>
-        val result = siProtectedUserListService.updateEntry(entry.copy(entryId = None)).failed.futureValue
+        val result = await(siProtectedUserListService.updateEntry(entry.copy(entryId = None)).failed)
 
         result shouldBe a[IllegalArgumentException]
       }
 
     "Call findEntry on the connector when finding" in
-      forAll { protectedUserRecord: ProtectedUserRecord =>
-        when(mockBackendConnector.findEntry(protectedUserRecord.entryId)).thenReturn(Future.successful(Some(protectedUserRecord)))
+      forAll(protectedUserRecords) { record =>
+        when(mockBackendConnector.findEntry(record.entryId)).thenReturn(Future.successful(Some(record)))
 
-        val result = siProtectedUserListService.findEntry(protectedUserRecord.entryId).futureValue.value
-        result shouldBe protectedUserRecord
+        val result = await(siProtectedUserListService.findEntry(record.entryId)).value
+        result shouldBe record
       }
 
     "Call deleteEntry on the connector when deleting" in
-      forAll { protectedUserRecord: ProtectedUserRecord =>
+      forAll(protectedUserRecords) { record =>
         val expectedResponse = HttpResponse(Status.NO_CONTENT, "")
-        when(mockBackendConnector.deleteEntry(protectedUserRecord.entryId)).thenReturn(Future.successful(Right(expectedResponse)))
+        when(mockBackendConnector.deleteEntry(record.entryId)).thenReturn(Future.successful(Right(expectedResponse)))
 
-        val result = siProtectedUserListService.deleteEntry(protectedUserRecord.entryId).futureValue.value
+        val result = await(siProtectedUserListService.deleteEntry(record.entryId)).value
         result shouldBe expectedResponse
       }
   }

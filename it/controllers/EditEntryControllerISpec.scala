@@ -18,26 +18,17 @@ package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.{Entry, ProtectedUser, ProtectedUserRecord}
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.ResultExtractors
-import util.Generators
 
-import scala.concurrent.duration.DurationInt
-
-class EditEntryControllerISpec extends BaseISpec with ResultExtractors with Generators with ScalaFutures with ScalaCheckDrivenPropertyChecks {
-  import org.scalacheck.Arbitrary.arbitrary
-
-  private implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 5.millis)
-
+class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
   "EditEntryController" should {
     "return OK when edit is successful" in
-      forAll(validEditEntryGen, arbitrary, nonEmptyStringGen) { (entry, protectedUserRecord, pid) =>
+      forAll(validEditEntryGen, protectedUserRecords, nonEmptyStringGen) { (entry, record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
 
-        expectEditEntryToBeSuccessful(expectedEntry.entryId.value, protectedUserRecord, expectedEntry.toProtectedUser())
+        expectEditEntryToBeSuccessful(expectedEntry.entryId.value, record, expectedEntry.toProtectedUser())
 
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/edit"))

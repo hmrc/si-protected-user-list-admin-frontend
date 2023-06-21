@@ -17,7 +17,6 @@
 package controllers
 
 import controllers.base.StrideAction
-import models.ProtectedUserRecord
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -57,16 +56,16 @@ class DeleteEntryControllerSpec extends UnitSpec with Injecting with GuiceOneApp
     }
 
     def expectStrideAuthenticated(): Unit = {
-      when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some(stridePid)))
+      when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)) thenReturn Future.successful(Some(stridePid))
     }
   }
   "DeleteEntryController" should {
     "forward to the delete confirmation page view when GET /add is called" in new Setup {
-      forAll { protectedUserRecord: ProtectedUserRecord =>
+      forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated()
-        when(mockSiProtectedUserListService.findEntry(eqTo(protectedUserRecord.entryId))(*)).thenReturn(Future.successful(Some(protectedUserRecord)))
+        when(mockSiProtectedUserListService.findEntry(eqTo(record.entryId))(*)) thenReturn Future.successful(Some(record))
 
-        val result = deleteEntryController.showConfirmDeletePage(protectedUserRecord.entryId)(FakeRequest().withMethod("GET")).futureValue
+        val result = deleteEntryController.showConfirmDeletePage(record.entryId)(FakeRequest().withMethod("GET")).futureValue
         status(result) shouldBe OK
 
         val body = contentAsString(result)
@@ -82,16 +81,17 @@ class DeleteEntryControllerSpec extends UnitSpec with Injecting with GuiceOneApp
         body should include("protectedUser.details.updatedOn")
         body should include("continue.button")
         body should include("cancel.button")
-
       }
     }
 
     "Forward to delete success page when delete is successful" in new Setup {
-      forAll { protectedUserRecord: ProtectedUserRecord =>
+      forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated()
-        when(mockSiProtectedUserListService.deleteEntry(eqTo(protectedUserRecord.entryId))(*)).thenReturn(Future.successful(Right(HttpResponse(Status.NO_CONTENT, ""))))
+        when {
+          mockSiProtectedUserListService.deleteEntry(eqTo(record.entryId))(*)
+        } thenReturn Future.successful(Right(HttpResponse(Status.NO_CONTENT, "")))
 
-        val result = deleteEntryController.delete(protectedUserRecord.entryId)(FakeRequest().withMethod("DELETE"))
+        val result = deleteEntryController.delete(record.entryId)(FakeRequest().withMethod("DELETE"))
 
         status(result) shouldBe OK
         val body = contentAsString(result)
@@ -103,11 +103,13 @@ class DeleteEntryControllerSpec extends UnitSpec with Injecting with GuiceOneApp
     }
 
     "Forward to error page when delete is unsuccessful with NOT_FOUND" in new Setup {
-      forAll { protectedUserRecord: ProtectedUserRecord =>
+      forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated()
-        when(mockSiProtectedUserListService.deleteEntry(eqTo(protectedUserRecord.entryId))(*)).thenReturn(Future.successful(Left(UpstreamErrorResponse("not found", NOT_FOUND))))
+        when {
+          mockSiProtectedUserListService.deleteEntry(eqTo(record.entryId))(*)
+        } thenReturn Future.successful(Left(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-        val result = deleteEntryController.delete(protectedUserRecord.entryId)(FakeRequest().withMethod("DELETE"))
+        val result = deleteEntryController.delete(record.entryId)(FakeRequest().withMethod("DELETE"))
 
         status(result) shouldBe NOT_FOUND
         val body = contentAsString(result)
@@ -117,19 +119,17 @@ class DeleteEntryControllerSpec extends UnitSpec with Injecting with GuiceOneApp
     }
 
     "Forward to error page when delete is unsuccessful" in new Setup {
-      forAll { protectedUserRecord: ProtectedUserRecord =>
+      forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated()
-        when(mockSiProtectedUserListService.deleteEntry(eqTo(protectedUserRecord.entryId))(*))
+        when(mockSiProtectedUserListService.deleteEntry(eqTo(record.entryId))(*))
           .thenReturn(Future.successful(Left(UpstreamErrorResponse("internal server error", INTERNAL_SERVER_ERROR))))
 
-        val result = deleteEntryController.delete(protectedUserRecord.entryId)(FakeRequest().withMethod("DELETE"))
+        val result = deleteEntryController.delete(record.entryId)(FakeRequest().withMethod("DELETE"))
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
         val body = contentAsString(result)
         body should include("error.internal_server_error")
       }
     }
-
   }
-
 }

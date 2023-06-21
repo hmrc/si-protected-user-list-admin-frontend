@@ -16,13 +16,13 @@
 
 package controllers
 
-import connectors.SiProtectedUserAdminBackendConnector
 import controllers.base.StrideAction
-import models.ProtectedUserRecord
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
+import org.scalacheck.Gen
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.test.FakeRequest
+import services.SiProtectedUserListService
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.gg.test.UnitSpec
 import uk.gov.hmrc.http.HeaderCarrier
@@ -39,17 +39,17 @@ class SiProtectedUserControllerSpec extends UnitSpec with GuiceOneAppPerSuite wi
   private val siProtectedUserController =
     new SiProtectedUserController(
       new StrideAction(appName, defaultAuthStrideEnrolmentsConfigGen, mockAuthConnector),
-      mockBackendConnector,
+      mockBackendService,
       app.injector.instanceOf[views.Views],
       Stubs.stubMessagesControllerComponents()
     )
 
   "homepage" should {
     "display the correct html page" in {
-      forAll { protectedUserRecords: Seq[ProtectedUserRecord] =>
+      forAll(Gen listOf protectedUserRecords) { listOfRecords =>
         when {
-          mockBackendConnector.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])
-        } thenReturn Future(protectedUserRecords)
+          mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])
+        } thenReturn Future(listOfRecords)
 
         val result = await(siProtectedUserController.homepage(None, None)(FakeRequest()))
         status(result) shouldBe OK
@@ -61,10 +61,10 @@ class SiProtectedUserControllerSpec extends UnitSpec with GuiceOneAppPerSuite wi
 
   "view" should {
     "Retrieve user and forward to details template" in {
-      forAll { protectedUser: ProtectedUserRecord =>
-        when(mockBackendConnector.findEntry(eqTo(protectedUser.entryId))(*)).thenReturn(Future.successful(Some(protectedUser)))
+      forAll(protectedUserRecords) { record =>
+        when(mockBackendService.findEntry(eqTo(record.entryId))(*)).thenReturn(Future.successful(Some(record)))
 
-        val result = await(siProtectedUserController.view(entryId = protectedUser.entryId)(FakeRequest()))
+        val result = await(siProtectedUserController.view(entryId = record.entryId)(FakeRequest()))
         status(result) shouldBe OK
         val body = contentAsString(result)
         body should include("view.entry.title")
@@ -83,9 +83,9 @@ class SiProtectedUserControllerSpec extends UnitSpec with GuiceOneAppPerSuite wi
     }
 
     "Forward to error page with NOT_FOUND when entry doesnt exist" in {
-      forAll { pu: ProtectedUserRecord =>
-        when(mockBackendConnector.findEntry(eqTo(pu.entryId))(*)).thenReturn(Future.successful(None))
-        val result = await(siProtectedUserController.view(pu.entryId)(FakeRequest()))
+      forAll(protectedUserRecords) { record =>
+        when(mockBackendService.findEntry(eqTo(record.entryId))(*)).thenReturn(Future.successful(None))
+        val result = await(siProtectedUserController.view(record.entryId)(FakeRequest()))
         status(result) shouldBe NOT_FOUND
         val body = contentAsString(result)
         body should include("error.not.found")
@@ -94,15 +94,14 @@ class SiProtectedUserControllerSpec extends UnitSpec with GuiceOneAppPerSuite wi
     }
 
     "Forward to error page with INTERNAL_SERVER_ERROR when there is an exception" in {
-      forAll { protectedUserRecord: ProtectedUserRecord =>
-        when(mockBackendConnector.findEntry(eqTo(protectedUserRecord.entryId))(*)).thenReturn(Future.failed(new Exception("some exception")))
-        val result = await(siProtectedUserController.view(protectedUserRecord.entryId)(FakeRequest()))
+      forAll(protectedUserRecords) { record =>
+        when(mockBackendService.findEntry(eqTo(record.entryId))(*)).thenReturn(Future.failed(new Exception("some exception")))
+        val result = await(siProtectedUserController.view(record.entryId)(FakeRequest()))
         status(result) shouldBe INTERNAL_SERVER_ERROR
         val body = contentAsString(result)
         body should include("error.internal_server_error")
       }
     }
-
   }
 }
 object SiProtectedUserControllerSpec extends MockitoSugar with ArgumentMatchersSugar with Generators {
@@ -112,6 +111,5 @@ object SiProtectedUserControllerSpec extends MockitoSugar with ArgumentMatchersS
   private val mockAuthConnector = mock[AuthConnector]
   when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)) thenReturn Future.successful(Some("stride-pid"))
 
-  private val mockBackendConnector = mock[SiProtectedUserAdminBackendConnector]
-
+  private val mockBackendService = mock[SiProtectedUserListService]
 }

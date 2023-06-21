@@ -20,7 +20,6 @@ import controllers.base.StrideAction
 import models.Entry
 import org.jsoup.Jsoup
 import org.scalatest.Assertion
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.test.{FakeRequest, Injecting}
@@ -34,13 +33,8 @@ import views.Views
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration.DurationInt
 
-class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPerSuite with Generators with ScalaFutures with ScalaCheckDrivenPropertyChecks {
-  import org.scalacheck.Arbitrary.arbitrary
-
-  private implicit val pc: PatienceConfig = PatienceConfig(5.seconds, interval = 5.millis)
-
+class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPerSuite with Generators with ScalaCheckDrivenPropertyChecks {
   private val mockSiProtectedUserListService = mock[SiProtectedUserListService]
   private val mockAuthConnector = mock[AuthConnector]
   private val views = inject[Views]
@@ -54,10 +48,10 @@ class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPe
 
   "EditEntryController" should {
     "forward to the edit entry view when GET /add is called" in
-      forAll(validEditEntryGen, arbitrary) { (entry, protectedUserRecord) =>
+      forAll(validEditEntryGen, protectedUserRecords) { (entry, record) =>
         expectStrideAuthenticated { _ =>
-          when(mockSiProtectedUserListService.findEntry(eqTo(entry.entryId.value))(*)).thenReturn(Future.successful(Some(protectedUserRecord)))
-          val result = editEntryController.showEditEntryPage(entry.entryId.value)(FakeRequest().withMethod("GET")).futureValue
+          when(mockSiProtectedUserListService.findEntry(eqTo(entry.entryId.value))(*)).thenReturn(Future.successful(Some(record)))
+          val result = editEntryController.showEditEntryPage(entry.entryId.value)(FakeRequest().withMethod("GET"))
           status(result) shouldBe OK
 
           val body = contentAsString(result)
@@ -66,12 +60,12 @@ class EditEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPe
       }
 
     "Forward to confirmation page when edit is successful" in
-      forAll(validEditEntryGen, arbitrary) { (entry, protectedUserRecord) =>
+      forAll(validEditEntryGen, protectedUserRecords) { (entry, record) =>
         expectStrideAuthenticated { pid =>
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
 
-          when(mockSiProtectedUserListService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(protectedUserRecord))
+          when(mockSiProtectedUserListService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(record))
 
           val result = editEntryController.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 

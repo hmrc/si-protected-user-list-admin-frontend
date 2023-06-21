@@ -19,7 +19,7 @@ package util
 import config.{SiProtectedUserConfig, StrideConfig}
 import models.InputForms.groupMaxLength
 import models._
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.Gen
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.domain.{Generator, Nino, SaUtr, SaUtrGenerator}
 
@@ -111,7 +111,7 @@ trait Generators {
     updatedByTeam = updatedByTeam
   )
 
-  implicit val arbProtectedUserRecord: Arbitrary[ProtectedUserRecord] = Arbitrary(
+  val protectedUserRecords: Gen[ProtectedUserRecord] =
     for {
       entryId      <- nonEmptyStringGen
       firstCreated <- Gen.posNum[Long]
@@ -123,5 +123,4 @@ trait Generators {
       lastUpdated = lastUpdated,
       body = body
     )
-  )
 }

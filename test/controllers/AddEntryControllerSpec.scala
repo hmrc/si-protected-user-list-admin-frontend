@@ -19,7 +19,6 @@ package controllers
 import controllers.base.StrideAction
 import models.Entry
 import org.jsoup.Jsoup
-import org.scalacheck.Arbitrary
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -37,9 +36,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPerSuite with Generators with ScalaFutures with ScalaCheckDrivenPropertyChecks {
-  import Arbitrary.arbitrary
-
-  implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
+  private implicit val pc: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   trait Setup {
     val defaultSiProtectedUserConfig = siProtectedUserConfigGen.sample.get
@@ -100,18 +97,18 @@ class AddEntryControllerSpec extends UnitSpec with Injecting with GuiceOneAppPer
     }
 
     "Forward to confirmation page when add is successful" in new Setup {
-      forAll(validRequestEntryGen, arbitrary) { (entry, protectedUserRecord) =>
+      forAll(validRequestEntryGen, protectedUserRecords) { (entry, record) =>
         expectStrideAuthenticated()
         val requestFields = toRequestFields(entry)
         val expectedEntry = entry.copy(addedByUser = Some(stridePid))
 
-        when(mockSiProtectedUserListService.addEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(protectedUserRecord))
+        when(mockSiProtectedUserListService.addEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(record))
 
         val result = addEntryController.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 
         status(result) shouldBe SEE_OTHER
         redirectLocation(result) shouldBe Some(
-          controllers.routes.SiProtectedUserController.view(protectedUserRecord.entryId).url
+          controllers.routes.SiProtectedUserController.view(record.entryId).url
         )
         verify(mockSiProtectedUserListService).addEntry(eqTo(expectedEntry))(*)
       }
