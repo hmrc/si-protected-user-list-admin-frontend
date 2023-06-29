@@ -1,0 +1,118 @@
+@*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import config.SiProtectedUserConfig
+@import controllers.base.StrideRequest
+
+@import models.TaxIdentifierType._
+
+@import views.html.fragments.Heading1
+
+@this(
+    config: SiProtectedUserConfig,
+    hmrcInternalHead: HmrcInternalHead,
+    hmrcInternalHeader: HmrcInternalHeader,
+    layout: GovukLayout,
+    backLink: GovukBackLink,
+    h1: Heading1,
+    button: GovukButton,
+    input: GovukInput,
+    select: GovukSelect,
+    table: GovukTable
+)
+
+@(records: Seq[ProtectedUserRecord], filterByTeam: Option[String], searchQuery: Option[String])(implicit req: StrideRequest[_], messages: Messages)
+
+@beforeContent = {
+    <link rel='stylesheet' href='@routes.Assets.at("application.css")'>
+}
+
+@layout(
+    pageTitle = Some(messages("home.page.title")),
+    headBlock = Some(hmrcInternalHead()),
+    headerBlock = Some(hmrcInternalHeader(InternalHeader(serviceName = Some(messages("service.name"))))),
+    beforeContentBlock = Some(beforeContent),
+    mainContentLayout = Some(identity)
+) {
+    @backLink(BackLink(href = config.dashboardUrl))
+    @h1("home.page.header")
+    <div id="actions">
+        <div class="action">
+            @button(Button(
+                href = Some(controllers.routes.AddEntryController.showAddEntryPage().url),
+                content = Text(messages("home.page.add"))
+            ))
+        </div>
+        <form class="action">
+            @select(Select(
+                id = "filterByTeam",
+                name = "filterByTeam",
+                items = "All" +: config.addedByTeams map { team =>
+                    SelectItem(text = team, value = Some(team))
+                },
+                label = Label(content = Text(messages("home.page.filterBy"))),
+                classes = "govuk-input--width-3",
+                attributes = Map( "oninput" -> "this.form.submit()" ),
+                value = filterByTeam
+            ))
+            @input(Input(
+                id = "searchQuery",
+                name = "searchQuery",
+                classes = "govuk-input--width-10",
+                suffix = Some(PrefixOrSuffix(
+                    classes = "pul-btn-search",
+                    content = HtmlContent (
+                        button(Button(
+                            content = HtmlContent(
+                                <svg class="gem-c-search__icon" width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                                    <circle cx="12.0161" cy="11.0161" r="8.51613" stroke="currentColor" stroke-width="3"></circle>
+                                    <line x1="17.8668" y1="17.3587" x2="26.4475" y2="25.9393" stroke="currentColor" stroke-width="3"></line>
+                                </svg>.toString
+                            )
+                        ))
+                    )
+                )),
+                value = searchQuery
+            ))
+        </form>
+    </div>
+    @if(records.isEmpty) {
+        <p class="govuk-body">No results found@for(team <- filterByTeam){ for team <b>@team</b>}@for(str <- searchQuery){ containing <b>@str</b>}.</p>
+    } else {
+        @table(Table(
+            head = Some(
+                "entryId,saUtr,nino,idp,idpId,status,group,addedBy"
+                    .split(",").toIndexedSeq
+                    .map( prop => HeadCell(Text(messages(s"protectedUser.$prop"))) )
+            ),
+            rows = records map { record =>
+                val taxId = record.body.taxId match {
+                    case TaxIdentifier(SAUTR, value) => Seq(value, "")
+                    case TaxIdentifier( NINO, value) => Seq("", value)
+                }
+                val status = record.body.identityProviderId match {
+                    case Some(id) => Seq(id.name, id.value,  "Locked")
+                    case None     => Seq(     "",       "", "Blocked")
+                }
+                val metaData = Seq(record.body.group, record.body.addedByTeam getOrElse "")
+
+                record.entryId +: (taxId ++ status ++ metaData) map { data =>
+                    TableRow(Text(data))
+                }
+            }
+        ))
+    }
+}

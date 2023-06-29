@@ -18,24 +18,18 @@ package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.{Entry, ProtectedUser, ProtectedUserRecord}
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.ResultExtractors
 import util.Generators
 
-class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Generators with ScalaFutures with ScalaCheckDrivenPropertyChecks {
-  implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
-
+class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Generators {
   "AddEntryController" should {
-
     "return CREATED when add is successful" in new Setup {
-      forAll(validRequestEntryGen, protectedUserRecordGen, nonEmptyStringGen) { (entry, protectedUserRecord, pid) =>
+      forAll(validRequestEntryGen, protectedUserRecords, nonEmptyStringGen) { (entry, record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(addedByUser = Some(pid))
 
-        expectAddEntryToBeSuccessful(protectedUserRecord, expectedEntry.toProtectedUser())
+        expectAddEntryToBeSuccessful(record, expectedEntry.toProtectedUser())
 
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/add"))

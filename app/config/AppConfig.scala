@@ -21,49 +21,49 @@ import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
+import scala.util.Try
 
 @Singleton
 class AppConfig @Inject() (val configuration: Configuration, servicesConfig: ServicesConfig) {
-  private def getString(key: String) = configuration.get[String](key)
-  private def getBoolean(key: String) = configuration.get[Boolean](key)
+  import configuration.underlying._
 
   lazy val appName: String = getString("appName")
 
   lazy val analyticsConfig: AnalyticsConfig = AnalyticsConfig(analyticsToken = getString(s"google-analytics.token"), analyticsHost = getString(s"google-analytics.host"))
 
-  lazy val authStrideEnrolments: AuthStrideEnrolmentsConfig =
-    AuthStrideEnrolmentsConfig(
-      strideLoginBaseUrl = getString("authentication.stride.loginBaseUrl"),
-      strideSuccessUrl = getString("authentication.stride.successReturnUrl"),
-      strideEnrolments = configuration
-        .get[Seq[String]]("authentication.stride.enrolments")
-        .map(Enrolment.apply)
-        .toSet
-    )
+  lazy val authStrideEnrolments: StrideConfig = StrideConfig(
+    strideLoginBaseUrl = getString("authentication.stride.loginBaseUrl"),
+    strideSuccessUrl = getString("authentication.stride.successReturnUrl"),
+    strideEnrolments = configuration
+      .get[Seq[String]]("authentication.stride.enrolments")
+      .map(Enrolment.apply)
+      .toSet
+  )
 
   lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
-    shutterService = getBoolean("si-protected-user.shutter-service"),
+    dashboardUrl = Try(servicesConfig.baseUrl("account-protection-tools-dashboard")) getOrElse "http://gov.uk",
     identityProviders = configuration.get[Seq[String]]("si-protected-user.identity-providers"),
     addedByTeams = configuration.get[Seq[String]]("si-protected-user.added-by-teams")
   )
 
-  lazy val backendConfig = BackendConfig(
+  lazy val backendConfig: BackendConfig = BackendConfig(
     endpoint = servicesConfig.baseUrl("si-protected-user-list-admin"),
-    contextRoot = servicesConfig.getConfString(s"si-protected-user-list-admin.context-root",
-                                               throw new RuntimeException(s"Could not find config key 'si-protected-user-list-admin.context-root'")
-                                              )
+    contextRoot = servicesConfig.getConfString(
+      s"si-protected-user-list-admin.context-root",
+      throw new RuntimeException(s"Could not find config key 'si-protected-user-list-admin.context-root'")
+    )
   )
 
-  lazy val sessionCacheConfig = SessionCacheConfig(
+  lazy val sessionCacheConfig: SessionCacheConfig = SessionCacheConfig(
     baseUri = servicesConfig.baseUrl("cacheable.session-cache"),
     domain = servicesConfig.getConfString("cacheable.session-cache.domain", throw new RuntimeException("missing required config cacheable.session-cache.domain"))
   )
 }
 
 case class AnalyticsConfig(analyticsToken: String, analyticsHost: String)
-case class AuthStrideEnrolmentsConfig(strideLoginBaseUrl: String, strideSuccessUrl: String, strideEnrolments: Set[Enrolment])
+case class StrideConfig(strideLoginBaseUrl: String, strideSuccessUrl: String, strideEnrolments: Set[Enrolment])
 case class SiProtectedUserConfig(
-  shutterService: Boolean,
+  dashboardUrl: String,
   identityProviders: Seq[String],
   addedByTeams: Seq[String]
 )

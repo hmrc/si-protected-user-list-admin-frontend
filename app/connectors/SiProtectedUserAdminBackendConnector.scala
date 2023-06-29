@@ -18,61 +18,67 @@ package connectors
 
 import config.BackendConfig
 import models.{ProtectedUser, ProtectedUserRecord}
-import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, HttpResponse, NotFoundException, UpstreamErrorResponse}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+import util.{Failure, Success}
 
 @Singleton
-class SiProtectedUserAdminBackendConnector @Inject() (backendConfig: BackendConfig, httpClient: HttpClient)(implicit
-  ec: ExecutionContext
-) {
+class SiProtectedUserAdminBackendConnector @Inject() (
+  backendConfig: BackendConfig,
+  httpClient: HttpClient
+)(implicit ec: ExecutionContext) {
+  private val backendUrl = backendConfig.endpoint + "/" + backendConfig.contextRoot
 
-  def addEntry(protectedUser: ProtectedUser)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] = {
+  def addEntry(protectedUser: ProtectedUser)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
     httpClient
-      .POST[JsObject, Either[UpstreamErrorResponse, ProtectedUserRecord]](
-        s"${backendConfig.endpoint}/${backendConfig.contextRoot}/add",
-        Json.toJsObject(protectedUser)
+      .POST[ProtectedUser, ProtectedUserRecord](s"$backendUrl/add", protectedUser)
+      .transform(
+        identity,
+        {
+          case UpstreamErrorResponse(_, 409, _, _) => new ConflictException("Conflict")
+          case err                                 => err
+        }
       )
-      .map {
-        case Left(UpstreamErrorResponse(_, 409, _, _)) => throw new ConflictException("Conflict")
-        case Left(err)                                 => throw err
-        case Right(user)                               => user
-      }
-  }
 
-  def updateEntry(entryId: String, protectedUser: ProtectedUser)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] = {
+  def updateEntry(entryId: String, protectedUser: ProtectedUser)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
     httpClient
-      .PATCH[JsObject, Either[UpstreamErrorResponse, ProtectedUserRecord]](
-        s"${backendConfig.endpoint}/${backendConfig.contextRoot}/update/$entryId",
-        Json.toJsObject(protectedUser)
+      .PATCH[ProtectedUser, ProtectedUserRecord](s"$backendUrl/update/$entryId", protectedUser)
+      .transform(
+        identity,
+        {
+          case UpstreamErrorResponse(_, 409, _, _) => new ConflictException("Conflict")
+          case UpstreamErrorResponse(_, 404, _, _) => new NotFoundException("Entry to update was already deleted")
+          case err                                 => err
+        }
       )
-      .map {
-        case Left(UpstreamErrorResponse(_, 409, _, _)) => throw new ConflictException("Conflict")
-        case Left(UpstreamErrorResponse(_, 404, _, _)) => throw new NotFoundException("Entry to update was already deleted")
-        case Left(err)                                 => throw err
-        case Right(user)                               => user
-      }
-  }
 
   def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
     httpClient
-      .GET[Either[UpstreamErrorResponse, ProtectedUserRecord]](
-        url = s"${backendConfig.endpoint}/${backendConfig.contextRoot}/entry-id/$entryId"
-      )
-      .flatMap {
-        case Right(user)                               => Future.successful(Some(user))
-        case Left(UpstreamErrorResponse(_, 404, _, _)) => Future.successful(None)
-        case Left(err)                                 => Future.failed(err)
+      .GET[ProtectedUserRecord](s"$backendUrl/entry-id/$entryId")
+      .transform {
+        case Success(user)                                => Success(Some(user))
+        case Failure(UpstreamErrorResponse(_, 404, _, _)) => Success(None)
+        case Failure(err)                                 => Failure(err)
       }
   }
 
-  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
+  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] =
     httpClient
-      .DELETE[Either[UpstreamErrorResponse, HttpResponse]](
-        url = s"${backendConfig.endpoint}/${backendConfig.contextRoot}/entry-id/$entryId"
-      )
+      .DELETE[Either[UpstreamErrorResponse, HttpResponse]](url = s"$backendUrl/entry-id/$entryId")
+
+  def findEntries(teamOpt: Option[String], queryOpt: Option[String])(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] = {
+    var queryString = Map(
+      "filterByTeam" -> teamOpt,
+      "searchQuery"  -> queryOpt
+    )
+      .collect { case (key, Some(value)) => s"$key=$value" }
+      .mkString("&")
+
+    if (queryString.nonEmpty) queryString = s"?$queryString"
+
+    httpClient.GET[Seq[ProtectedUserRecord]](s"$backendUrl/record/$queryString")
   }
 }

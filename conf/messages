@@ -11,12 +11,23 @@ continue.button = Continue
 home.button = Home
 delete.button = Delete
 
+protectedUser.entryId = Entry ID
+protectedUser.saUtr   = SA UTR
+protectedUser.nino    = NINO
+protectedUser.idp     = Identity Provider
+protectedUser.idpId   = Identity Provider ID
+protectedUser.status  = Status
+protectedUser.group   = Group
+protectedUser.addedBy = Added by Team
+
 home.page.title = MDTP User Admin - SI Protected Users
 home.page.header = SI Protected User List Admin
-home.page.button = Add to Allowlist
-home.page.delete.button = Remove from Allowlist
-home.page.bulk.button = Bulk Add to Allowlist
-home.page.get.all =List entries in Allowlist
+home.page.filterBy = Filter by
+home.page.add = Add to Allowlist
+home.page.bulkAdd = Bulk Add to Allowlist
+home.page.delete = Remove from Allowlist
+home.page.search = Search
+home.page.get.all = List entries in Allowlist
 home.page.merge = Merge Data from OTP
 
 

@@ -24,24 +24,25 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class SiProtectedUserListService @Inject() (siProtectedUserAdminBackendConnector: SiProtectedUserAdminBackendConnector) {
-
+class SiProtectedUserListService @Inject() (backendConnector: SiProtectedUserAdminBackendConnector) {
   def addEntry(entry: Entry)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] = {
-    siProtectedUserAdminBackendConnector.addEntry(entry.toProtectedUser())
+    backendConnector.addEntry(entry.toProtectedUser())
   }
-  def updateEntry(entry: Entry)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] = {
+
+  def updateEntry(entry: Entry)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
     entry.entryId match {
-      case Some(entryId) => siProtectedUserAdminBackendConnector.updateEntry(entryId, entry.toProtectedUser())
+      case Some(entryId) => backendConnector.updateEntry(entryId, entry.toProtectedUser())
       case None          => Future.failed(new IllegalArgumentException("entryId not present for update"))
     }
 
-  }
-
   def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
-    siProtectedUserAdminBackendConnector.findEntry(entryId)
+    backendConnector.findEntry(entryId)
   }
 
   def deleteEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
-    siProtectedUserAdminBackendConnector.deleteEntry(entryId)
+    backendConnector.deleteEntry(entryId)
   }
+
+  def findEntries(teamOpt: Option[String], queryOpt: Option[String])(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] =
+    backendConnector.findEntries(teamOpt, queryOpt)
 }

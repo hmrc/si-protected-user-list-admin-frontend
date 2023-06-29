@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package controllers.actions
+package controllers.base
 
-import play.api.mvc.{Request, WrappedRequest}
+import play.api.Logging
+import play.api.i18n.I18nSupport
+import play.api.mvc.{ActionBuilder, AnyContent, MessagesControllerComponents}
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
-final case class StrideRequest[A](
-  underlying: Request[A],
-  clientIdOpt: Option[String]
-) extends WrappedRequest[A](underlying) {
-  def clientId: String = clientIdOpt getOrElse "UnknownUserId"
+abstract class StrideController(mcc: MessagesControllerComponents) extends FrontendController(mcc) with I18nSupport with Logging {
+  protected val strideAction: StrideAction
+
+  protected def StrideAction: ActionBuilder[StrideRequest, AnyContent] = Action andThen strideAction
 }

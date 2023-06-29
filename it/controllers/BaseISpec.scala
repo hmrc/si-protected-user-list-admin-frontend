@@ -16,7 +16,10 @@
 
 package controllers
 
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.i18n.{Lang, MessagesApi, MessagesImpl, MessagesProvider}
 import play.api.libs.ws.WSCookie
 import play.api.mvc.{Cookie, Session, SessionCookieBaker}
@@ -25,8 +28,11 @@ import uk.gov.hmrc.crypto.PlainText
 import uk.gov.hmrc.gg.test.WireMockSpec
 import uk.gov.hmrc.http.SessionKeys
 import uk.gov.hmrc.play.bootstrap.frontend.filters.crypto.SessionCookieCrypto
+import util.Generators
 
-trait BaseISpec extends WireMockSpec with GuiceOneServerPerSuite with Injecting {
+trait BaseISpec extends WireMockSpec with GuiceOneServerPerSuite with Injecting with ScalaFutures with Generators with ScalaCheckDrivenPropertyChecks {
+  protected implicit val pc: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
+
   val backendBaseUrl = "/si-protected-user-list-admin"
   val frontEndBaseUrl = "/account-protection-tools/protected-user-list"
   implicit val mp: MessagesProvider = MessagesImpl(Lang("en"), inject[MessagesApi])

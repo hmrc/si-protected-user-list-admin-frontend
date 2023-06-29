@@ -16,60 +16,49 @@
 
 package controllers
 
-import config.SiProtectedUserConfig
-import controllers.actions.StrideAction
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import play.api.test.{FakeRequest, Injecting}
-import services.SiProtectedUserListService
-import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.gg.test.UnitSpec
+import org.scalacheck.Gen
+import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
-import util.Generators
-import views.Views
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOneAppPerSuite with Generators with ScalaCheckDrivenPropertyChecks {
-  implicit val hc: HeaderCarrier = HeaderCarrier()
+class SiProtectedUserControllerSpec extends BaseControllerSpec {
 
-  trait Setup {
-    private implicit val ec: ExecutionContext = inject[ExecutionContext]
-    val defaultSiProtectedUserConfig = siProtectedUserConfigGen.sample.get
-    val defaultAuthStrideEnrolmentsConfigGen = authStrideEnrolmentsConfigGen.sample.get
-    val appName = nonEmptyStringGen.sample.get
+  private def siProtectedUserController =
+    new SiProtectedUserController(
+      stubStrideActions.sample.get,
+      mockBackendService,
+      injectViews,
+      Stubs.stubMessagesControllerComponents()
+    )
 
-    val mockAuthConnector: AuthConnector = mock[AuthConnector]
-    when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some("stride-pid")))
-    val mockProtectedUserService = mock[SiProtectedUserListService]
-    val views = inject[Views]
-
-    def siProtectedUserController(siProtectedUserConfig: SiProtectedUserConfig = defaultSiProtectedUserConfig): SiProtectedUserController =
-      new SiProtectedUserController(
-        siProtectedUserConfig,
-        mockProtectedUserService,
-        views,
-        Stubs.stubMessagesControllerComponents(),
-        new StrideAction(mockAuthConnector, defaultAuthStrideEnrolmentsConfigGen, appName)
-      )(ExecutionContext.Implicits.global)
-  }
+  when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)) thenReturn Future.successful(Some("stride-pid"))
 
   "homepage" should {
-    "display the correct html page" in new Setup {
-      val result = await(siProtectedUserController().homepage()(FakeRequest()))
-      status(result) shouldBe OK
-      val body = contentAsString(result)
-      body should include("home.page.title")
+    "display the correct html page" in {
+      forAll(Gen listOf protectedUserRecords) { listOfRecords =>
+        when {
+          mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])
+        } thenReturn Future(listOfRecords)
+
+        val result = await(siProtectedUserController.homepage(None, None)(FakeRequest()))
+        status(result) shouldBe OK
+        val body = contentAsString(result)
+        body should include("home.page.title")
+      }
     }
   }
 
   "view" should {
-    "Retrieve user and forward to details template" in new Setup {
-      forAll(protectedUserRecordGen) { protectedUser =>
-        when(mockProtectedUserService.findEntry(eqTo(protectedUser.entryId))(*)).thenReturn(Future.successful(Some(protectedUser)))
+    "Retrieve user and forward to details template" in {
+      forAll(protectedUserRecords) { record =>
+        when {
+          mockBackendService.findEntry(eqTo(record.entryId))(*)
+        } thenReturn Future.successful(Some(record))
 
-        val result = await(siProtectedUserController().view(entryId = protectedUser.entryId)(FakeRequest()))
+        val result = await(siProtectedUserController.view(entryId = record.entryId)(FakeRequest()))
         status(result) shouldBe OK
         val body = contentAsString(result)
         body should include("view.entry.title")
@@ -87,10 +76,13 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
       }
     }
 
-    "Forward to error page with NOT_FOUND when entry doesnt exist" in new Setup {
-      forAll(protectedUserRecordGen) { pu =>
-        when(mockProtectedUserService.findEntry(eqTo(pu.entryId))(*)).thenReturn(Future.successful(None))
-        val result = await(siProtectedUserController().view(pu.entryId)(FakeRequest()))
+    "Forward to error page with NOT_FOUND when entry doesnt exist" in {
+      forAll(protectedUserRecords) { record =>
+        when {
+          mockBackendService.findEntry(eqTo(record.entryId))(*)
+        } thenReturn Future.successful(None)
+
+        val result = siProtectedUserController.view(record.entryId)(FakeRequest())
         status(result) shouldBe NOT_FOUND
         val body = contentAsString(result)
         body should include("error.not.found")
@@ -98,16 +90,17 @@ class SiProtectedUserControllerSpec extends UnitSpec with Injecting with GuiceOn
       }
     }
 
-    "Forward to error page with INTERNAL_SERVER_ERROR when there is an exception" in new Setup {
-      forAll(protectedUserRecordGen) { protectedUserRecord =>
-        when(mockProtectedUserService.findEntry(eqTo(protectedUserRecord.entryId))(*)).thenReturn(Future.failed(new Exception("some exception")))
-        val result = await(siProtectedUserController().view(protectedUserRecord.entryId)(FakeRequest()))
-        status(result) shouldBe INTERNAL_SERVER_ERROR
-        val body = contentAsString(result)
-        body should include("error.internal_server_error")
+    "Forward to error page with INTERNAL_SERVER_ERROR when there is an exception" in {
+      forAll(protectedUserRecords) { record =>
+        when {
+          mockBackendService.findEntry(eqTo(record.entryId))(*)
+        } thenReturn Future.failed(new Exception("some exception"))
+
+        val result = siProtectedUserController.view(record.entryId)(FakeRequest())
+
+        status(result)        shouldBe INTERNAL_SERVER_ERROR
+        contentAsString(result) should include("error.internal_server_error")
       }
     }
-
   }
-
 }

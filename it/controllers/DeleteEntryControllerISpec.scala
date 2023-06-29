@@ -18,25 +18,18 @@ package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.ProtectedUserRecord
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.ResultExtractors
-import util.Generators
 
-class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors with Generators with ScalaFutures with ScalaCheckDrivenPropertyChecks {
-  implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
-
+class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
   "SiProtectedUserController" should {
-
     "return OK when confirm-delete successful" in new Setup {
-      forAll(protectedUserRecordGen, nonEmptyStringGen) { (protectedUserRecord, pid) =>
+      forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
-        expectFindEntryToBeSuccessful(protectedUserRecord)
+        expectFindEntryToBeSuccessful(record)
 
         val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/confirm-delete/${protectedUserRecord.entryId}"))
+          .url(resource(s"$frontEndBaseUrl/confirm-delete/${record.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .get()
@@ -47,12 +40,12 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors with Ge
     }
 
     "return OK when entry is deleted" in new Setup {
-      forAll(protectedUserRecordGen, nonEmptyStringGen) { (protectedUserRecord, pid) =>
+      forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
-        expectDeleteEntryToBeSuccessful(protectedUserRecord)
+        expectDeleteEntryToBeSuccessful(record)
 
         val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/delete-entry/${protectedUserRecord.entryId}"))
+          .url(resource(s"$frontEndBaseUrl/delete-entry/${record.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .get()
@@ -63,12 +56,12 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors with Ge
     }
 
     "return NOT_FOUND when no entry is found to delete" in new Setup {
-      forAll(protectedUserRecordGen, nonEmptyStringGen) { (protectedUserRecord, pid) =>
+      forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
-        expectDeleteEntryToFailWithNotFound(protectedUserRecord)
+        expectDeleteEntryToFailWithNotFound(record)
 
         val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/delete-entry/${protectedUserRecord.entryId}"))
+          .url(resource(s"$frontEndBaseUrl/delete-entry/${record.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .delete()

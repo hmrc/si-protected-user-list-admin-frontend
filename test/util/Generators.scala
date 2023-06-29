@@ -16,7 +16,7 @@
 
 package util
 
-import config.{AuthStrideEnrolmentsConfig, SiProtectedUserConfig}
+import config.{SiProtectedUserConfig, StrideConfig}
 import models.InputForms.groupMaxLength
 import models._
 import org.scalacheck.Gen
@@ -61,25 +61,24 @@ trait Generators {
     addedByUser = addedByUser
   )
 
-  val validRequestEntryGen = entryGen.map(_.copy(entryId = None, addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
+  val validRequestEntryGen: Gen[Entry] = entryGen.map(_.copy(entryId = None, addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
   val validEditEntryGen = entryGen.map(_.copy(addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
 
   val siProtectedUserConfigGen: Gen[SiProtectedUserConfig] = for {
-    shutterService    <- Gen.const(false)
     num               <- Gen.chooseNum(1, 10)
     addedByTeams      <- Gen.listOfN(num, nonEmptyStringGen)
     identityProviders <- Gen.listOfN(num, nonEmptyStringGen)
   } yield SiProtectedUserConfig(
-    shutterService = shutterService,
+    dashboardUrl = "http://gov.uk",
     identityProviders = identityProviders,
     addedByTeams = addedByTeams
   )
 
-  val authStrideEnrolmentsConfigGen: Gen[AuthStrideEnrolmentsConfig] = for {
+  val authStrideEnrolmentsConfigGen: Gen[StrideConfig] = for {
     strideLoginBaseUrl <- nonEmptyStringGen
     strideSuccessUrl   <- nonEmptyStringGen
     strideEnrolments   <- Gen.const(Set.empty[Enrolment])
-  } yield AuthStrideEnrolmentsConfig(strideLoginBaseUrl = strideLoginBaseUrl, strideSuccessUrl = strideSuccessUrl, strideEnrolments = strideEnrolments)
+  } yield StrideConfig(strideLoginBaseUrl = strideLoginBaseUrl, strideSuccessUrl = strideSuccessUrl, strideEnrolments = strideEnrolments)
 
   val taxIdTypeGen: Gen[TaxIdentifierType] = Gen.oneOf(TaxIdentifierType.values)
 
@@ -112,16 +111,16 @@ trait Generators {
     updatedByTeam = updatedByTeam
   )
 
-  val protectedUserRecordGen: Gen[ProtectedUserRecord] = for {
-    entryId      <- nonEmptyStringGen
-    firstCreated <- Gen.posNum[Long]
-    lastUpdated  <- Gen.option(Gen.posNum[Long])
-    body         <- protectedUserGen
-
-  } yield ProtectedUserRecord(
-    entryId = entryId,
-    firstCreated = firstCreated,
-    lastUpdated = lastUpdated,
-    body = body
-  )
+  val protectedUserRecords: Gen[ProtectedUserRecord] =
+    for {
+      entryId      <- nonEmptyStringGen
+      firstCreated <- Gen.posNum[Long]
+      lastUpdated  <- Gen.option(Gen.posNum[Long])
+      body         <- protectedUserGen
+    } yield ProtectedUserRecord(
+      entryId = entryId,
+      firstCreated = firstCreated,
+      lastUpdated = lastUpdated,
+      body = body
+    )
 }
