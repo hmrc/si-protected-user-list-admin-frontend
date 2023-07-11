@@ -18,6 +18,7 @@ package controllers
 
 import org.scalacheck.Gen
 import play.api.test.FakeRequest
+import uk.gov.hmrc.auth.core.{InsufficientEnrolments, MissingBearerToken}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
 
@@ -34,19 +35,40 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
       Stubs.stubMessagesControllerComponents()
     )
 
-  when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)) thenReturn Future.successful(Some("stride-pid"))
 
   "homepage" should {
     "display the correct html page" in {
       forAll(Gen listOf protectedUserRecords) { listOfRecords =>
-        when {
-          mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])
-        } thenReturn Future(listOfRecords)
+        expectStrideAuthenticated {
+          when {
+            mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])
+          } thenReturn Future(listOfRecords)
+
+          val result = await(siProtectedUserController.homepage(None, None)(FakeRequest()))
+          status(result) shouldBe OK
+          val body = contentAsString(result)
+          body should include("home.page.title")
+        }
+      }
+    }
+
+    "redirect to sign in when no active session" in {
+      forAll(Gen listOf protectedUserRecords) { listOfRecords =>
+        when(mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])).thenReturn(Future(listOfRecords))
+        when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.failed(MissingBearerToken()))
 
         val result = await(siProtectedUserController.homepage(None, None)(FakeRequest()))
-        status(result) shouldBe OK
-        val body = contentAsString(result)
-        body should include("home.page.title")
+        status(result) shouldBe SEE_OTHER
+      }
+    }
+
+    "return unauthorized when insufficient privs" in {
+      forAll(Gen listOf protectedUserRecords) { listOfRecords =>
+        when(mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])).thenReturn(Future(listOfRecords))
+        when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.failed(InsufficientEnrolments()))
+
+        val result = await(siProtectedUserController.homepage(None, None)(FakeRequest()))
+        status(result) shouldBe UNAUTHORIZED
       }
     }
   }
@@ -54,52 +76,58 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
   "view" should {
     "Retrieve user and forward to details template" in {
       forAll(protectedUserRecords) { record =>
-        when {
-          mockBackendService.findEntry(eqTo(record.entryId))(*)
-        } thenReturn Future.successful(Some(record))
+        expectStrideAuthenticated {
+          when {
+            mockBackendService.findEntry(eqTo(record.entryId))(*)
+          } thenReturn Future.successful(Some(record))
 
-        val result = await(siProtectedUserController.view(entryId = record.entryId)(FakeRequest()))
-        status(result) shouldBe OK
-        val body = contentAsString(result)
-        body should include("view.entry.title")
-        body should include("view.entry.header")
-        body should include("protectedUser.details.entryId")
-        body should include("protectedUser.details.status")
-        body should include("protectedUser.details.identityProvider")
-        body should include("protectedUser.details.identityProviderId")
-        body should include("protectedUser.details.group")
-        body should include("protectedUser.details.addedByTeam")
-        body should include("protectedUser.details.addedOn")
-        body should include("protectedUser.details.updatedOn")
-        body should include("edit.button")
-        body should include("delete.button")
+          val result = await(siProtectedUserController.view(entryId = record.entryId)(FakeRequest()))
+          status(result) shouldBe OK
+          val body = contentAsString(result)
+          body should include("view.entry.title")
+          body should include("view.entry.header")
+          body should include("protectedUser.details.entryId")
+          body should include("protectedUser.details.status")
+          body should include("protectedUser.details.identityProvider")
+          body should include("protectedUser.details.identityProviderId")
+          body should include("protectedUser.details.group")
+          body should include("protectedUser.details.addedByTeam")
+          body should include("protectedUser.details.addedOn")
+          body should include("protectedUser.details.updatedOn")
+          body should include("edit.button")
+          body should include("delete.button")
+        }
       }
     }
 
     "Forward to error page with NOT_FOUND when entry doesnt exist" in {
       forAll(protectedUserRecords) { record =>
-        when {
-          mockBackendService.findEntry(eqTo(record.entryId))(*)
-        } thenReturn Future.successful(None)
+        expectStrideAuthenticated {
+          when {
+            mockBackendService.findEntry(eqTo(record.entryId))(*)
+          } thenReturn Future.successful(None)
 
-        val result = siProtectedUserController.view(record.entryId)(FakeRequest())
-        status(result) shouldBe NOT_FOUND
-        val body = contentAsString(result)
-        body should include("error.not.found")
-        body should include("protectedUser.details.not.found")
+          val result = siProtectedUserController.view(record.entryId)(FakeRequest())
+          status(result) shouldBe NOT_FOUND
+          val body = contentAsString(result)
+          body should include("error.not.found")
+          body should include("protectedUser.details.not.found")
+        }
       }
     }
 
     "Forward to error page with INTERNAL_SERVER_ERROR when there is an exception" in {
       forAll(protectedUserRecords) { record =>
-        when {
-          mockBackendService.findEntry(eqTo(record.entryId))(*)
-        } thenReturn Future.failed(new Exception("some exception"))
+        expectStrideAuthenticated {
+          when {
+            mockBackendService.findEntry(eqTo(record.entryId))(*)
+          } thenReturn Future.failed(new Exception("some exception"))
 
-        val result = siProtectedUserController.view(record.entryId)(FakeRequest())
+          val result = siProtectedUserController.view(record.entryId)(FakeRequest())
 
-        status(result)        shouldBe INTERNAL_SERVER_ERROR
-        contentAsString(result) should include("error.internal_server_error")
+          status(result)        shouldBe INTERNAL_SERVER_ERROR
+          contentAsString(result) should include("error.internal_server_error")
+        }
       }
     }
   }
