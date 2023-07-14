@@ -24,3 +24,4 @@ lazy val microservice = Project("si-protected-user-list-admin-frontend", file(".
     )
   )
   .configs(IntegrationTest)
+  .disablePlugins(JUnitXmlReportPlugin)
