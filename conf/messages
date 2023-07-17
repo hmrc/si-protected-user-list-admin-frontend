@@ -63,8 +63,8 @@ edit.submit.button = Update
 edit.error.not.found = Entry not found
 edit.error.already.deleted = This entry has already been deleted, no action taken
 edit.error.conflict = There is already an existing entry for these details
-edit.success.title = Entry successfully updated
-edit.success.header = Entry successfully updated
+edit.success.title = Entry Successfully Updated
+edit.success.header = Entry Successfully Updated
 edit.success.body = Entry has been successfully updated on the protected user list
 
 form.nino.regex = Invalid Nino
