@@ -33,10 +33,14 @@ siProtectedUserConfig: SiProtectedUserConfig
 )
 
 @(form: Form[Entry])(implicit request: Request[_], messages: Messages)
+@additionalScripts = {
+    <script src='@controllers.routes.Assets.at("javascripts/entry-form.js")'></script>
+}
 
 @mainLayout(
     pageTitle = Messages("add.page.title"),
-    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
+    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url)),
+    scripts = Some(additionalScripts)
 ) {
     @h1("add.page.header")
     @entryForm(form,controllers.routes.AddEntryController.submit(),"add.submit.button")
