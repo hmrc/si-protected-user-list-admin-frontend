@@ -35,7 +35,6 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
       Stubs.stubMessagesControllerComponents()
     )
 
-
   "homepage" should {
     "display the correct html page" in {
       forAll(Gen listOf protectedUserRecords) { listOfRecords =>

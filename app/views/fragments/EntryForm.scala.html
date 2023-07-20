@@ -33,12 +33,12 @@
         siProtectedUserConfig: SiProtectedUserConfig
 )
 
-@(form: Form[Entry], call: Call, submitButtonMessageKey:String )(implicit request: Request[_], messages: Messages)
+@(form: Form[Entry], call: Call, submitButtonMessageKey: String)(implicit request: Request[_], messages: Messages)
 @formTemplate(action = call, args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
     @if(form.errors.nonEmpty) {
         @govukErrorSummary(ErrorSummary().withFormErrorsAsText(form))
     }
-    @input(Input(id="entryId", name="entryId", inputType = "hidden").withFormField(form("entryId")))
+    @input(Input(id = "entryId", name = "entryId", inputType = "hidden").withFormField(form("entryId")))
     @govukSelect(Select(
         id = "action",
         name = "action",
@@ -47,13 +47,15 @@
     ).withFormField(form("action")))
     @input(Input(label = Label(content = Text(Messages("entry.form.nino")), classes = "govuk-!-font-weight-bold"), hint = Some(Hint(content = Text(Messages("entry.form.nino.hint"))))).withFormFieldWithErrorAsHtml(form("nino")))
     @input(Input(label = Label(content = Text(Messages("entry.form.sautr")), classes = "govuk-!-font-weight-bold"), hint = Some(Hint(content = Text(Messages("entry.form.sautr.hint"))))).withFormFieldWithErrorAsHtml(form("sautr")))
-    @govukSelect(Select(
-        id = "identityProvider",
-        name = "identityProvider",
-        items = siProtectedUserConfig.identityProviders.map(identityProvider => SelectItem(Some(identityProvider), identityProvider)),
-        label = Label(content = Text(messages("entry.form.identityProvider")), classes = "govuk-!-font-weight-bold")
-    ).withFormField(form("identityProvider")))
-    @input(Input(label = Label(content = Text(Messages("entry.form.identityProviderId")), classes = "govuk-!-font-weight-bold")).withFormFieldWithErrorAsHtml(form("identityProviderId")))
+    <div id="identityProviderContainer">
+        @govukSelect(Select(
+            id = "identityProvider",
+            name = "identityProvider",
+            items = siProtectedUserConfig.identityProviders.map(identityProvider => SelectItem(Some(identityProvider), identityProvider)),
+            label = Label(content = Text(messages("entry.form.identityProvider")), classes = "govuk-!-font-weight-bold")
+        ).withFormField(form("identityProvider")))
+        @input(Input(label = Label(content = Text(Messages("entry.form.identityProviderId")), classes = "govuk-!-font-weight-bold")).withFormFieldWithErrorAsHtml(form("identityProviderId")))
+    </div>
     @input(Input(label = Label(content = Text(Messages("entry.form.group")), classes = "govuk-!-font-weight-bold"), hint = Some(Hint(content = Text(Messages("entry.form.group.hint"))))).withFormFieldWithErrorAsHtml(form("group")))
     @govukSelect(Select(
         id = "addedByTeam",
