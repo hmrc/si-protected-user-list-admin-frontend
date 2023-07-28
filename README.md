@@ -20,3 +20,5 @@ sbt clean compile coverage test it:test coverageReport
 ```bash
 sbt it:test
 ```
+
+Please see backend si-protected-user-list-admin for usage instructions
