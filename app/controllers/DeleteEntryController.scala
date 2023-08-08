@@ -49,7 +49,7 @@ class DeleteEntryController @Inject() (
       .map {
         case Right(_)                                  => Ok(views.deleteSuccess())
         case Left(UpstreamErrorResponse(_, 404, _, _)) => NotFound(views.errorTemplate("delete.entry.not.found", "delete.entry.not.found", "delete.entry.already.deleted"))
-        case Left(err)                                 => InternalServerError(views.errorTemplate("error.internal_server_error", "error.internal_server_error", err.getMessage))
+        case Left(err)                                 => InternalServerError(views.somethingWentWrong())
       }
   }
 }

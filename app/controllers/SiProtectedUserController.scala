@@ -49,6 +49,6 @@ class SiProtectedUserController @Inject() (
         case Some(protectedUser) => Ok(views.view(protectedUser))
         case None                => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
       }
-      .recover { case exception => InternalServerError(views.errorTemplate("error.internal_server_error", "error.internal_server_error", exception.getMessage)) }
+      .recover { case exception => InternalServerError(views.somethingWentWrong()) }
   }
 }

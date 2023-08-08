@@ -106,7 +106,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
 
           status(result) shouldBe INTERNAL_SERVER_ERROR
           val body = contentAsString(result)
-          body should include("error.internal_server_error")
+          body should include("something.wrong.heading")
         }
       }
     }

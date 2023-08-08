@@ -3,8 +3,10 @@ service.text = This is your new service
 service.unavailable.title = Service is unavailable
 service.unavailable.header = This service is shuttered and currently unavailable
 error.not.found = Not Found
-error.bad.request = Bad Request
-error.internal_server_error = Internal Error
+
+something.wrong.title = Sorry, there is a problem with the service
+something.wrong.heading = Sorry, there is a problem with the service
+something.wrong.p1 = Try again later.
 
 cancel.button = Cancel
 continue.button = Continue
