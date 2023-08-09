@@ -125,7 +125,7 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
           val result = siProtectedUserController.view(record.entryId)(FakeRequest())
 
           status(result)        shouldBe INTERNAL_SERVER_ERROR
-          contentAsString(result) should include("error.internal_server_error")
+          contentAsString(result) should include("something.wrong.heading")
         }
       }
     }
