@@ -23,10 +23,10 @@ protectedUser.group   = Group
 protectedUser.addedBy = Added by Team
 
 home.page.title = MDTP User Admin - SI Protected Users
-home.page.header = SI Protected User List Admin
+home.page.header = SI Protected User List - Admin Console
 home.page.filterBy = Filter by
-home.page.add = Add to Allowlist
-home.page.bulkAdd = Bulk Add to Allowlist
+home.page.add = Add Entry
+home.page.bulkAdd = Bulk Add Entry
 home.page.delete = Remove from Allowlist
 home.page.search = Search
 home.page.get.all = List entries in Allowlist

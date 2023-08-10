@@ -41,7 +41,7 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
   )
 
   lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
-    dashboardUrl = Try(servicesConfig.baseUrl("account-protection-tools-dashboard")) getOrElse "http://gov.uk",
+    dashboardUrl = configuration.get[String]("account-protection-tools-dashboard-linkUrl"),
     identityProviders = configuration.get[Seq[String]]("si-protected-user.identity-providers"),
     addedByTeams = configuration.get[Seq[String]]("si-protected-user.added-by-teams")
   )
