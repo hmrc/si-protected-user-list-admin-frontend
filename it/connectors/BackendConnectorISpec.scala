@@ -25,10 +25,10 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, NotFoundException}
 import util.Generators
 
-class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generators with ScalaCheckDrivenPropertyChecks with ScalaFutures with EitherValues {
+class BackendConnectorISpec extends BaseISpec with Generators with ScalaCheckDrivenPropertyChecks with ScalaFutures with EitherValues {
 
   implicit private val headerCarrier: HeaderCarrier = HeaderCarrier()
-  private val siProtectedUserAdminBackendConnector = inject[SiProtectedUserAdminBackendConnector]
+  private val siProtectedUserAdminBackendConnector = inject[BackendConnector]
 
   "SiProtectedUserAdminBackendConnector" should {
     "return a ProtectedUserRecord when addEntry is successful" in {
@@ -39,7 +39,7 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
             .willReturn(ok(Json.toJsObject(userRecord).toString()))
         )
 
-        val result = siProtectedUserAdminBackendConnector.addEntry(user).futureValue
+        val result = siProtectedUserAdminBackendConnector.insertNew(user).futureValue
 
         result shouldBe userRecord
       }
@@ -53,7 +53,7 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
             .willReturn(aResponse().withStatus(CONFLICT))
         )
 
-        val result = siProtectedUserAdminBackendConnector.addEntry(user).failed.futureValue
+        val result = siProtectedUserAdminBackendConnector.insertNew(user).failed.futureValue
         result shouldBe a[ConflictException]
       }
 
@@ -65,7 +65,7 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
             .willReturn(ok(Json.toJsObject(record).toString()))
         )
 
-        val result = siProtectedUserAdminBackendConnector.updateEntry(record.entryId, record.body).futureValue
+        val result = siProtectedUserAdminBackendConnector.updateBy(record.entryId, record.body).futureValue
 
         result shouldBe record
       }
@@ -78,7 +78,7 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
             .willReturn(aResponse().withStatus(CONFLICT))
         )
 
-        val result = siProtectedUserAdminBackendConnector.updateEntry(record.entryId, record.body).failed.futureValue
+        val result = siProtectedUserAdminBackendConnector.updateBy(record.entryId, record.body).failed.futureValue
         result shouldBe a[ConflictException]
       }
 
@@ -90,7 +90,7 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
             .willReturn(aResponse().withStatus(NOT_FOUND))
         )
 
-        val result = siProtectedUserAdminBackendConnector.updateEntry(record.entryId, record.body).failed.futureValue
+        val result = siProtectedUserAdminBackendConnector.updateBy(record.entryId, record.body).failed.futureValue
         result shouldBe a[NotFoundException]
       }
 
@@ -102,7 +102,7 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
             .willReturn(ok(Json.toJsObject(record).toString()))
         )
 
-        val result = siProtectedUserAdminBackendConnector.findEntry(record.entryId).futureValue
+        val result = siProtectedUserAdminBackendConnector.findBy(record.entryId).futureValue
         result shouldBe Some(record)
       }
 
@@ -114,7 +114,7 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
             .willReturn(aResponse().withStatus(NOT_FOUND))
         )
 
-        val result = siProtectedUserAdminBackendConnector.findEntry(record.entryId).futureValue
+        val result = siProtectedUserAdminBackendConnector.findBy(record.entryId).futureValue
         result shouldBe None
       }
 
@@ -126,7 +126,7 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
             .willReturn(noContent())
         )
 
-        val result = siProtectedUserAdminBackendConnector.deleteEntry(record.entryId).futureValue.value
+        val result = siProtectedUserAdminBackendConnector.deleteBy(record.entryId).futureValue.value
         result.status shouldBe NO_CONTENT
       }
 
@@ -138,7 +138,7 @@ class SiProtectedUserAdminBackendConnectorISpec extends BaseISpec with Generator
             .willReturn(notFound())
         )
 
-        val result = siProtectedUserAdminBackendConnector.deleteEntry(record.entryId).futureValue.left.value
+        val result = siProtectedUserAdminBackendConnector.deleteBy(record.entryId).futureValue.left.value
         result.statusCode shouldBe NOT_FOUND
       }
   }

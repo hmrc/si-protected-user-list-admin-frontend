@@ -16,7 +16,7 @@
 
 package services
 
-import connectors.SiProtectedUserAdminBackendConnector
+import connectors.BackendConnector
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.EitherValues
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -34,24 +34,24 @@ class SiProtectedUserListServiceSpec extends UnitSpec with Generators with Scala
     "Call add on the connector when adding" in {
       forAll(entryGen, protectedUserRecords) { (entry, record) =>
         val expectedProtectedUser = entry.toProtectedUser()
-        when(mockBackendConnector.addEntry(expectedProtectedUser)).thenReturn(Future.successful(record))
+        when(mockBackendConnector.insertNew(expectedProtectedUser)).thenReturn(Future.successful(record))
 
         val result = await(siProtectedUserListService.addEntry(entry))
 
         result shouldBe record
-        verify(mockBackendConnector).addEntry(expectedProtectedUser)
+        verify(mockBackendConnector).insertNew(expectedProtectedUser)
       }
     }
 
     "Call update on the connector when updating" in
       forAll(entryGen, protectedUserRecords) { (entry, record) =>
         val expectedProtectedUser = entry.toProtectedUser()
-        when(mockBackendConnector.updateEntry(entry.entryId.value, expectedProtectedUser)).thenReturn(Future.successful(record))
+        when(mockBackendConnector.updateBy(entry.entryId.value, expectedProtectedUser)).thenReturn(Future.successful(record))
 
         val result = await(siProtectedUserListService.updateEntry(entry))
 
         result shouldBe record
-        verify(mockBackendConnector).updateEntry(entry.entryId.value, expectedProtectedUser)
+        verify(mockBackendConnector).updateBy(entry.entryId.value, expectedProtectedUser)
       }
 
     "Fails when no entryId present for updateEntry" in
@@ -63,7 +63,7 @@ class SiProtectedUserListServiceSpec extends UnitSpec with Generators with Scala
 
     "Call findEntry on the connector when finding" in
       forAll(protectedUserRecords) { record =>
-        when(mockBackendConnector.findEntry(record.entryId)).thenReturn(Future.successful(Some(record)))
+        when(mockBackendConnector.findBy(record.entryId)).thenReturn(Future.successful(Some(record)))
 
         val result = await(siProtectedUserListService.findEntry(record.entryId)).value
         result shouldBe record
@@ -72,7 +72,7 @@ class SiProtectedUserListServiceSpec extends UnitSpec with Generators with Scala
     "Call deleteEntry on the connector when deleting" in
       forAll(protectedUserRecords) { record =>
         val expectedResponse = HttpResponse(Status.NO_CONTENT, "")
-        when(mockBackendConnector.deleteEntry(record.entryId)).thenReturn(Future.successful(Right(expectedResponse)))
+        when(mockBackendConnector.deleteBy(record.entryId)).thenReturn(Future.successful(Right(expectedResponse)))
 
         val result = await(siProtectedUserListService.deleteEntry(record.entryId)).value
         result shouldBe expectedResponse
@@ -80,7 +80,7 @@ class SiProtectedUserListServiceSpec extends UnitSpec with Generators with Scala
   }
 }
 object SiProtectedUserListServiceSpec extends MockitoSugar {
-  private val mockBackendConnector = mock[SiProtectedUserAdminBackendConnector]
+  private val mockBackendConnector = mock[BackendConnector]
   private val siProtectedUserListService = new SiProtectedUserListService(mockBackendConnector)
 
   implicit private val headerCarrier: HeaderCarrier = HeaderCarrier()

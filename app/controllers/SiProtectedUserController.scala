@@ -16,9 +16,9 @@
 
 package controllers
 
+import connectors.BackendConnector
 import controllers.base.{StrideAction, StrideController}
 import play.api.mvc._
-import services.SiProtectedUserListService
 import views.Views
 
 import javax.inject.{Inject, Singleton}
@@ -26,29 +26,26 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class SiProtectedUserController @Inject() (
-  val strideAction: StrideAction,
-  backendService: SiProtectedUserListService,
+  protected val strideAction: StrideAction,
+  backendConnector: BackendConnector,
   views: Views,
   mcc: MessagesControllerComponents
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
-  def homepage(filterByTeam: Option[String], searchQuery: Option[String]): Action[AnyContent] = StrideAction.async { implicit request =>
-    val teamOpt = filterByTeam filterNot "all".equalsIgnoreCase
-    val queryOpt = searchQuery filter (_.nonEmpty)
-
-    backendService
-      .findEntries(teamOpt, queryOpt)
-      .map(entries => Ok(views.home(entries, teamOpt, queryOpt)))
+  def homepage(): Action[AnyContent] = StrideAction.async { implicit request =>
+    backendConnector
+      .findAll()
+      .map(records => Ok(views.home(records)))
   }
 
   def view(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
-    backendService
-      .findEntry(entryId)
+    backendConnector
+      .findBy(entryId)
       .map {
         case Some(protectedUser) => Ok(views.view(protectedUser))
         case None                => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
       }
-      .recover { case exception => InternalServerError(views.somethingWentWrong()) }
+      .recover { case _ => InternalServerError(views.somethingWentWrong()) }
   }
 }

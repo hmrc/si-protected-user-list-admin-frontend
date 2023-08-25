@@ -32,7 +32,7 @@
         table: GovukTable
 )
 
-@(records: Seq[ProtectedUserRecord], filterByTeam: Option[String], searchQuery: Option[String])(implicit req: StrideRequest[_], messages: Messages)
+@(records: Seq[ProtectedUserRecord])(implicit req: StrideRequest[_], messages: Messages)
 
 @beforeContent = {
     <link rel='stylesheet' href='@routes.Assets.at("application.css")'>
@@ -65,8 +65,7 @@
                 },
                 label = Label(content = Text(messages("home.page.filterBy"))),
                 classes = "govuk-input--width-3",
-                attributes = Map("oninput" -> "this.form.submit()"),
-                value = filterByTeam
+                attributes = Map("oninput" -> "this.form.submit()")
             ))
             @input(Input(
                 id = "searchQuery",
@@ -84,22 +83,18 @@
                             )
                         ))
                     )
-                )),
-                value = searchQuery
+                ))
             ))
         </form>
     </div>
     @if(records.isEmpty) {
-        <p class="govuk-body">
-            No results found@for(team <- filterByTeam) { for team <b>@team</b>}@for(str <- searchQuery) {
-            containing <b>@str</b>
-        }.</p>
+        <p class="govuk-body">No results found.</p>
     } else {
         @table(Table(
             head = Some(
                 "entryId,saUtr,nino,idp,idpId,status,group,addedBy"
-                        .split(",").toIndexedSeq
-                        .map(prop => HeadCell(Text(messages(s"protectedUser.$prop"))))
+                    .split(",").toIndexedSeq
+                    .map(prop => HeadCell(Text(messages(s"protectedUser.$prop"))))
             ),
             rows = records map { record =>
                 val taxId = record.body.taxId match {

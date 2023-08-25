@@ -21,7 +21,6 @@ import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
-import scala.util.Try
 
 @Singleton
 class AppConfig @Inject() (val configuration: Configuration, servicesConfig: ServicesConfig) {
@@ -46,7 +45,7 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
     addedByTeams = configuration.get[Seq[String]]("si-protected-user.added-by-teams")
   )
 
-  lazy val backendConfig: BackendConfig = BackendConfig(
+  lazy val backendConfig: BackendConfig = new BackendConfig(
     endpoint = servicesConfig.baseUrl("si-protected-user-list-admin"),
     contextRoot = servicesConfig.getConfString(
       s"si-protected-user-list-admin.context-root",
@@ -68,4 +67,6 @@ case class SiProtectedUserConfig(
   addedByTeams: Seq[String]
 )
 case class SessionCacheConfig(baseUri: String, domain: String)
-case class BackendConfig(endpoint: String, contextRoot: String)
+final class BackendConfig(endpoint: String, contextRoot: String) {
+  def apply(pathSegments: String*): String = endpoint +: contextRoot +: pathSegments mkString "/"
+}
