@@ -1,17 +1,18 @@
 # microservice specific routes
 
-
 GET         /                               controllers.SiProtectedUserController.homepage()
+GET         /view-entry/:entryId            controllers.SiProtectedUserController.view(entryId)
 
-GET         /add                            controllers.AddEntryController.showAddEntryPage()
+GET         /add                            controllers.AddEntryController.show()
 POST        /add                            controllers.AddEntryController.submit()
+GET         /clear                          controllers.AddEntryController.show()
+
 GET         /edit/:entryId                  controllers.EditEntryController.showEditEntryPage(entryId)
 POST        /edit                           controllers.EditEntryController.submit()
-GET         /view-entry/:entryId            controllers.SiProtectedUserController.view(entryId)
+
 GET         /confirm-delete/:entryId        controllers.DeleteEntryController.showConfirmDeletePage(entryId)
 GET         /delete-entry/:entryId          controllers.DeleteEntryController.delete(entryId)
 
-GET         /clear                          controllers.AddEntryController.showAddEntryPage()
 
 GET         /assets/*file                   controllers.Assets.at(path="/public", file)
 

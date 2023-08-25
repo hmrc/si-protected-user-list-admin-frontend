@@ -24,16 +24,16 @@
 @import views.html.fragments.Heading1
 
 @this(
-        formTemplate: FormWithCSRF,
-        h1: Heading1,
-        input: GovukInput,
-        govukErrorSummary: GovukErrorSummary,
-        govukSelect: GovukSelect,
-        govukButton: GovukButton,
-        siProtectedUserConfig: SiProtectedUserConfig
+    formTemplate: FormWithCSRF,
+    h1: Heading1,
+    input: GovukInput,
+    govukErrorSummary: GovukErrorSummary,
+    govukSelect: GovukSelect,
+    govukButton: GovukButton,
+    siProtectedUserConfig: SiProtectedUserConfig
 )
-
 @(form: Form[Entry], call: Call, submitButtonMessageKey: String)(implicit request: Request[_], messages: Messages)
+
 @formTemplate(action = call, args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
     @if(form.errors.nonEmpty) {
         @govukErrorSummary(ErrorSummary().withFormErrorsAsText(form))

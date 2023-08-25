@@ -18,7 +18,7 @@
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.summarylist.{Key, SummaryList, SummaryListRow}
 
 @this(
-        govukSummaryList: GovukSummaryList
+    govukSummaryList: GovukSummaryList
 )
 @(protectedUserRecord: ProtectedUserRecord)(implicit messages: Messages)
 
@@ -31,7 +31,7 @@
             SummaryListRow(key = Key(Text(Messages("protectedUser.details.identityProvider"))), value = Value(content = Text(protectedUserRecord.body.identityProviderId.map(_.name).getOrElse("")))),
             SummaryListRow(key = Key(Text(Messages("protectedUser.details.identityProviderId"))), value = Value(content = Text(protectedUserRecord.body.identityProviderId.map(_.value).getOrElse("")))),
             SummaryListRow(key = Key(Text(Messages("protectedUser.details.group"))), value = Value(content = Text(protectedUserRecord.body.group))),
-            SummaryListRow(key = Key(Text(Messages("protectedUser.details.addedByTeam"))), value = Value(content = Text(protectedUserRecord.body.addedByTeam.getOrElse("")))),
+            SummaryListRow(key = Key(Text(Messages("protectedUser.details.addedByTeam"))), value = Value(content = Text(protectedUserRecord.body.team))),
             SummaryListRow(key = Key(Text(Messages("protectedUser.details.addedOn"))), value = Value(content = Text(protectedUserRecord.formattedFirstCreated()))),
             SummaryListRow(key = Key(Text(Messages("protectedUser.details.updatedOn"))), value = Value(content = Text(protectedUserRecord.formattedLastUpdated().getOrElse("")))),
         )

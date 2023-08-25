@@ -16,7 +16,7 @@
 
 package controllers
 
-import models.Entry
+import models.{Entry, ProtectedUserRecord}
 import org.jsoup.Jsoup
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.ConflictException
@@ -26,6 +26,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class AddEntryControllerSpec extends BaseControllerSpec {
+  import org.scalacheck.Arbitrary.arbitrary
+
   private def controller =
     new AddEntryController(
       mockBackendService,
@@ -46,7 +48,7 @@ class AddEntryControllerSpec extends BaseControllerSpec {
     }
 
     "Forward to confirmation page when add is successful" in {
-      forAll(validRequestEntryGen, protectedUserRecords) { (entry, record) =>
+      forAll(validRequestEntryGen, arbitrary[ProtectedUserRecord]) { (entry, record) =>
         expectStrideAuthenticated { pid =>
           val requestFields = toRequestFields(entry)
           val expectedEntry = entry.copy(addedByUser = Some(pid))

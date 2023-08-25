@@ -35,15 +35,15 @@ abstract class BaseControllerSpec extends UnitSpec with GuiceOneAppPerSuite with
   protected val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
   protected val stubStrideActions: Gen[StrideAction] = for {
-    appName      <- nonEmptyStringGen
+    appName      <- randomNonEmptyAlphaNumStrings
     strideConfig <- authStrideEnrolmentsConfigGen
   } yield new StrideAction(appName, strideConfig, mockAuthConnector)
 
   protected val mockBackendService: SiProtectedUserListService = mock[SiProtectedUserListService]
-  protected val injectViews: Views = app.injector.instanceOf[Views]
+  protected val injectViews:        Views = app.injector.instanceOf[Views]
 
   protected def expectStrideAuthenticated(assertionFrom: String => Unit): Unit = {
-    val stridePid = nonEmptyStringGen.sample.get
+    val stridePid = randomNonEmptyAlphaNumStrings.sample.get
 
     when {
       mockAuthConnector.authorise[Option[String]](any, any)(any, any)

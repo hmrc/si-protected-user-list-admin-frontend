@@ -52,7 +52,7 @@
     <div id="actions">
         <div class="action">
         @button(Button(
-            href = Some(controllers.routes.AddEntryController.showAddEntryPage().url),
+            href = Some(controllers.routes.AddEntryController.show().url),
             content = Text(messages("home.page.add"))
         ))
         </div>
@@ -105,7 +105,7 @@
                     case Some(id) => Seq(id.name, id.value, "Locked")
                     case None => Seq("", "", "Blocked")
                 }
-                val metaData = Seq(record.body.group, record.body.addedByTeam getOrElse "")
+                val metaData = Seq(record.body.group, record.body.team)
 
                viewLink( record.entryId).body +: (taxId ++ status ++ metaData) map { data =>
                     TableRow(HtmlContent(data))

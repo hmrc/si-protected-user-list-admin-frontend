@@ -16,11 +16,11 @@
 
 package controllers
 
+import connectors.BackendConnector
 import controllers.base.{StrideAction, StrideController}
-import models.InputForms.entryForm
+import models.forms.Insert
 import play.api.i18n.Messages
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import services.SiProtectedUserListService
 import uk.gov.hmrc.http.ConflictException
 import views.Views
 
@@ -29,28 +29,26 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AddEntryController @Inject() (
-  siProtectedUserListService: SiProtectedUserListService,
-  views: Views,
-  mcc: MessagesControllerComponents,
+  backendConnector: BackendConnector,
+  views:            Views,
+  mcc:              MessagesControllerComponents,
   val strideAction: StrideAction
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
-  def showAddEntryPage(): Action[AnyContent] = StrideAction(implicit request => Ok(views.add(entryForm)))
+  def show(): Action[AnyContent] = StrideAction(implicit request => Ok(views.add(Insert.form)))
 
   def submit(): Action[AnyContent] = StrideAction.async { implicit request =>
-    entryForm
+    Insert.form
       .bindFromRequest()
       .fold(
         errorForm => Future.successful(BadRequest(views.add(errorForm))),
-        entry => {
-          val entryWithUserId = entry.copy(addedByUser = Some(request.getUserPid))
-
-          siProtectedUserListService
-            .addEntry(entryWithUserId)
+        insertModel => {
+          backendConnector
+            .insertNew(insertModel.toRequestJSON(request.getUserPid))
             .map(protectedUserRecord => Redirect(controllers.routes.SiProtectedUserController.view(protectedUserRecord.entryId)))
             .recover { case _: ConflictException =>
-              Conflict(views.add(entryForm.fill(entry).withGlobalError(Messages("add.error.conflict"))))
+              Conflict(views.add(Insert.form fill insertModel withGlobalError Messages("add.error.conflict")))
             }
         }
       )

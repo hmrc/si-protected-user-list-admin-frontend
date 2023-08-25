@@ -25,13 +25,9 @@ import scala.concurrent.Future
 
 @Singleton
 class SiProtectedUserListService @Inject() (backendConnector: BackendConnector) {
-  def addEntry(entry: Entry)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] = {
-    backendConnector.insertNew(entry.toProtectedUser())
-  }
-
   def updateEntry(entry: Entry)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
     entry.entryId match {
-      case Some(entryId) => backendConnector.updateBy(entryId, entry.toProtectedUser())
+      case Some(entryId) => backendConnector.updateBy(entryId, entry.toProtectedUser)
       case None          => Future.failed(new IllegalArgumentException("entryId not present for update"))
     }
 

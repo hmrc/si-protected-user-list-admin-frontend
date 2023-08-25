@@ -23,17 +23,17 @@ import java.time.{Instant, LocalDateTime, ZoneId}
 
 case class ProtectedUserRecord(
   entryId: String,
-  firstCreated: Long,
-  lastUpdated: Option[Long],
-  body: ProtectedUser
+  created: Modified,
+  updated: Option[Modified],
+  body:    ProtectedUser
 ) {
-  def formattedFirstCreated(): String = {
-    LocalDateTime.ofInstant(Instant.ofEpochMilli(firstCreated), ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-  }
+  def formattedFirstCreated(): String = formatted(created.at)
 
-  def formattedLastUpdated(): Option[String] = {
-    lastUpdated.map(lu => LocalDateTime.ofInstant(Instant.ofEpochMilli(lu), ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
-  }
+  def formattedLastUpdated(): Option[String] = updated.map(u => formatted(u.at))
+
+  private def formatted(instant: Instant): String =
+    LocalDateTime.ofInstant(instant, ZoneId of "UTC").format(DateTimeFormatter ofPattern "dd/MM/yyyy")
+
   val action: String = body.identityProviderId.map(_ => "LOCK").getOrElse("BLOCK")
   val nino: Option[String] = body.taxId.name match {
     case TaxIdentifierType.NINO => Some(body.taxId.value)
@@ -46,5 +46,5 @@ case class ProtectedUserRecord(
 }
 
 object ProtectedUserRecord {
-  implicit val format: OFormat[ProtectedUserRecord] = Json.format
+  implicit val rds: Reads[ProtectedUserRecord] = Json.reads
 }

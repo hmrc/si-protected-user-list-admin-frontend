@@ -32,7 +32,7 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
 
   lazy val authStrideEnrolments: StrideConfig = StrideConfig(
     strideLoginBaseUrl = getString("authentication.stride.loginBaseUrl"),
-    strideSuccessUrl = getString("authentication.stride.successReturnUrl"),
+    strideSuccessUrl   = getString("authentication.stride.successReturnUrl"),
     strideEnrolments = configuration
       .get[Seq[String]]("authentication.stride.enrolments")
       .map(Enrolment.apply)
@@ -40,9 +40,9 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
   )
 
   lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
-    dashboardUrl = configuration.get[String]("account-protection-tools-dashboard-linkUrl"),
+    dashboardUrl      = configuration.get[String]("account-protection-tools-dashboard-linkUrl"),
     identityProviders = configuration.get[Seq[String]]("si-protected-user.identity-providers"),
-    addedByTeams = configuration.get[Seq[String]]("si-protected-user.added-by-teams")
+    addedByTeams      = configuration.get[Seq[String]]("si-protected-user.added-by-teams")
   )
 
   lazy val backendConfig: BackendConfig = new BackendConfig(
@@ -55,16 +55,16 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
 
   lazy val sessionCacheConfig: SessionCacheConfig = SessionCacheConfig(
     baseUri = servicesConfig.baseUrl("cacheable.session-cache"),
-    domain = servicesConfig.getConfString("cacheable.session-cache.domain", throw new RuntimeException("missing required config cacheable.session-cache.domain"))
+    domain  = servicesConfig.getConfString("cacheable.session-cache.domain", throw new RuntimeException("missing required config cacheable.session-cache.domain"))
   )
 }
 
 case class AnalyticsConfig(analyticsToken: String, analyticsHost: String)
 case class StrideConfig(strideLoginBaseUrl: String, strideSuccessUrl: String, strideEnrolments: Set[Enrolment])
 case class SiProtectedUserConfig(
-  dashboardUrl: String,
+  dashboardUrl:      String,
   identityProviders: Seq[String],
-  addedByTeams: Seq[String]
+  addedByTeams:      Seq[String]
 )
 case class SessionCacheConfig(baseUri: String, domain: String)
 final class BackendConfig(endpoint: String, contextRoot: String) {

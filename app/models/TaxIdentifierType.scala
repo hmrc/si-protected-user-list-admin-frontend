@@ -21,7 +21,7 @@ import play.api.libs.json._
 sealed trait TaxIdentifierType
 
 object TaxIdentifierType {
-  case object NINO extends TaxIdentifierType
+  case object NINO  extends TaxIdentifierType
   case object SAUTR extends TaxIdentifierType
 
   val values: Seq[TaxIdentifierType] = Seq(NINO, SAUTR)

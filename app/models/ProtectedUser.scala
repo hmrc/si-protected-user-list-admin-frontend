@@ -16,27 +16,21 @@
 
 package models
 
-import play.api.libs.functional.syntax.{toFunctionalBuilderOps, unlift}
-import play.api.libs.json.{OFormat, __}
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
+import play.api.libs.json.{Reads, __}
 
 case class ProtectedUser(
-  taxId: TaxIdentifier,
+  taxId:              TaxIdentifier,
   identityProviderId: Option[IdentityProviderId],
-  addedByUser: Option[String],
-  addedByTeam: Option[String],
-  updatedByUser: Option[String],
-  updatedByTeam: Option[String],
-  group: String = ""
+  team:               String,
+  group:              String = ""
 )
 
 object ProtectedUser {
-  implicit val format: OFormat[ProtectedUser] = (
-    (__ \ "taxId").format[TaxIdentifier] and
-      (__ \ "identityProviderId").formatNullable[IdentityProviderId] and
-      (__ \ "addedByUser").formatNullable[String] and
-      (__ \ "addedByTeam").formatNullable[String] and
-      (__ \ "updatedByUser").formatNullable[String] and
-      (__ \ "updatedByTeam").formatNullable[String] and
-      (__ \ "group").formatWithDefault("")
-  )(apply, unlift(unapply))
+  implicit val rds: Reads[ProtectedUser] = (
+    (__ \ "tax_id").read[TaxIdentifier] and
+      (__ \ "idp_id").readNullable[IdentityProviderId] and
+      (__ \ "team").read[String] and
+      (__ \ "group").readWithDefault("")
+  )(apply _)
 }

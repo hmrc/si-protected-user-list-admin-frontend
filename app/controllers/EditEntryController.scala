@@ -31,9 +31,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class EditEntryController @Inject() (
   siProtectedUserListService: SiProtectedUserListService,
-  views: Views,
-  mcc: MessagesControllerComponents,
-  val strideAction: StrideAction
+  views:                      Views,
+  mcc:                        MessagesControllerComponents,
+  val strideAction:           StrideAction
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 

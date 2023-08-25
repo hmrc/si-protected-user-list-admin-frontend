@@ -16,6 +16,7 @@
 
 package controllers
 
+import models.ProtectedUserRecord
 import play.api.http.Status
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
@@ -36,7 +37,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
 
   "DeleteEntryController" should {
     "forward to the delete confirmation page view when GET /add is called" in {
-      forAll(protectedUserRecords) { record =>
+      forAll { record: ProtectedUserRecord =>
         expectStrideAuthenticated {
           when(mockBackendService.findEntry(eqTo(record.entryId))(*)) thenReturn Future.successful(Some(record))
 
@@ -61,7 +62,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
     }
 
     "Forward to delete success page when delete is successful" in {
-      forAll(protectedUserRecords) { record =>
+      forAll { record: ProtectedUserRecord =>
         expectStrideAuthenticated { _ =>
           when {
             mockBackendService.deleteEntry(eqTo(record.entryId))(*)
@@ -79,7 +80,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
     }
 
     "Forward to error page when delete is unsuccessful with NOT_FOUND" in {
-      forAll(protectedUserRecords) { record =>
+      forAll { record: ProtectedUserRecord =>
         expectStrideAuthenticated {
           when {
             mockBackendService.deleteEntry(eqTo(record.entryId))(*)
@@ -96,7 +97,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
     }
 
     "Forward to error page when delete is unsuccessful" in {
-      forAll(protectedUserRecords) { record =>
+      forAll { record: ProtectedUserRecord =>
         expectStrideAuthenticated {
           when {
             mockBackendService.deleteEntry(eqTo(record.entryId))(*)

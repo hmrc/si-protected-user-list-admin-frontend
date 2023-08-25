@@ -58,12 +58,12 @@ trait BaseISpec extends WireMockSpec with GuiceOneServerPerSuite with Injecting 
     val cookie = makeSessionCookie(mockSession)
 
     new WSCookie() {
-      override def name: String = cookie.name
-      override def value: String = cookie.value
-      override def domain: Option[String] = cookie.domain
-      override def path: Option[String] = Some(cookie.path)
-      override def maxAge: Option[Long] = cookie.maxAge.map(_.toLong)
-      override def secure: Boolean = cookie.secure
+      override def name:     String = cookie.name
+      override def value:    String = cookie.value
+      override def domain:   Option[String] = cookie.domain
+      override def path:     Option[String] = Some(cookie.path)
+      override def maxAge:   Option[Long] = cookie.maxAge.map(_.toLong)
+      override def secure:   Boolean = cookie.secure
       override def httpOnly: Boolean = cookie.httpOnly
     }
   }

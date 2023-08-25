@@ -16,7 +16,7 @@
 
 package controllers
 
-import models.Entry
+import models.{Entry, ProtectedUserRecord}
 import org.jsoup.Jsoup
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{ConflictException, NotFoundException}
@@ -26,6 +26,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class EditEntryControllerSpec extends BaseControllerSpec {
+  import org.scalacheck.Arbitrary.arbitrary
+
   private def editEntryController = new EditEntryController(
     mockBackendService,
     injectViews,
@@ -35,7 +37,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
 
   "EditEntryController" should {
     "forward to the edit entry view when GET /add is called" in
-      forAll(validEditEntryGen, protectedUserRecords) { (entry, record) =>
+      forAll(validEditEntryGen, arbitrary[ProtectedUserRecord]) { (entry, record) =>
         expectStrideAuthenticated {
           when(mockBackendService.findEntry(eqTo(entry.entryId.value))(*)).thenReturn(Future.successful(Some(record)))
           val result = editEntryController.showEditEntryPage(entry.entryId.value)(FakeRequest().withMethod("GET"))
@@ -47,7 +49,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
       }
 
     "Forward to confirmation page when edit is successful" in
-      forAll(validEditEntryGen, protectedUserRecords) { (entry, record) =>
+      forAll(validEditEntryGen, arbitrary[ProtectedUserRecord]) { (entry, record) =>
         expectStrideAuthenticated { pid =>
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)

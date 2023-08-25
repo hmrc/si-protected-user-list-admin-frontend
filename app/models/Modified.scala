@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package views
+package models
 
-import javax.inject.Inject
 
-class Views @Inject() (
-  val home:               views.html.Home,
-  val add:                views.html.add,
-  val edit:               views.html.edit,
-  val editSuccess:        views.html.edit_success,
-  val view:               views.html.view_entry,
-  val deleteConfirmation: views.html.delete_entry_confirmation,
-  val deleteSuccess:      views.html.delete_entry_success,
-  val errorTemplate:      views.html.error_template,
-  val somethingWentWrong: views.html.something_went_wrong
-)
+import java.time.Instant
+
+final case class Modified(at: Instant, by: String)
+object Modified {
+  import play.api.libs.json.{Json, Reads}
+
+  implicit val rds: Reads[Modified] = Json.reads
+}

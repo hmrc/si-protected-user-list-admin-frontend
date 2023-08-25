@@ -27,9 +27,9 @@ import scala.concurrent.ExecutionContext
 @Singleton
 class SiProtectedUserController @Inject() (
   protected val strideAction: StrideAction,
-  backendConnector: BackendConnector,
-  views: Views,
-  mcc: MessagesControllerComponents
+  backendConnector:           BackendConnector,
+  views:                      Views,
+  mcc:                        MessagesControllerComponents
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 

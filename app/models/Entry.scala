@@ -18,23 +18,24 @@ package models
 
 import play.api.libs.json.{Json, OFormat}
 
-case class Entry(entryId: Option[String],
-                 addedByUser: Option[String],
-                 updatedByUser: Option[String],
-                 action: String,
-                 nino: Option[String],
-                 sautr: Option[String],
-                 identityProvider: Option[String],
-                 identityProviderId: Option[String],
-                 group: Option[String],
-                 addedByTeam: Option[String],
-                 updatedByTeam: Option[String]
-                )
+case class Entry(
+  entryId:            Option[String],
+  addedByUser:        Option[String],
+  updatedByUser:      Option[String],
+  action:             String,
+  nino:               Option[String],
+  sautr:              Option[String],
+  identityProvider:   Option[String],
+  identityProviderId: Option[String],
+  group:              Option[String],
+  addedByTeam:        Option[String],
+  updatedByTeam:      Option[String]
+)
 object Entry {
-  implicit val formats: OFormat[Entry] = Json.format[Entry]
+  implicit val formats: OFormat[Entry] = Json.format
 
   implicit class EntryConversionOps(entry: Entry) {
-    def toProtectedUser(): ProtectedUser = {
+    def toProtectedUser: ProtectedUser = {
       ProtectedUser(
         taxId = (entry.nino, entry.sautr) match {
           case (Some(nino), _)     => TaxIdentifier(TaxIdentifierType.NINO, nino)
@@ -45,27 +46,24 @@ object Entry {
           provider <- entry.identityProvider
           creds    <- entry.identityProviderId
         } yield IdentityProviderId(provider, creds),
-        addedByUser = entry.addedByUser,
-        addedByTeam = entry.addedByTeam,
-        updatedByUser = entry.updatedByUser,
-        updatedByTeam = entry.updatedByTeam,
+        team  = entry.addedByTeam getOrElse "",
         group = entry.group.getOrElse("")
       )
     }
   }
   def from(protectedUserRecord: ProtectedUserRecord): Entry = {
     Entry(
-      entryId = Some(protectedUserRecord.entryId),
-      addedByUser = protectedUserRecord.body.addedByUser,
-      updatedByUser = protectedUserRecord.body.updatedByUser,
-      action = protectedUserRecord.action,
-      nino = protectedUserRecord.nino,
-      sautr = protectedUserRecord.sautr,
-      identityProvider = protectedUserRecord.body.identityProviderId.map(_.name),
+      entryId            = Some(protectedUserRecord.entryId),
+      addedByUser        = Some(protectedUserRecord.created.by),
+      updatedByUser      = protectedUserRecord.updated.map(_.by),
+      action             = protectedUserRecord.action,
+      nino               = protectedUserRecord.nino,
+      sautr              = protectedUserRecord.sautr,
+      identityProvider   = protectedUserRecord.body.identityProviderId.map(_.name),
       identityProviderId = protectedUserRecord.body.identityProviderId.map(_.value),
-      group = Some(protectedUserRecord.body.group),
-      addedByTeam = protectedUserRecord.body.addedByTeam,
-      updatedByTeam = protectedUserRecord.body.updatedByTeam
+      group              = Some(protectedUserRecord.body.group),
+      addedByTeam        = Some(protectedUserRecord.body.team),
+      updatedByTeam      = Some(protectedUserRecord.body.team)
     )
   }
 }

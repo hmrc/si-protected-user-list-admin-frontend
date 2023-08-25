@@ -32,14 +32,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class StrideAction @Inject() (
   @Named("appName") appName: String,
-  strideConfig: StrideConfig,
-  val authConnector: AuthConnector
+  strideConfig:              StrideConfig,
+  val authConnector:         AuthConnector
 )(implicit val executionContext: ExecutionContext)
     extends ActionRefiner[MessagesRequest, StrideRequest]
     with FrontendHeaderCarrierProvider
     with AuthorisedFunctions
     with Logging {
-  private lazy val strideLoginUrl: String = s"${strideConfig.strideLoginBaseUrl}/stride/sign-in"
+  private lazy val strideLoginUrl:   String = s"${strideConfig.strideLoginBaseUrl}/stride/sign-in"
   private lazy val strideSuccessUrl: String = strideConfig.strideSuccessUrl
 
   def refine[A](request: MessagesRequest[A]): Future[Either[Result, StrideRequest[A]]] = {
@@ -75,9 +75,9 @@ class StrideAction @Inject() (
 object StrideAction {
   class Shuttered @Inject() (
     @Named("appName") appName: String,
-    strideConfig: StrideConfig,
-    authConnector: AuthConnector,
-    shutterView: views.html.Shutter
+    strideConfig:              StrideConfig,
+    authConnector:             AuthConnector,
+    shutterView:               views.html.Shutter
   )(implicit ec: ExecutionContext)
       extends StrideAction(appName, strideConfig, authConnector)
       with Results {

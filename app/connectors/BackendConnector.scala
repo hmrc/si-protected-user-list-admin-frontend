@@ -18,6 +18,7 @@ package connectors
 
 import config.BackendConfig
 import models.{ProtectedUser, ProtectedUserRecord}
+import play.api.libs.json.JsValue
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, HttpResponse, NotFoundException, UpstreamErrorResponse}
 
@@ -32,9 +33,9 @@ class BackendConnector @Inject() (
   def findAll()(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] =
     httpClient.GET[Seq[ProtectedUserRecord]](backendURL("record/"))
 
-  def insertNew(protectedUser: ProtectedUser)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
+  def insertNew(protectedUser: JsValue)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
     httpClient
-      .POST[ProtectedUser, ProtectedUserRecord](backendURL("record/"), protectedUser)
+      .POST[JsValue, ProtectedUserRecord](backendURL("record/"), protectedUser)
       .transform(
         identity,
         {

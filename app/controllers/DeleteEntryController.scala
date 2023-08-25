@@ -28,9 +28,9 @@ import scala.concurrent.ExecutionContext
 @Singleton
 class DeleteEntryController @Inject() (
   siProtectedUserListService: SiProtectedUserListService,
-  views: Views,
-  mcc: MessagesControllerComponents,
-  val strideAction: StrideAction
+  views:                      Views,
+  mcc:                        MessagesControllerComponents,
+  val strideAction:           StrideAction
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
