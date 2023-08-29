@@ -16,12 +16,11 @@
 
 package controllers
 
+import connectors.BackendConnector
 import controllers.base.{StrideAction, StrideController}
-import models.Entry
-import models.InputForms.entryForm
+import models.forms.Update
 import play.api.i18n.Messages
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import services.SiProtectedUserListService
 import uk.gov.hmrc.http.{ConflictException, NotFoundException}
 import views.Views
 
@@ -30,38 +29,35 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class EditEntryController @Inject() (
-  siProtectedUserListService: SiProtectedUserListService,
-  views:                      Views,
-  mcc:                        MessagesControllerComponents,
-  val strideAction:           StrideAction
+  backendConnector: BackendConnector,
+  views:            Views,
+  mcc:              MessagesControllerComponents,
+  val strideAction: StrideAction
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
-  def showEditEntryPage(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
-    siProtectedUserListService
-      .findEntry(entryId)
+  def show(entryID: String): Action[AnyContent] = StrideAction.async { implicit request =>
+    backendConnector
+      .findBy(entryID)
       .map {
-        case Some(protectedUserRecord) => Ok(views.edit(entryForm.fill(Entry.from(protectedUserRecord))))
+        case Some(protectedUserRecord) => Ok(views.edit(Update.form fill Update(protectedUserRecord), entryID))
         case None                      => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
       }
   }
 
-  def submit(): Action[AnyContent] = StrideAction.async { implicit request =>
-    entryForm
+  def submit(entryID: String): Action[AnyContent] = StrideAction.async { implicit request =>
+    Update.form
       .bindFromRequest()
       .fold(
-        errorForm => {
-          Future.successful(BadRequest(views.edit(errorForm)))
-        },
-        entry => {
-          siProtectedUserListService
-            .updateEntry(entry.copy(updatedByUser = Some(request.getUserPid), updatedByTeam = entry.addedByTeam))
+        errorForm => Future.successful(BadRequest(views.edit(errorForm, entryID))),
+        update =>
+          backendConnector
+            .updateBy(entryID, update.toRequestJSON(request.getUserPid))
             .map(_ => Ok(views.editSuccess()))
             .recover {
               case _: NotFoundException => NotFound(views.errorTemplate("edit.error.not.found", "edit.error.not.found", "edit.error.already.deleted"))
-              case _: ConflictException => Conflict(views.edit(entryForm.fill(entry).withGlobalError(Messages("edit.error.conflict"))))
+              case _: ConflictException => Conflict(views.edit(Update.form fill update withGlobalError Messages("edit.error.conflict"), entryID))
             }
-        }
       )
   }
 }

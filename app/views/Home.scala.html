@@ -16,7 +16,8 @@
 
 @import config.SiProtectedUserConfig
 @import controllers.base.StrideRequest
-@import models.TaxIdentifierType._
+@import models.backend.{ProtectedUserRecord, TaxIdentifier, TaxIdentifierType}
+@import TaxIdentifierType._
 @import views.html.fragments.Heading1
 
 @this(
@@ -92,7 +93,7 @@
     } else {
         @table(Table(
             head = Some(
-                "entryId,saUtr,nino,idp,idpId,status,group,addedBy"
+                "entryId,saUtr,nino,idp,idpId,status,group,team"
                     .split(",").toIndexedSeq
                     .map(prop => HeadCell(Text(messages(s"protectedUser.$prop"))))
             ),

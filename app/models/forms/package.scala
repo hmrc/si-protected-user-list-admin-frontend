@@ -16,12 +16,9 @@
 
 package models
 
-
-import java.time.Instant
-
-final case class Modified(at: Instant, by: String)
-object Modified {
-  import play.api.libs.json.{Json, Reads}
-
-  implicit val rds: Reads[Modified] = Json.reads
+package object forms {
+  val addEntryActionBlock = "BLOCK"
+  val addEntryActionLock = "LOCK"
+  val addEntryActions: Seq[String] = Seq(addEntryActionBlock, addEntryActionLock)
+  val groupMaxLength = 12
 }

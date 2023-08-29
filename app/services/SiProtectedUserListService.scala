@@ -17,7 +17,7 @@
 package services
 
 import connectors.BackendConnector
-import models.{Entry, ProtectedUserRecord}
+import models.backend.ProtectedUserRecord
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 
 import javax.inject.{Inject, Singleton}
@@ -25,11 +25,6 @@ import scala.concurrent.Future
 
 @Singleton
 class SiProtectedUserListService @Inject() (backendConnector: BackendConnector) {
-  def updateEntry(entry: Entry)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
-    entry.entryId match {
-      case Some(entryId) => backendConnector.updateBy(entryId, entry.toProtectedUser)
-      case None          => Future.failed(new IllegalArgumentException("entryId not present for update"))
-    }
 
   def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
     backendConnector.findBy(entryId)

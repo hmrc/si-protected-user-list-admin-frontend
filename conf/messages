@@ -20,7 +20,7 @@ protectedUser.idp     = Identity Provider
 protectedUser.idpId   = Identity Provider ID
 protectedUser.status  = Status
 protectedUser.group   = Group
-protectedUser.addedBy = Added by Team
+protectedUser.team    = Team
 
 home.page.title = MDTP User Admin - SI Protected Users
 home.page.header = SI Protected User List - Admin Console
@@ -50,7 +50,7 @@ entry.form.group = Group
 entry.form.group.hint = Optional way to tag this entry
 entry.form.identityProvider = Identity Provider
 entry.form.identityProviderId = Identity Provider Id
-entry.form.addedByTeam = Added by team
+entry.form.team = Team
 entry.form.action.select.LOCK = Lock a NINO or SA UTR to the credential ID provided.
 entry.form.action.select.BLOCK = Block a NINO or SA UTR from being used.
 

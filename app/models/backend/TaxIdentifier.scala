@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package models
+package models.backend
 
 import play.api.libs.json.{Json, OFormat}
 
-case class IdentityProviderId(name: String, value: String)
+case class TaxIdentifier(name: TaxIdentifierType, value: String)
 
-object IdentityProviderId {
-  implicit val format: OFormat[IdentityProviderId] = Json.format
+object TaxIdentifier {
+  implicit val format: OFormat[TaxIdentifier] = Json.format
 }

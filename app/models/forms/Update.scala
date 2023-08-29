@@ -16,52 +16,35 @@
 
 package models.forms
 
-import models.backend.{IdentityProviderId, TaxIdentifier, TaxIdentifierType}
+import models.backend.{IdentityProviderId, ProtectedUserRecord}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.voa.play.form.ConditionalMappings.mandatoryIfEqual
 
-final case class Insert(
-  optNINO:  Option[String],
-  optSAUTR: Option[String],
+final case class Update(
   optIdpID: Option[IdentityProviderId],
   group:    String,
   team:     String
 ) {
-  import TaxIdentifierType._
-
-  def toRequestJSON(stridePID: String): JsValue = {
-    val taxID = optNINO.map(TaxIdentifier(NINO, _)) orElse optSAUTR.map(TaxIdentifier(SAUTR, _))
-
+  def toRequestJSON(stridePID: String): JsValue =
     Json.obj(
       "stride_pid" -> stridePID,
-      "protectedUser" -> Json.obj(
-        "tax_id" -> taxID,
-        "idp_id" -> optIdpID,
-        "group"  -> group,
-        "team"   -> team
-      )
+      "idp_id"     -> optIdpID,
+      "group"      -> group,
+      "team"       -> team
     )
-  }
 }
-object Insert {
-  private val ninoRegex = "((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]"
-  private val saUtrRegex = "[0-9]{10}"
-
-  val form: Form[Insert] = Form(
+object Update {
+  val form: Form[Update] = Form(
     mapping(
       "action"             -> nonEmptyText,
-      "nino"               -> optional(nonEmptyText.verifying("form.nino.regex", _ matches ninoRegex)),
-      "sautr"              -> optional(nonEmptyText.verifying("form.sautr.regex", _ matches saUtrRegex)),
       "identityProvider"   -> mandatoryIfEqual("action", addEntryActionLock, nonEmptyText),
       "identityProviderId" -> mandatoryIfEqual("action", addEntryActionLock, text.verifying("form.identityProviderId.required", !_.isBlank)),
       "group"              -> text(maxLength = groupMaxLength),
       "team"               -> nonEmptyText
-    ) { (_, optNINO, optSAUTR, optIdpName, optIdpValue, group, team) =>
+    ) { (_, optIdpName, optIdpValue, group, team) =>
       apply(
-        optNINO,
-        optSAUTR,
         for {
           idpName  <- optIdpName
           idpValue <- optIdpValue
@@ -69,19 +52,22 @@ object Insert {
         group,
         team
       )
-    } { insert =>
+    } { update =>
       Some(
         (
-          insert.optIdpID.fold(addEntryActionBlock)(_ => addEntryActionLock),
-          insert.optNINO,
-          insert.optSAUTR,
-          insert.optIdpID.map(_.name),
-          insert.optIdpID.map(_.value),
-          insert.group,
-          insert.team
+          update.optIdpID.fold(addEntryActionBlock)(_ => addEntryActionLock),
+          update.optIdpID.map(_.name),
+          update.optIdpID.map(_.value),
+          update.group,
+          update.team
         )
       )
     }
-      .verifying("form.nino.sautr.required", insert => (insert.optNINO orElse insert.optSAUTR).isDefined)
+  )
+
+  def apply(record: ProtectedUserRecord): Update = apply(
+    record.body.identityProviderId,
+    record.body.group,
+    record.body.team
   )
 }

@@ -54,7 +54,7 @@
         @govukSelect(Select(
             id = "action",
             name = "action",
-            items = InputForms.addEntryActions.map(action => SelectItem(value = Some(action), text = Messages(s"entry.form.action.select.$action"))),
+            items = models.forms.addEntryActions.map(action => SelectItem(value = Some(action), text = Messages(s"entry.form.action.select.$action"))),
             label = Label(content = Text(messages("entry.form.action")), classes = "govuk-!-font-weight-bold"),
         ).withFormField(form("action")))
         @input(Input(label = Label(content = Text(Messages("entry.form.nino")), classes = "govuk-!-font-weight-bold"), hint = Some(Hint(content = Text(Messages("entry.form.nino.hint"))))).withFormFieldWithErrorAsHtml(form("nino")))
@@ -73,7 +73,7 @@
             id = "team",
             name = "team",
             items = siProtectedUserConfig.addedByTeams.map(team => SelectItem(Some(team), team)),
-            label = Label(content = Text(messages("entry.form.addedByTeam")), classes = "govuk-!-font-weight-bold")
+            label = Label(content = Text(messages("entry.form.team")), classes = "govuk-!-font-weight-bold")
         ).withFormField(form("team")))
         @govukButton(Button(content = Text(Messages("add.submit.button"))))
         @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("cancel.button")), classes = "govuk-button govuk-button--secondary"))

@@ -14,6 +14,7 @@
  * limitations under the License.
  *@
 
+@import models.backend.ProtectedUserRecord
 @import play.api.i18n.Messages
 @import play.api.mvc.Request
 @import uk.gov.hmrc.govukfrontend.views.html.components._
@@ -34,7 +35,7 @@
 ) {
     @h1("view.entry.header")
     @details(protectedUserRecord)
-    @govukButton(Button(href = Some(controllers.routes.EditEntryController.showEditEntryPage(protectedUserRecord.entryId).url), content = Text(Messages("edit.button"))))
+    @govukButton(Button(href = Some(controllers.routes.EditEntryController.show(protectedUserRecord.entryId).url), content = Text(Messages("edit.button"))))
     @govukButton(Button(href = Some(controllers.routes.DeleteEntryController.showConfirmDeletePage(protectedUserRecord.entryId).url), content = Text(Messages("delete.button")), classes = "govuk-button govuk-button--warning"))
     @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("home.button"))))
 }

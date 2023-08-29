@@ -14,23 +14,13 @@
  * limitations under the License.
  */
 
-package models
+package models.backend
 
-import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json.{Reads, __}
+import java.time.Instant
 
-case class ProtectedUser(
-  taxId:              TaxIdentifier,
-  identityProviderId: Option[IdentityProviderId],
-  team:               String,
-  group:              String = ""
-)
+final case class Modified(at: Instant, by: String)
+object Modified {
+  import play.api.libs.json.{Json, Reads}
 
-object ProtectedUser {
-  implicit val rds: Reads[ProtectedUser] = (
-    (__ \ "tax_id").read[TaxIdentifier] and
-      (__ \ "idp_id").readNullable[IdentityProviderId] and
-      (__ \ "team").read[String] and
-      (__ \ "group").readWithDefault("")
-  )(apply _)
+  implicit val rds: Reads[Modified] = Json.reads
 }

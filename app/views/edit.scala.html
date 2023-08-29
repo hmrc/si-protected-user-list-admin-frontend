@@ -15,6 +15,7 @@
  *@
 
 @import config.SiProtectedUserConfig
+@import models.forms.Update
 @import play.api.data.Form
 @import play.api.i18n.Messages
 @import play.api.mvc.Request
@@ -24,15 +25,18 @@
 @import views.html.Layout
 @import views.html.fragments.Heading1
 
-@import views.html.fragments.EntryForm
 @this(
-h1: Heading1,
-mainLayout: Layout,
-entryForm: EntryForm,
-siProtectedUserConfig: SiProtectedUserConfig
+    formTemplate: FormWithCSRF,
+    h1: Heading1,
+    mainLayout: Layout,
+    input: GovukInput,
+    govukErrorSummary: GovukErrorSummary,
+    govukSelect: GovukSelect,
+    govukButton: GovukButton,
+    siProtectedUserConfig: SiProtectedUserConfig
 )
 
-@(form: Form[Entry])(implicit request: Request[_], messages: Messages)
+@(form: Form[Update], entryID: String)(implicit request: Request[_], messages: Messages)
 @additionalScripts = {
     <script src='@controllers.routes.Assets.at("javascripts/entry-form.js")'></script>
 }
@@ -42,5 +46,33 @@ siProtectedUserConfig: SiProtectedUserConfig
     scripts = Some(additionalScripts)
 ) {
     @h1("edit.entry.header")
-    @entryForm(form,controllers.routes.EditEntryController.submit(),"edit.submit.button")
+    @formTemplate(action = routes.EditEntryController.submit(entryID), args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
+        @if(form.errors.nonEmpty) {
+            @govukErrorSummary(ErrorSummary().withFormErrorsAsText(form))
+        }
+        @govukSelect(Select(
+            id = "action",
+            name = "action",
+            items = models.forms.addEntryActions.map(action => SelectItem(value = Some(action), text = Messages(s"entry.form.action.select.$action"))),
+            label = Label(content = Text(messages("entry.form.action")), classes = "govuk-!-font-weight-bold"),
+        ).withFormField(form("action")))
+        <div id="identityProviderContainer">
+            @govukSelect(Select(
+                id = "identityProvider",
+                name = "identityProvider",
+                items = siProtectedUserConfig.identityProviders.map(identityProvider => SelectItem(Some(identityProvider), identityProvider)),
+                label = Label(content = Text(messages("entry.form.identityProvider")), classes = "govuk-!-font-weight-bold")
+            ).withFormField(form("identityProvider")))
+            @input(Input(label = Label(content = Text(Messages("entry.form.identityProviderId")), classes = "govuk-!-font-weight-bold")).withFormFieldWithErrorAsHtml(form("identityProviderId")))
+        </div>
+        @input(Input(label = Label(content = Text(Messages("entry.form.group")), classes = "govuk-!-font-weight-bold"), hint = Some(Hint(content = Text(Messages("entry.form.group.hint"))))).withFormFieldWithErrorAsHtml(form("group")))
+        @govukSelect(Select(
+            id = "team",
+            name = "team",
+            items = siProtectedUserConfig.addedByTeams.map(team => SelectItem(Some(team), team)),
+            label = Label(content = Text(messages("entry.form.team")), classes = "govuk-!-font-weight-bold")
+        ).withFormField(form("team")))
+        @govukButton(Button(content = Text(Messages("edit.submit.button"))))
+        @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("cancel.button")), classes = "govuk-button govuk-button--secondary"))
+    }
 }

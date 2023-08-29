@@ -7,8 +7,8 @@ GET         /add                            controllers.AddEntryController.show(
 POST        /add                            controllers.AddEntryController.submit()
 GET         /clear                          controllers.AddEntryController.show()
 
-GET         /edit/:entryId                  controllers.EditEntryController.showEditEntryPage(entryId)
-POST        /edit                           controllers.EditEntryController.submit()
+GET         /edit/:entryId                  controllers.EditEntryController.show(entryId)
+POST        /edit/:entryId                  controllers.EditEntryController.submit(entryId)
 
 GET         /confirm-delete/:entryId        controllers.DeleteEntryController.showConfirmDeletePage(entryId)
 GET         /delete-entry/:entryId          controllers.DeleteEntryController.delete(entryId)

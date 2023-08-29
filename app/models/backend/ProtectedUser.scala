@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 
-package models
+package models.backend
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
+import play.api.libs.json.{Reads, __}
 
-case class TaxIdentifier(name: TaxIdentifierType, value: String)
+case class ProtectedUser(
+  taxId:              TaxIdentifier,
+  identityProviderId: Option[IdentityProviderId],
+  team:               String,
+  group:              String = ""
+)
 
-object TaxIdentifier {
-  implicit val format: OFormat[TaxIdentifier] = Json.format
+object ProtectedUser {
+  implicit val rds: Reads[ProtectedUser] = (
+    (__ \ "tax_id").read[TaxIdentifier] and
+      (__ \ "idp_id").readNullable[IdentityProviderId] and
+      (__ \ "team").read[String] and
+      (__ \ "group").readWithDefault("")
+  )(apply _)
 }

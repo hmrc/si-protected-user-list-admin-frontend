@@ -17,7 +17,7 @@
 package connectors
 
 import config.BackendConfig
-import models.{ProtectedUser, ProtectedUserRecord}
+import models.backend.ProtectedUserRecord
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, HttpResponse, NotFoundException, UpstreamErrorResponse}
@@ -50,9 +50,9 @@ class BackendConnector @Inject() (
       .map(Some.apply)
       .recover { case UpstreamErrorResponse(_, 404, _, _) => None }
 
-  def updateBy(entryId: String, protectedUser: ProtectedUser)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
+  def updateBy(entryId: String, update: JsValue)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
     httpClient
-      .PATCH[ProtectedUser, ProtectedUserRecord](backendURL("record", entryId), protectedUser)
+      .PATCH[JsValue, ProtectedUserRecord](backendURL("record", entryId), update)
       .transform(
         identity,
         {

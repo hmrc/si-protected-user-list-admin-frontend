@@ -24,7 +24,8 @@ class AppConfigModule(environment: Environment, configuration: Configuration) ex
   override def configure(): Unit = {
     bind(classOf[AppConfig]).asEagerSingleton()
 
-    if (configuration.get[Boolean]("si-protected-user.shutter-service"))
+    val isShuttered = configuration.get[Boolean]("si-protected-user.shutter-service")
+    if (isShuttered)
       bind(classOf[StrideAction]).to(classOf[StrideAction.Shuttered])
   }
 
