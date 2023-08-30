@@ -18,29 +18,33 @@
 @import play.api.mvc.RequestHeader
 @import uk.gov.hmrc.govukfrontend.views.viewmodels.backlink.BackLink
 @import uk.gov.hmrc.hmrcfrontend.views.html.helpers._
-@import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage.{HmrcStandardPageParams, ServiceURLs, TemplateOverrides}
+@import config.SiProtectedUserConfig
 
 @this(
-    hmrcStandardPage: HmrcStandardPage,
+        config: SiProtectedUserConfig,
+        hmrcStandardPage: HmrcStandardPage,
+        hmrcInternalHead: HmrcInternalHead,
+        hmrcInternalHeader: HmrcInternalHeader,
+        layout: GovukLayout,
+        govukBackLink: GovukBackLink,
 )
 
 @(
-    pageTitle: String,
-    headBlock: Option[Html] = None,
-    beforeContentBlock: Option[Html] = None,
-    scripts: Option[Html] = None,
-    backLink: Option[BackLink] = None
+        pageTitle: String,
+        headBlock: Option[Html] = None,
+        beforeContentBlock: Option[Html] = None,
+        scripts: Option[Html] = None,
+        backLink: Option[BackLink] = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
 )(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
 
-@hmrcStandardPage(
-    HmrcStandardPageParams(
-        pageTitle = Some(pageTitle),
-        serviceURLs = ServiceURLs(serviceUrl = Some(controllers.routes.SiProtectedUserController.homepage().url)),
-        templateOverrides = TemplateOverrides(
-            additionalHeadBlock = headBlock,
-            beforeContentBlock = beforeContentBlock,
-            additionalScriptsBlock = scripts
-        ),
-        backLink = backLink
-    )
-)(contentBlock)
+@layout(
+    pageTitle = Some(pageTitle),
+    headBlock = Some(hmrcInternalHead()),
+    headerBlock = Some(hmrcInternalHeader(InternalHeader(serviceName = Some(messages("service.name")), serviceUrl = controllers.routes.SiProtectedUserController.homepage().url))),
+    beforeContentBlock = beforeContentBlock,
+    scriptsBlock = scripts,
+    mainContentLayout = Some(identity)
+) {
+    @govukBackLink(backLink.get)
+    @contentBlock
+}

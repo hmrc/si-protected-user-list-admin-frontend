@@ -60,7 +60,7 @@
     @govukSelect(Select(
         id = "addedByTeam",
         name = "addedByTeam",
-        items = siProtectedUserConfig.addedByTeams.map(team => SelectItem(Some(team), team)),
+        items = Seq(SelectItem(None, "")) ++ siProtectedUserConfig.addedByTeams.map(team => SelectItem(Some(team), team)),
         label = Label(content = Text(messages("entry.form.addedByTeam")), classes = "govuk-!-font-weight-bold")
     ).withFormField(form("addedByTeam")))
     @govukButton(Button(content = Text(Messages(submitButtonMessageKey))))

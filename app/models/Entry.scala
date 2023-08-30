@@ -28,7 +28,7 @@ case class Entry(entryId: Option[String],
                  identityProvider: Option[String],
                  identityProviderId: Option[String],
                  group: Option[String],
-                 addedByTeam: Option[String],
+                 addedByTeam: String,
                  updatedByTeam: Option[String]
                 ) {
   def toProtectedUser(isUpdate: Boolean)(implicit request: StrideRequest[_]): ProtectedUser =
@@ -46,7 +46,7 @@ case class Entry(entryId: Option[String],
         creds    <- identityProviderId
       } yield IdentityProviderId(provider, creds),
       addedByUser = if (isUpdate) None else Some(stridePID),
-      addedByTeam = addedByTeam,
+      addedByTeam = Option(addedByTeam),
       updatedByUser = if (isUpdate) Some(stridePID) else None,
       updatedByTeam = updatedByTeam,
       group = group.getOrElse("")
@@ -66,7 +66,7 @@ object Entry {
       identityProvider = protectedUserRecord.body.identityProviderId.map(_.name),
       identityProviderId = protectedUserRecord.body.identityProviderId.map(_.value),
       group = Some(protectedUserRecord.body.group),
-      addedByTeam = protectedUserRecord.body.addedByTeam,
+      addedByTeam = protectedUserRecord.body.addedByTeam.getOrElse(""),
       updatedByTeam = protectedUserRecord.body.updatedByTeam
     )
   }

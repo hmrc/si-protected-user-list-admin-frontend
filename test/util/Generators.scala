@@ -43,7 +43,7 @@ trait Generators {
     identityProvider   <- Gen.some(nonEmptyStringGen)
     identityProviderId <- Gen.some(nonEmptyStringGen)
     group              <- Gen.some(nonEmptyStringOfGen(groupMaxLength))
-    addedByTeam        <- Gen.some(nonEmptyStringGen)
+    addedByTeam        <- nonEmptyStringGen
     updatedByTeam      <- Gen.some(nonEmptyStringGen)
     updatedByUser      <- Gen.some(nonEmptyStringGen)
     addedByUser        <- Gen.some(nonEmptyStringGen)

@@ -38,7 +38,7 @@ object InputForms {
       "identityProvider"   -> mandatoryIfEqual("action", addEntryActionLock, nonEmptyText),
       "identityProviderId" -> mandatoryIfEqual("action", addEntryActionLock, text.verifying("form.identityProviderId.required", !_.trim.isEmpty)),
       "group"              -> optional(nonEmptyText(maxLength = groupMaxLength)),
-      "addedByTeam"        -> optional(nonEmptyText),
+      "addedByTeam"        -> text.verifying("form.addedByTeam.required", !_.isBlank),
       "updatedByTeam"      -> optional(nonEmptyText)
     )(Entry.apply)(Entry.unapply)
       .verifying("form.nino.sautr.required", entry => entry.sautr.isDefined || entry.nino.isDefined)

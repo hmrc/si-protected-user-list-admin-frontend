@@ -1,4 +1,4 @@
-service.name = Si Applications Dashboard
+service.name = Account Protection Tools Dashboard
 service.text = This is your new service
 service.unavailable.title = Service is unavailable
 service.unavailable.header = This service is shuttered and currently unavailable
@@ -73,6 +73,7 @@ form.nino.regex = Invalid Nino
 form.sautr.regex = Invalid SA UTR
 form.nino.sautr.required = At least one of Nino or Sautr is required
 form.identityProviderId.required = Identity Provider Id is required when action is Lock a NINO or SaUtr to a credential
+form.addedByTeam.required = Added by team is required
 error.maxLength = Maximum allowed characters is {0}
 
 view.entry.header = View Entry

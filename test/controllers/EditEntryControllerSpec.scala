@@ -50,7 +50,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
       forAll(validEditEntryGen, protectedUserRecords) { (entry, record) =>
         expectStrideAuthenticated { pid =>
           val requestFields = toEditRequestFields(entry)
-          val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
+          val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
           when(mockBackendService.updateEntry(eqTo(expectedEntry))(*, *)).thenReturn(Future.successful(record))
 
@@ -67,7 +67,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
       forAll(validEditEntryGen) { entry =>
         expectStrideAuthenticated { pid =>
           val requestFields = toEditRequestFields(entry)
-          val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
+          val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
           when(mockBackendService.updateEntry(eqTo(expectedEntry))(*, *)).thenReturn(Future.failed(new NotFoundException("not found")))
 
@@ -84,7 +84,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
       forAll(validEditEntryGen) { entry =>
         expectStrideAuthenticated { pid =>
           val requestFields = toEditRequestFields(entry)
-          val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
+          val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
           when(mockBackendService.updateEntry(eqTo(expectedEntry))(*, *)).thenReturn(Future.failed(new ConflictException("conflict")))
 
@@ -131,7 +131,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
       entry.identityProvider.map(s => "identityProvider" -> s),
       entry.identityProviderId.map(s => "identityProviderId" -> s),
       entry.group.map(s => "group" -> s),
-      entry.addedByTeam.map(s => "addedByTeam" -> s),
+      Some("addedByTeam" -> entry.addedByTeam),
       entry.updatedByTeam.map(s => "updatedByTeam" -> s)
     ).flatten
 }

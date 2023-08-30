@@ -55,7 +55,7 @@ class EditEntryController @Inject() (
         },
         entry => {
           siProtectedUserListService
-            .updateEntry(entry.copy(updatedByUser = Some(request.getUserPid), updatedByTeam = entry.addedByTeam))
+            .updateEntry(entry.copy(updatedByUser = Some(request.getUserPid), updatedByTeam = Option(entry.addedByTeam)))
             .map(_ => Ok(views.editSuccess()))
             .recover {
               case _: NotFoundException => NotFound(views.errorTemplate("edit.error.not.found", "edit.error.not.found", "edit.error.already.deleted"))

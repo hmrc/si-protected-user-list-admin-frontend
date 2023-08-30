@@ -29,8 +29,7 @@
 @(protectedUserRecord: ProtectedUserRecord)(implicit request: Request[_], messages: Messages)
 
 @mainLayout(
-    pageTitle = Messages("view.entry.title"),
-    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
+    pageTitle = Messages("view.entry.title")
 ) {
     @h1("view.entry.header")
     @details(protectedUserRecord)
