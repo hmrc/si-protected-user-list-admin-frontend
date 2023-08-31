@@ -16,6 +16,7 @@
 
 package models.forms
 
+import controllers.base.StrideRequest
 import models.backend.{IdentityProviderId, TaxIdentifier, TaxIdentifierType}
 import play.api.data.Form
 import play.api.data.Forms._
@@ -31,11 +32,11 @@ final case class Insert(
 ) {
   import TaxIdentifierType._
 
-  def toRequestJSON(stridePID: String): JsValue = {
+  def toRequestJSON(implicit request: StrideRequest[_]): JsValue = {
     val taxID = optNINO.map(TaxIdentifier(NINO, _)) orElse optSAUTR.map(TaxIdentifier(SAUTR, _))
 
     Json.obj(
-      "stride_pid" -> stridePID,
+      "stride_pid" -> request.getUserPid,
       "protectedUser" -> Json.obj(
         "tax_id" -> taxID,
         "idp_id" -> optIdpID,

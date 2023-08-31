@@ -21,7 +21,7 @@ import controllers.base.{StrideAction, StrideController}
 import models.forms.Update
 import play.api.i18n.Messages
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import uk.gov.hmrc.http.{ConflictException, NotFoundException}
+import uk.gov.hmrc.http.{ConflictException, NotFoundException, UpstreamErrorResponse}
 import views.Views
 
 import javax.inject.{Inject, Singleton}
@@ -30,18 +30,18 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class EditEntryController @Inject() (
   backendConnector: BackendConnector,
-  views:            Views,
   mcc:              MessagesControllerComponents,
-  val strideAction: StrideAction
+  val strideAction: StrideAction,
+  views:            Views
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
   def show(entryID: String): Action[AnyContent] = StrideAction.async { implicit request =>
     backendConnector
       .findBy(entryID)
-      .map {
-        case Some(protectedUserRecord) => Ok(views.edit(Update.form fill Update(protectedUserRecord), entryID))
-        case None                      => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
+      .map(protectedUserRecord => Ok(views.edit(Update.form fill Update(protectedUserRecord), entryID)))
+      .recover { case UpstreamErrorResponse(_, NOT_FOUND, _, _) =>
+        NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
       }
   }
 

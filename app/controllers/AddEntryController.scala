@@ -21,7 +21,7 @@ import controllers.base.{StrideAction, StrideController}
 import models.forms.Insert
 import play.api.i18n.Messages
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import uk.gov.hmrc.http.ConflictException
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import views.Views
 
 import javax.inject.{Inject, Singleton}
@@ -29,8 +29,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AddEntryController @Inject() (
-  backendConnector: BackendConnector,
   views:            Views,
+  backendConnector: BackendConnector,
   mcc:              MessagesControllerComponents,
   val strideAction: StrideAction
 )(implicit ec: ExecutionContext)
@@ -45,9 +45,9 @@ class AddEntryController @Inject() (
         errorForm => Future.successful(BadRequest(views.add(errorForm))),
         insertModel =>
           backendConnector
-            .insertNew(insertModel.toRequestJSON(request.getUserPid))
+            .insertNew(insertModel.toRequestJSON)
             .map(protectedUserRecord => Redirect(controllers.routes.SiProtectedUserController.view(protectedUserRecord.entryId)))
-            .recover { case _: ConflictException =>
+            .recover { case UpstreamErrorResponse(_, CONFLICT, _, _) =>
               Conflict(views.add(Insert.form fill insertModel withGlobalError Messages("add.error.conflict")))
             }
       )

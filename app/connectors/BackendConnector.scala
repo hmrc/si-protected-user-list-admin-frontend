@@ -16,53 +16,73 @@
 
 package connectors
 
-import config.BackendConfig
+import controllers.base.StrideRequest
 import models.backend.ProtectedUserRecord
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, HttpResponse, NotFoundException, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Named, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class BackendConnector @Inject() (
-  backendURL: BackendConfig,
-  httpClient: HttpClient
+  val auditConnector:               AuditConnector,
+  @Named("backend_url") backendURL: String,
+  httpClient:                       HttpClient
 )(implicit ec: ExecutionContext) {
+  private def resource(pathSegments: String*) = backendURL +: pathSegments mkString "/"
+
   def findAll()(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] =
-    httpClient.GET[Seq[ProtectedUserRecord]](backendURL("record/"))
+    httpClient.GET[Seq[ProtectedUserRecord]](resource("record/"))
 
-  def insertNew(protectedUser: JsValue)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
-    httpClient
-      .POST[JsValue, ProtectedUserRecord](backendURL("record/"), protectedUser)
-      .transform(
-        identity,
-        {
-          case UpstreamErrorResponse(_, 409, _, _) => new ConflictException("Conflict")
-          case err                                 => err
-        }
+  def insertNew(protectedUser: JsValue)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
+    withAuditEvent("", "") {
+      httpClient.POST[JsValue, ProtectedUserRecord](resource("record/"), protectedUser)
+    }
+
+  def findBy(entryId: String)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
+    httpClient.GET[ProtectedUserRecord](resource("record", entryId))
+
+  def updateBy(entryId: String, update: JsValue)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
+    withAuditEvent("", "") {
+      httpClient.PATCH[JsValue, ProtectedUserRecord](resource("record", entryId), update)
+    }
+
+  def deleteBy(entryId: String)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
+    withAuditEvent("", "") {
+      httpClient.DELETE[ProtectedUserRecord](resource("record", entryId))
+    }
+
+  private def withAuditEvent(
+    auditType:       String,
+    transactionType: String
+  )(
+    block: => Future[ProtectedUserRecord]
+  )(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
+    block.map { record =>
+      auditConnector.sendExtendedEvent(
+        ExtendedDataEvent(
+          auditSource = "si-protected-user-list-admin",
+          auditType   = auditType,
+          tags        = hc.toAuditTags(s"HMRC Session Creation - SI Protected User List - $transactionType", request.path),
+          detail = Json.obj(
+            "pid"   -> request.getUserPid,
+            "group" -> record.body.group,
+            "team"  -> record.body.team,
+            "entry" -> Json.obj(
+              "id"                                        -> record.entryId,
+              "action"                                    -> (if (record.body.identityProviderId.isEmpty) "block" else "lock"),
+              record.body.taxId.name.toString.toLowerCase -> record.body.taxId.value,
+              "identityProviderType"                      -> record.body.identityProviderId.fold("-")(_.name),
+              "identityProviderId"                        -> record.body.identityProviderId.fold("-")(_.value)
+            )
+          )
+        )
       )
-
-  def findBy(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] =
-    httpClient
-      .GET[ProtectedUserRecord](backendURL("record", entryId))
-      .map(Some.apply)
-      .recover { case UpstreamErrorResponse(_, 404, _, _) => None }
-
-  def updateBy(entryId: String, update: JsValue)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
-    httpClient
-      .PATCH[JsValue, ProtectedUserRecord](backendURL("record", entryId), update)
-      .transform(
-        identity,
-        {
-          case UpstreamErrorResponse(_, 404, _, _) => new NotFoundException("Entry to update was already deleted")
-          case UpstreamErrorResponse(_, 409, _, _) => new ConflictException("Conflict")
-          case err                                 => err
-        }
-      )
-
-  def deleteBy(entryId: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] =
-    httpClient
-      .DELETE[Either[UpstreamErrorResponse, HttpResponse]](backendURL("record", entryId))
+      record
+    }
 }

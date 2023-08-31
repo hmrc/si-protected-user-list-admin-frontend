@@ -17,8 +17,14 @@
 package config
 
 import com.google.inject.{AbstractModule, Provides, Singleton}
+import config.AppConfig.{AnalyticsConfig, SessionCacheConfig, SiProtectedUserConfig, StrideConfig}
 import controllers.base.StrideAction
 import play.api.{Configuration, Environment}
+import uk.gov.hmrc.auth.core.Enrolment
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+
+import javax.inject.Named
+import scala.jdk.CollectionConverters.ListHasAsScala
 
 class AppConfigModule(environment: Environment, configuration: Configuration) extends AbstractModule {
   override def configure(): Unit = {
@@ -33,14 +39,29 @@ class AppConfigModule(environment: Environment, configuration: Configuration) ex
   def analyticsConfig(appConfig: AppConfig): AnalyticsConfig = appConfig.analyticsConfig
 
   @Provides @Singleton
-  def authStrideEnrolmentsConfig(appConfig: AppConfig): StrideConfig = appConfig.authStrideEnrolments
+  def getStrideConfig(servicesConfig: ServicesConfig): StrideConfig = {
+    val service = "stride-auth-frontend"
+    val config = configuration.underlying.getConfig(s"microservice.services.$service")
+
+    StrideConfig(
+      outboundURL = servicesConfig.baseUrl(service) + config.getString("path"),
+      enrolments = config
+        .getStringList("enrolments")
+        .asScala
+        .map(Enrolment.apply)
+        .toSet
+    )
+  }
+
+  @Provides @Named("backend_url")
+  def getBackendURL(servicesConfig: ServicesConfig): String = {
+    val service = "si-protected-user-list-admin"
+    servicesConfig.baseUrl(service) + "/" + service
+  }
 
   @Provides @Singleton
   def siProtectedUserConfig(appConfig: AppConfig): SiProtectedUserConfig = appConfig.siProtectedUserConfig
 
   @Provides @Singleton
   def sessionCacheConfig(appConfig: AppConfig): SessionCacheConfig = appConfig.sessionCacheConfig
-
-  @Provides @Singleton
-  def backendConfig(appConfig: AppConfig): BackendConfig = appConfig.backendConfig
 }

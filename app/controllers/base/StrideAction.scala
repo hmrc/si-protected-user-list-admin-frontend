@@ -17,7 +17,7 @@
 package controllers.base
 
 import com.google.inject.name.Named
-import config.StrideConfig
+import config.AppConfig.StrideConfig
 import play.api.Logging
 import play.api.mvc.Results.{Redirect, Unauthorized}
 import play.api.mvc.{ActionRefiner, MessagesRequest, Result, Results}
@@ -32,21 +32,18 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class StrideAction @Inject() (
   @Named("appName") appName: String,
-  strideConfig:              StrideConfig,
+  config:                    StrideConfig,
   val authConnector:         AuthConnector
 )(implicit val executionContext: ExecutionContext)
     extends ActionRefiner[MessagesRequest, StrideRequest]
     with FrontendHeaderCarrierProvider
     with AuthorisedFunctions
     with Logging {
-  private lazy val strideLoginUrl:   String = s"${strideConfig.strideLoginBaseUrl}/stride/sign-in"
-  private lazy val strideSuccessUrl: String = strideConfig.strideSuccessUrl
-
   def refine[A](request: MessagesRequest[A]): Future[Either[Result, StrideRequest[A]]] = {
     implicit val req: MessagesRequest[A] = request
 
     val hasPrivilegedApp = AuthProviders(PrivilegedApplication)
-    val hasAnyOfRequiredRoles = strideConfig.strideEnrolments.reduceOption[Predicate](_ or _) getOrElse EmptyPredicate
+    val hasAnyOfRequiredRoles = config.enrolments.reduceOption[Predicate](_ or _) getOrElse EmptyPredicate
 
     authorised(hasPrivilegedApp and hasAnyOfRequiredRoles)
       .retrieve(clientId) { userPidOpt =>
@@ -54,21 +51,25 @@ class StrideAction @Inject() (
         Future.successful(Right(StrideRequest(request, userPidOpt)))
       }
       .recover {
-        case _: InsufficientEnrolments =>
-          val msg = "Failed Stride Auth - InsufficientEnrolments"
-          logger.info(msg)
-          Left(Unauthorized(msg))
-        case _: NoActiveSession =>
-          logger.info("Failed Stride Auth - NoActiveSession")
+        case ex: NoActiveSession =>
+          logger.info(s"Failed Stride Auth: ${ex.reason}")
+
+          val protocol = if (request.secure) "https" else "http"
+          val callbackURL = s"$protocol://${request.host}${request.path}"
+
           Left(
             Redirect(
-              strideLoginUrl,
+              config.outboundURL,
               Map(
-                "successURL" -> Seq(strideSuccessUrl),
+                "successURL" -> Seq(callbackURL),
                 "origin"     -> Seq(appName)
               )
             )
           )
+        case ex: AuthorisationException =>
+          val msg = s"Failed Stride Auth: ${ex.reason}"
+          logger.info(msg)
+          Left(Unauthorized(msg))
       }
   }
 }

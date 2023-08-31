@@ -14,7 +14,7 @@
  * limitations under the License.
  *@
 
-@import config.SiProtectedUserConfig
+@import config.AppConfig.SiProtectedUserConfig
 @import models.forms.Update
 @import play.api.data.Form
 @import play.api.i18n.Messages
@@ -35,8 +35,8 @@
     govukButton: GovukButton,
     siProtectedUserConfig: SiProtectedUserConfig
 )
-
 @(form: Form[Update], entryID: String)(implicit request: Request[_], messages: Messages)
+
 @additionalScripts = {
     <script src='@controllers.routes.Assets.at("javascripts/entry-form.js")'></script>
 }

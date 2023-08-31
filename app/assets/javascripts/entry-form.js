@@ -1,7 +1,7 @@
 function onLoad() {
   function addSelectOnChangeEventHandler(select) {
-      select.addEventListener("change", () => {
-        toggleIdentityProviderFields(this.options[this.selectedIndex].value)
+      select.addEventListener("change", event => {
+        toggleIdentityProviderFields(event.target.options[event.target.selectedIndex].value)
       });
   }
 

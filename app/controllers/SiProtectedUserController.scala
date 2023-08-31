@@ -19,6 +19,7 @@ package controllers
 import connectors.BackendConnector
 import controllers.base.{StrideAction, StrideController}
 import play.api.mvc._
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import views.Views
 
 import javax.inject.{Inject, Singleton}
@@ -26,10 +27,10 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class SiProtectedUserController @Inject() (
-  protected val strideAction: StrideAction,
-  backendConnector:           BackendConnector,
-  views:                      Views,
-  mcc:                        MessagesControllerComponents
+  val strideAction: StrideAction,
+  backendConnector: BackendConnector,
+  views:            Views,
+  mcc:              MessagesControllerComponents
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
@@ -42,10 +43,11 @@ class SiProtectedUserController @Inject() (
   def view(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
     backendConnector
       .findBy(entryId)
-      .map {
-        case Some(protectedUser) => Ok(views.view(protectedUser))
-        case None                => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
+      .map(protectedUser => Ok(views.view(protectedUser)))
+      .recover {
+        case UpstreamErrorResponse(_, NOT_FOUND, _, _) =>
+          NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
+        case _ => InternalServerError(views.somethingWentWrong())
       }
-      .recover { case _ => InternalServerError(views.somethingWentWrong()) }
   }
 }

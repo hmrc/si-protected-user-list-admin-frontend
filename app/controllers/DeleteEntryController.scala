@@ -16,9 +16,9 @@
 
 package controllers
 
+import connectors.BackendConnector
 import controllers.base.{StrideAction, StrideController}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import services.SiProtectedUserListService
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import views.Views
 
@@ -27,29 +27,28 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class DeleteEntryController @Inject() (
-  siProtectedUserListService: SiProtectedUserListService,
-  views:                      Views,
-  mcc:                        MessagesControllerComponents,
-  val strideAction:           StrideAction
+  backendConnector: BackendConnector,
+  views:            Views,
+  mcc:              MessagesControllerComponents,
+  val strideAction: StrideAction
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
   def showConfirmDeletePage(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
-    siProtectedUserListService
-      .findEntry(entryId)
-      .map {
-        case Some(protectedUser) => Ok(views.deleteConfirmation(protectedUser))
-        case None                => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
+    backendConnector
+      .findBy(entryId)
+      .map(protectedUser => Ok(views.deleteConfirmation(protectedUser)))
+      .recover { case UpstreamErrorResponse(_, NOT_FOUND, _, _) =>
+        NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
       }
   }
 
   def delete(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
-    siProtectedUserListService
-      .deleteEntry(entryId)
-      .map {
-        case Right(_)                                  => Ok(views.deleteSuccess())
-        case Left(UpstreamErrorResponse(_, 404, _, _)) => NotFound(views.errorTemplate("delete.entry.not.found", "delete.entry.not.found", "delete.entry.already.deleted"))
-        case Left(err)                                 => InternalServerError(views.somethingWentWrong())
+    backendConnector
+      .deleteBy(entryId)
+      .map(_ => Ok(views.deleteSuccess()))
+      .recover { case UpstreamErrorResponse(_, NOT_FOUND, _, _) =>
+        NotFound(views.errorTemplate("delete.entry.not.found", "delete.entry.not.found", "delete.entry.already.deleted"))
       }
   }
 }

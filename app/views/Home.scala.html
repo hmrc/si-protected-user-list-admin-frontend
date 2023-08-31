@@ -14,7 +14,7 @@
  * limitations under the License.
  *@
 
-@import config.SiProtectedUserConfig
+@import config.AppConfig.SiProtectedUserConfig
 @import controllers.base.StrideRequest
 @import models.backend.{ProtectedUserRecord, TaxIdentifier, TaxIdentifierType}
 @import TaxIdentifierType._
@@ -32,7 +32,6 @@
         select: GovukSelect,
         table: GovukTable
 )
-
 @(records: Seq[ProtectedUserRecord])(implicit req: StrideRequest[_], messages: Messages)
 
 @beforeContent = {
@@ -108,7 +107,7 @@
                 }
                 val metaData = Seq(record.body.group, record.body.team)
 
-               viewLink( record.entryId).body +: (taxId ++ status ++ metaData) map { data =>
+                viewLink( record.entryId).body +: (taxId ++ status ++ metaData) map { data =>
                     TableRow(HtmlContent(data))
                 }
             }
