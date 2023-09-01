@@ -16,27 +16,32 @@
 
 package controllers
 
-import play.api.test.ResultExtractors
+import controllers.scenarios.{EditForm200Scenario, EditForm404Scenario}
 
-class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
-//  "EditEntryController" should {
-//    "return OK when edit is successful" in
-//      forAll(validEditEntryGen, protectedUserRecords, nonEmptyStringGen) { (entry, record, pid) =>
-//        expectUserToBeStrideAuthenticated(pid)
-//        val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
-//
-//        expectEditEntryToBeSuccessful(expectedEntry.entryId.value, record, expectedEntry.toProtectedUser())
-//
-//        val response = wsClient
-//          .url(resource(s"$frontEndBaseUrl/edit"))
-//          .withHttpHeaders("Csrf-Token" -> "nocheck")
-//          .withCookies(mockSessionCookie)
-//          .withFollowRedirects(false)
-//          .post(toEditRequestFields(expectedEntry).toMap)
-//          .futureValue
-//
-//        response.status shouldBe OK
-//      }
+class EditEntryControllerISpec extends BaseISpec {
+  "GET /edit/:entryID" should {
+    s"return $OK when given entry ID does exist" in
+      forAllScenarios { scenario: EditForm200Scenario =>
+        val response = await(
+          frontendRequest(s"/edit/${scenario.record.entryId}")
+            .withCookies(mockSessionCookie)
+            .get()
+        )
+
+        response.status shouldBe OK
+      }
+
+    s"return $NOT_FOUND when given entry ID does not exist" in
+      forAllScenarios { scenario: EditForm404Scenario =>
+        val response = await(
+          frontendRequest(s"/edit/${scenario.entryID}")
+            .withCookies(mockSessionCookie)
+            .get()
+        )
+
+        response.status shouldBe NOT_FOUND
+      }
+  }
 //
 //    "Return NOT_FOUND when upstream api return not found" in
 //      forAll(validEditEntryGen, nonEmptyStringGen) { (entry, pid) =>
@@ -103,5 +108,4 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
 //      entry.addedByTeam.map(s => "addedByTeam" -> s),
 //      entry.updatedByTeam.map(s => "updatedByTeam" -> s)
 //    ).flatten
-//  }
 }

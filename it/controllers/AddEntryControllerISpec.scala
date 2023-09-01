@@ -20,12 +20,10 @@ import controllers.scenarios.{Insert201Scenario, Insert400Scenario, Insert409Sce
 import models.forms.Insert
 
 class AddEntryControllerISpec extends BaseISpec {
-  private val wsRequest = wsClient.url(resource(s"$frontEndBaseUrl/add"))
-
   "GET /add" should {
     s"return $OK when viewing insert form" in
       forAllStridePIDs {
-        val response = await(wsRequest.withCookies(mockSessionCookie).get())
+        val response = await(frontendRequest("/add").withCookies(mockSessionCookie).get())
 
         response.status shouldBe OK
       }
@@ -35,7 +33,7 @@ class AddEntryControllerISpec extends BaseISpec {
       forAllScenarios { scenario: Insert201Scenario =>
         val payload = Insert.form.mapping unbind scenario.formModel
 
-        val response = wsRequest
+        val response = frontendRequest("/add")
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .withFollowRedirects(false)
@@ -49,7 +47,7 @@ class AddEntryControllerISpec extends BaseISpec {
       forAllScenarios { scenario: Insert400Scenario =>
         val payload = Insert.form.mapping unbind scenario.formModel
 
-        val response = wsRequest
+        val response = frontendRequest("/add")
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .post(payload)
@@ -62,7 +60,7 @@ class AddEntryControllerISpec extends BaseISpec {
       forAllScenarios { scenario: Insert409Scenario =>
         val payload = Insert.form.mapping unbind scenario.formModel
 
-        val response = wsRequest
+        val response = frontendRequest("/add")
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .post(payload)

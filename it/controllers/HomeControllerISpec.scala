@@ -23,8 +23,7 @@ class HomeControllerISpec extends BaseISpec {
     s"return $OK" in
       forAllStridePIDs {
         val response = await(
-          wsClient
-            .url(resource(frontEndBaseUrl))
+          frontendRequest("/")
             .withCookies(mockSessionCookie)
             .get()
         )
@@ -34,8 +33,7 @@ class HomeControllerISpec extends BaseISpec {
   "GET /view-entry/:entryId" should {
     "return OK when view is successful" in
       forAllScenarios { scenario: View200Scenario =>
-        val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/view-entry/${scenario.record.entryId}"))
+        val response = frontendRequest(s"/view-entry/${scenario.record.entryId}")
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .get()
@@ -46,8 +44,7 @@ class HomeControllerISpec extends BaseISpec {
 
     "return NOT_FOUND when entry doesnt exist" in
       forAllScenarios { scenario: View404Scenario =>
-        val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/view-entry/${scenario.entryID}"))
+        val response = frontendRequest(s"/view-entry/${scenario.entryID}")
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .get()

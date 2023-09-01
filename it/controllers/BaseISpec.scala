@@ -47,7 +47,8 @@ trait BaseISpec extends WireMockSpec with Injecting with ScalaFutures with Gener
   override def replaceExternalDependenciesWithMockServers: Map[String, Any] =
     super.replaceExternalDependenciesWithMockServers + backendPortConfig
 
-  protected def backendRequest(path: String): WSRequest = wsClient.url(s"http://localhost:${backendPortConfig._2}$path")
+  protected def frontendRequest(path: String): WSRequest = wsClient.url(resource(s"$frontEndBaseUrl$path"))
+  protected def backendRequest(path:  String): WSRequest = wsClient.url(s"http://localhost:${backendPortConfig._2}$path")
 
   private def stubAuthCallFor(stridePID: String) =
     stubFor(post("/auth/authorise") willReturn okJson(Json.obj("clientId" -> stridePID).toString))
