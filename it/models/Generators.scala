@@ -19,7 +19,7 @@ package models
 import config.AppConfig.{SiProtectedUserConfig, StrideConfig}
 import models.backend.TaxIdentifierType.{NINO, SAUTR}
 import models.backend._
-import models.forms.{Insert, groupMaxLength}
+import models.forms.{Insert, Update, groupMaxLength}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import uk.gov.hmrc.auth.core.Enrolment
@@ -133,4 +133,10 @@ trait Generators {
     group    <- genGroup
     team     <- Gen.alphaStr if team.nonEmpty
   } yield Insert(optNINO, optSAUTR, optIdpID, group, team)
+
+  val validUpdateModels: Gen[Update] = for {
+    optIdpID <- arbitrary[Option[IdentityProviderId]]
+    group    <- genGroup
+    team     <- Gen.alphaStr if team.nonEmpty
+  } yield Update(optIdpID, group, team)
 }

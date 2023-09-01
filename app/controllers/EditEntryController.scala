@@ -21,7 +21,7 @@ import controllers.base.{StrideAction, StrideController}
 import models.forms.Update
 import play.api.i18n.Messages
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import uk.gov.hmrc.http.{ConflictException, NotFoundException, UpstreamErrorResponse}
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import views.Views
 
 import javax.inject.{Inject, Singleton}
@@ -58,8 +58,10 @@ class EditEntryController @Inject() (
             .updateBy(entryID, update)
             .map(_ => Ok(views.editSuccess()))
             .recover {
-              case _: NotFoundException => NotFound(views.errorTemplate("edit.error.not.found", "edit.error.not.found", "edit.error.already.deleted"))
-              case _: ConflictException => Conflict(views.edit(Update.form fill update withGlobalError Messages("edit.error.conflict"), entryID))
+              case UpstreamErrorResponse(_, NOT_FOUND, _, _) =>
+                NotFound(views.errorTemplate("edit.error.not.found", "edit.error.not.found", "edit.error.already.deleted"))
+              case UpstreamErrorResponse(_, CONFLICT, _, _) =>
+                Conflict(views.edit(Update.form fill update withGlobalError Messages("edit.error.conflict"), entryID))
             }
       )
   }

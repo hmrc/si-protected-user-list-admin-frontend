@@ -16,7 +16,8 @@
 
 package controllers
 
-import controllers.scenarios.{EditForm200Scenario, EditForm404Scenario}
+import controllers.scenarios.{Edit200Scenario, Edit404Scenario, EditForm200Scenario, EditForm404Scenario}
+import models.forms.Update
 
 class EditEntryControllerISpec extends BaseISpec {
   "GET /edit/:entryID" should {
@@ -42,22 +43,32 @@ class EditEntryControllerISpec extends BaseISpec {
         response.status shouldBe NOT_FOUND
       }
   }
-//
-//    "Return NOT_FOUND when upstream api return not found" in
-//      forAll(validEditEntryGen, nonEmptyStringGen) { (entry, pid) =>
-//        expectUserToBeStrideAuthenticated(pid)
-//        val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
-//
-//        expectEditEntryToFailWithStatus(expectedEntry.entryId.value, expectedEntry.toProtectedUser(), NOT_FOUND)
-//        val response = wsClient
-//          .url(resource(s"$frontEndBaseUrl/edit"))
-//          .withHttpHeaders("Csrf-Token" -> "nocheck")
-//          .withCookies(mockSessionCookie)
-//          .post(toEditRequestFields(expectedEntry).toMap)
-//          .futureValue
-//
-//        response.status shouldBe NOT_FOUND
-//      }
+  "POST /edit/:entryID" should {
+    s"return $OK when entry ID does exist & form is valid" in
+      forAllScenarios { scenario: Edit200Scenario =>
+        val payload = Update.form.mapping unbind scenario.update
+        val response = await(
+          frontendRequest(s"/edit/${scenario.record.entryId}")
+            .withHttpHeaders("Csrf-Token" -> "nocheck")
+            .withCookies(mockSessionCookie)
+            .withFollowRedirects(false)
+            .post(payload)
+        )
+        response.status shouldBe OK
+      }
+  }
+  s"return $NOT_FOUND when upstream api return not found" in
+    forAllScenarios { scenario: Edit404Scenario =>
+      val payload = Update.form.mapping unbind scenario.update
+      val response = await(
+        frontendRequest(s"/edit/${scenario.entryID}")
+          .withHttpHeaders("Csrf-Token" -> "nocheck")
+          .withCookies(mockSessionCookie)
+          .post(payload)
+      )
+
+      response.status shouldBe NOT_FOUND
+    }
 //
 //    "Return CONFLICT when upstream api indicates a conflict" in
 //      forAll(validEditEntryGen, nonEmptyStringGen) { (entry, pid) =>
@@ -75,37 +86,4 @@ class EditEntryControllerISpec extends BaseISpec {
 //        response.status shouldBe CONFLICT
 //      }
 //  }
-//
-//  private def expectUserToBeStrideAuthenticated(pid: String) = {
-//    stubFor(post("/auth/authorise").willReturn(okJson(Json.obj("clientId" -> pid).toString())))
-//  }
-//
-//  private def expectEditEntryToBeSuccessful(entryId: String, protectedUserRecord: ProtectedUserRecord, protectedUser: ProtectedUser) = {
-//    stubFor(
-//      patch(urlEqualTo(s"$backendBaseUrl/update/$entryId"))
-//        .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString()))
-//        .willReturn(ok(Json.toJsObject(protectedUserRecord).toString()))
-//    )
-//  }
-//
-//  private def expectEditEntryToFailWithStatus(entryId: String, protectedUser: ProtectedUser, status: Int) = {
-//    stubFor(
-//      patch(urlEqualTo(s"$backendBaseUrl/update/$entryId"))
-//        .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString()))
-//        .willReturn(aResponse().withStatus(status))
-//    )
-//  }
-//
-//  private def toEditRequestFields(entry: Entry): Seq[(String, String)] = {
-//    Seq(
-//      entry.entryId.map(e => "entryId" -> e),
-//      Some("action" -> entry.action),
-//      entry.nino.map(n => "nino" -> n),
-//      entry.sautr.map(s => "sautr" -> s),
-//      entry.identityProvider.map(s => "identityProvider" -> s),
-//      entry.identityProviderId.map(s => "identityProviderId" -> s),
-//      entry.group.map(s => "group" -> s),
-//      entry.addedByTeam.map(s => "addedByTeam" -> s),
-//      entry.updatedByTeam.map(s => "updatedByTeam" -> s)
-//    ).flatten
 }

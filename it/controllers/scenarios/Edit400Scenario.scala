@@ -16,17 +16,4 @@
 
 package controllers.scenarios
 
-import models.Generators
-import models.forms.Insert
-
-final case class Insert201Scenario(strideUserPID: String, formModel: Insert) extends AbstractScenario(Seq.empty)
-object Insert201Scenario extends Generators {
-  import org.scalacheck.Arbitrary
-
-  implicit val arb: Arbitrary[Insert201Scenario] = Arbitrary(
-    for {
-      stridePID   <- randomNonEmptyAlphaNumStrings
-      insertModel <- validInsertModels
-    } yield apply(stridePID, insertModel)
-  )
-}
+final case class Edit400Scenario()

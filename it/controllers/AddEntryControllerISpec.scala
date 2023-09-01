@@ -16,7 +16,7 @@
 
 package controllers
 
-import controllers.scenarios.{Insert201Scenario, Insert400Scenario, Insert409Scenario}
+import controllers.scenarios.{Insert303Scenario, Insert400Scenario, Insert409Scenario}
 import models.forms.Insert
 
 class AddEntryControllerISpec extends BaseISpec {
@@ -30,7 +30,7 @@ class AddEntryControllerISpec extends BaseISpec {
   }
   "POST /add" should {
     s"return $SEE_OTHER when add is successful" in
-      forAllScenarios { scenario: Insert201Scenario =>
+      forAllScenarios { scenario: Insert303Scenario =>
         val payload = Insert.form.mapping unbind scenario.formModel
 
         val response = frontendRequest("/add")
