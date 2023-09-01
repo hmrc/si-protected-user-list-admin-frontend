@@ -16,7 +16,7 @@
 
 package controllers
 
-import controllers.scenarios.{Edit200Scenario, Edit404Scenario, EditForm200Scenario, EditForm404Scenario}
+import controllers.scenarios.{Edit200Scenario, Edit400Scenario, Edit404Scenario, EditForm200Scenario, EditForm404Scenario}
 import models.forms.Update
 
 class EditEntryControllerISpec extends BaseISpec {
@@ -56,19 +56,31 @@ class EditEntryControllerISpec extends BaseISpec {
         )
         response.status shouldBe OK
       }
-  }
-  s"return $NOT_FOUND when upstream api return not found" in
-    forAllScenarios { scenario: Edit404Scenario =>
-      val payload = Update.form.mapping unbind scenario.update
-      val response = await(
-        frontendRequest(s"/edit/${scenario.entryID}")
-          .withHttpHeaders("Csrf-Token" -> "nocheck")
-          .withCookies(mockSessionCookie)
-          .post(payload)
-      )
+    s"return $BAD_REQUEST when form is invalid" in
+      forAllScenarios { scenario: Edit400Scenario =>
+        val payload = Update.form.mapping unbind scenario.update
+        val response = await(
+          frontendRequest(s"/edit/${scenario.entryID}")
+            .withHttpHeaders("Csrf-Token" -> "nocheck")
+            .withCookies(mockSessionCookie)
+            .post(payload)
+        )
 
-      response.status shouldBe NOT_FOUND
-    }
+        response.status shouldBe BAD_REQUEST
+      }
+    s"return $NOT_FOUND when upstream api return not found" in
+      forAllScenarios { scenario: Edit404Scenario =>
+        val payload = Update.form.mapping unbind scenario.update
+        val response = await(
+          frontendRequest(s"/edit/${scenario.entryID}")
+            .withHttpHeaders("Csrf-Token" -> "nocheck")
+            .withCookies(mockSessionCookie)
+            .post(payload)
+        )
+
+        response.status shouldBe NOT_FOUND
+      }
+  }
 //
 //    "Return CONFLICT when upstream api indicates a conflict" in
 //      forAll(validEditEntryGen, nonEmptyStringGen) { (entry, pid) =>

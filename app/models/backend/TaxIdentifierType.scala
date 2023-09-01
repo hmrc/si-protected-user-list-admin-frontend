@@ -28,7 +28,7 @@ object TaxIdentifierType {
 
   private def parseErr(str: String) = s"Could not read tax ID type from $str."
 
-  private def reads(json: JsValue) =
+  private def read(json: JsValue) =
     json.validate[String].flatMap { str =>
       values.find(_.toString equalsIgnoreCase str) match {
         case Some(taxIdType) => JsSuccess(taxIdType)
@@ -36,7 +36,7 @@ object TaxIdentifierType {
       }
     }
 
-  private def writes(taxIdType: TaxIdentifierType) = JsString(taxIdType.toString)
+  private def write(taxIdType: TaxIdentifierType) = JsString(taxIdType.toString)
 
-  implicit val format: Format[TaxIdentifierType] = Format(reads, writes)
+  implicit val format: Format[TaxIdentifierType] = Format(read _, write _)
 }

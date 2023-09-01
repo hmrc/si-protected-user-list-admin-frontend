@@ -16,4 +16,26 @@
 
 package controllers.scenarios
 
-final case class Edit400Scenario()
+import models.Generators
+import models.backend.IdentityProviderId
+import models.forms.Update
+import org.scalacheck.{Arbitrary, Gen}
+
+final case class Edit400Scenario(
+  strideUserPID: String,
+  entryID:       String,
+  update:        Update
+) extends AbstractScenario(Seq.empty)
+
+object Edit400Scenario extends Generators {
+  implicit val arb: Arbitrary[Edit400Scenario] = Arbitrary(
+    for {
+      strideUserPID <- randomNonEmptyAlphaNumStrings
+      entryID       <- randomNonEmptyAlphaNumStrings
+      blankIdpID    <- genBlankString
+      group         <- Gen.asciiPrintableStr
+      team          <- randomNonEmptyAlphaNumStrings
+      update = Update(Some(IdentityProviderId("GG", blankIdpID)), group, team)
+    } yield apply(strideUserPID, entryID, update)
+  )
+}

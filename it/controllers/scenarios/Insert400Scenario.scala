@@ -25,8 +25,6 @@ final case class Insert400Scenario(strideUserPID: String, formModel: Insert) ext
 object Insert400Scenario extends Generators {
   import Arbitrary.arbitrary
 
-  private val genInvalidTaxID = Gen.alphaStr
-
   private val invalidInsertModels = for {
     optNINO  <- Gen option genInvalidTaxID
     optSAUTR <- Gen option genInvalidTaxID

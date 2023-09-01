@@ -63,6 +63,10 @@ trait Generators {
     genSAUTR.map(TaxIdentifier(SAUTR, _))
   )
 
+  val genInvalidTaxID: Gen[String] = Gen.alphaStr
+
+  val genBlankString: Gen[String] = Gen.posNum[Int].map(" " * _)
+
   val protectedUserGen: Gen[ProtectedUser] = for {
     taxId              <- genTaxId
     identityProviderId <- arbitrary[Option[IdentityProviderId]]
