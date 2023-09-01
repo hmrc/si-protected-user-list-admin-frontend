@@ -46,7 +46,7 @@ object Insert409Scenario extends Generators {
     for {
       initialRecord <- arbitrary[ProtectedUserRecord]
       stridePID     <- randomNonEmptyAlphaNumStrings
-      group         <- genGroup
+      group         <- genValidGroup
       team          <- randomNonEmptyAlphaNumStrings
     } yield apply(initialRecord, stridePID, group, team)
   )

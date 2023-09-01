@@ -29,7 +29,7 @@ object Insert400Scenario extends Generators {
     optNINO  <- Gen option genInvalidTaxID
     optSAUTR <- Gen option genInvalidTaxID
     optIdpID <- arbitrary[Option[IdentityProviderId]]
-    group    <- genGroup
+    group    <- genValidGroup
     team     <- Gen.asciiPrintableStr
   } yield Insert(optNINO, optSAUTR, optIdpID, group, team)
 

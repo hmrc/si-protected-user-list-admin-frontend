@@ -90,7 +90,7 @@ trait Generators {
     } yield Modified(calendar.toInstant, strideUserPid)
   )
 
-  implicit val genGroup: Gen[String] = for {
+  implicit val genValidGroup: Gen[String] = for {
     length <- Gen.chooseNum(1, groupMaxLength)
     chars  <- Gen.listOfN(length, Gen.asciiPrintableChar)
   } yield chars.mkString
@@ -100,7 +100,7 @@ trait Generators {
       taxId    <- genTaxId
       optIdpID <- arbitrary[Option[IdentityProviderId]]
       team     <- Gen.alphaNumStr if team.nonEmpty
-      group    <- genGroup
+      group    <- genValidGroup
     } yield ProtectedUser(taxId, optIdpID, team, group)
   )
 
@@ -134,13 +134,13 @@ trait Generators {
     optNINO = if (taxID.name == NINO) Some(taxID.value) else None
     optSAUTR = if (taxID.name == SAUTR) Some(taxID.value) else None
     optIdpID <- arbitrary[Option[IdentityProviderId]]
-    group    <- genGroup
+    group    <- genValidGroup
     team     <- Gen.alphaStr if team.nonEmpty
   } yield Insert(optNINO, optSAUTR, optIdpID, group, team)
 
   val validUpdateModels: Gen[Update] = for {
     optIdpID <- arbitrary[Option[IdentityProviderId]]
-    group    <- genGroup
+    group    <- genValidGroup
     team     <- Gen.alphaStr if team.nonEmpty
   } yield Update(optIdpID, group, team)
 }

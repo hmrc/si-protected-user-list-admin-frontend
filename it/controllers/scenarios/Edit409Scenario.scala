@@ -16,4 +16,28 @@
 
 package controllers.scenarios
 
-class Edit409Scenario {}
+import models.backend.ProtectedUserRecord
+import models.forms.Update
+import org.scalacheck.Arbitrary
+
+final case class Edit409Scenario(
+  strideUserPID: String,
+  firstRecord:   ProtectedUserRecord,
+  secondRecord:  ProtectedUserRecord,
+  update:        Update
+) extends AbstractScenario(Seq(firstRecord, secondRecord))
+
+object Edit409Scenario extends models.Generators {
+  import Arbitrary.arbitrary
+
+  implicit val arb: Arbitrary[Edit409Scenario] = Arbitrary(
+    for {
+      strideUserPID <- randomNonEmptyAlphaNumStrings
+      firstRecord   <- arbitrary[ProtectedUserRecord]
+      secondRecord  <- arbitrary[ProtectedUserRecord].map(r => r.copy(body = r.body.copy(taxId = firstRecord.body.taxId)))
+      newGroup      <- genValidGroup
+      newTeam       <- randomNonEmptyAlphaNumStrings
+      update = Update(firstRecord.body.identityProviderId, newGroup, newTeam)
+    } yield apply(strideUserPID, firstRecord, secondRecord, update)
+  )
+}

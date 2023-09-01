@@ -16,7 +16,7 @@
 
 package controllers
 
-import controllers.scenarios.{Edit200Scenario, Edit400Scenario, Edit404Scenario, EditForm200Scenario, EditForm404Scenario}
+import controllers.scenarios._
 import models.forms.Update
 
 class EditEntryControllerISpec extends BaseISpec {
@@ -80,22 +80,17 @@ class EditEntryControllerISpec extends BaseISpec {
 
         response.status shouldBe NOT_FOUND
       }
+    s"return $CONFLICT when submitting same IDP ID as existing record with same tax ID" in
+      forAllScenarios { scenario: Edit409Scenario =>
+        val payload = Update.form.mapping unbind scenario.update
+        val response = await(
+          frontendRequest(s"/edit/${scenario.secondRecord.entryId}")
+            .withHttpHeaders("Csrf-Token" -> "nocheck")
+            .withCookies(mockSessionCookie)
+            .post(payload)
+        )
+        println(s"Response body: ${response.body}")
+        response.status shouldBe CONFLICT
+      }
   }
-//
-//    "Return CONFLICT when upstream api indicates a conflict" in
-//      forAll(validEditEntryGen, nonEmptyStringGen) { (entry, pid) =>
-//        expectUserToBeStrideAuthenticated(pid)
-//        val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
-//
-//        expectEditEntryToFailWithStatus(expectedEntry.entryId.value, expectedEntry.toProtectedUser(), CONFLICT)
-//        val response = wsClient
-//          .url(resource(s"$frontEndBaseUrl/edit"))
-//          .withHttpHeaders("Csrf-Token" -> "nocheck")
-//          .withCookies(mockSessionCookie)
-//          .post(toEditRequestFields(expectedEntry).toMap)
-//          .futureValue
-//
-//        response.status shouldBe CONFLICT
-//      }
-//  }
 }
