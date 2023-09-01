@@ -16,13 +16,13 @@
 
 package controllers
 
-import controllers.scenarios.{DeleteForm200Scenario, DeleteForm404Scenario}
+import controllers.scenarios.{Delete200Scenario, Delete404Scenario}
 import play.api.test.ResultExtractors
 
 class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
   "GET /confirm-delete/:entryId" should {
     s"return $OK when entry ID does exist" in
-      forAllScenarios { scenario: DeleteForm200Scenario =>
+      forAllScenarios { scenario: Delete200Scenario =>
         val response = await(
           frontendRequest(s"/confirm-delete/${scenario.record.entryId}")
             .withCookies(mockSessionCookie)
@@ -32,7 +32,7 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
         response.status shouldBe OK
       }
     s"return $NOT_FOUND when entry ID does not exist" in
-      forAllScenarios { scenario: DeleteForm404Scenario =>
+      forAllScenarios { scenario: Delete404Scenario =>
         val response = await(
           frontendRequest(s"/confirm-delete/${scenario.entryID}")
             .withCookies(mockSessionCookie)
@@ -42,39 +42,26 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
         response.status shouldBe NOT_FOUND
       }
   }
-//  "SiProtectedUserController" should {//
-//    "return OK when entry is deleted" in new Setup {
-//      forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
-//        expectUserToBeStrideAuthenticated(pid)
-//        expectDeleteEntryToBeSuccessful(record)
-//
-//        val response = wsClient
-//          .url(resource(s"$frontEndBaseUrl/delete-entry/${record.entryId}"))
-//          .withHttpHeaders("Csrf-Token" -> "nocheck")
-//          .withCookies(mockSessionCookie)
-//          .get()
-//          .futureValue
-//
-//        response.status shouldBe OK
-//      }
-//    }
-//
-//    "return NOT_FOUND when no entry is found to delete" in new Setup {
-//      forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
-//        expectUserToBeStrideAuthenticated(pid)
-//        expectDeleteEntryToFailWithNotFound(record)
-//
-//        val response = wsClient
-//          .url(resource(s"$frontEndBaseUrl/delete-entry/${record.entryId}"))
-//          .withHttpHeaders("Csrf-Token" -> "nocheck")
-//          .withCookies(mockSessionCookie)
-//          .delete()
-//          .futureValue
-//
-//        response.status shouldBe NOT_FOUND
-//      }
-//    }
-//
-//  }
-//
+  "GET /delete-entry/:entryId" should {
+    s"return $OK when entry ID does exist" in
+      forAllScenarios { scenario: Delete200Scenario =>
+        val response = await(
+          frontendRequest(s"/delete-entry/${scenario.record.entryId}")
+            .withCookies(mockSessionCookie)
+            .get()
+        )
+
+        response.status shouldBe OK
+      }
+    s"return $NOT_FOUND when entry ID does not exist" in
+      forAllScenarios { scenario: Delete404Scenario =>
+        val response = await(
+          frontendRequest(s"/delete-entry/${scenario.entryID}")
+            .withCookies(mockSessionCookie)
+            .get()
+        )
+
+        response.status shouldBe NOT_FOUND
+      }
+  }
 }

@@ -18,14 +18,14 @@ package controllers.scenarios
 
 import org.scalacheck.Arbitrary
 
-final case class DeleteForm404Scenario(
+final case class Delete404Scenario(
   strideUserPID: String,
   entryID:       String
 ) extends AbstractScenario(Seq.empty)
 
-object DeleteForm404Scenario extends models.Generators {
+object Delete404Scenario extends models.Generators {
 
-  implicit val arb: Arbitrary[DeleteForm404Scenario] = Arbitrary(
+  implicit val arb: Arbitrary[Delete404Scenario] = Arbitrary(
     for {
       strideUserPID <- randomNonEmptyAlphaNumStrings
       entryID       <- randomNonEmptyAlphaNumStrings

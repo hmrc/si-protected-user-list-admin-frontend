@@ -19,15 +19,15 @@ package controllers.scenarios
 import models.backend.ProtectedUserRecord
 import org.scalacheck.Arbitrary
 
-final case class DeleteForm200Scenario(
+final case class Delete200Scenario(
   strideUserPID: String,
   record:        ProtectedUserRecord
 ) extends AbstractScenario(Seq(record))
 
-object DeleteForm200Scenario extends models.Generators {
+object Delete200Scenario extends models.Generators {
   import Arbitrary.arbitrary
 
-  implicit val arb: Arbitrary[DeleteForm200Scenario] = Arbitrary(
+  implicit val arb: Arbitrary[Delete200Scenario] = Arbitrary(
     for {
       strideUserPID <- randomNonEmptyAlphaNumStrings
       record        <- arbitrary[ProtectedUserRecord]
