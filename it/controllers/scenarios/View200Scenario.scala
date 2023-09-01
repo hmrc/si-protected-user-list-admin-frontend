@@ -14,11 +14,24 @@
  * limitations under the License.
  */
 
-package controllers.base
+package controllers.scenarios
 
-import play.api.mvc.{MessagesRequest, WrappedRequest}
+import models.Generators
+import models.backend.ProtectedUserRecord
+import org.scalacheck.{Arbitrary, Gen}
 
-final case class StrideRequest[A](
-  underlying: MessagesRequest[A],
-  userPID:    String
-) extends WrappedRequest[A](underlying)
+final case class View200Scenario(
+  record:        ProtectedUserRecord,
+  strideUserPID: String
+) extends AbstractScenario(initRecords = Seq(record))
+
+object View200Scenario extends Generators {
+  import Arbitrary.arbitrary
+
+  implicit val arb: Arbitrary[View200Scenario] = Arbitrary(
+    for {
+      record <- arbitrary[ProtectedUserRecord]
+      pid    <- Gen.alphaNumStr if pid.nonEmpty
+    } yield apply(record, pid)
+  )
+}

@@ -45,8 +45,8 @@ class AddEntryController @Inject() (
         errorForm => Future.successful(BadRequest(views.add(errorForm))),
         insertModel =>
           backendConnector
-            .insertNew(insertModel.toRequestJSON)
-            .map(protectedUserRecord => Redirect(controllers.routes.SiProtectedUserController.view(protectedUserRecord.entryId)))
+            .insertNew(insertModel)
+            .map(protectedUserRecord => Redirect(routes.HomeController.view(protectedUserRecord.entryId)))
             .recover { case UpstreamErrorResponse(_, CONFLICT, _, _) =>
               Conflict(views.add(Insert.form fill insertModel withGlobalError Messages("add.error.conflict")))
             }

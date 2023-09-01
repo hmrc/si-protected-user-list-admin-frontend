@@ -1,7 +1,7 @@
 # microservice specific routes
 
-GET         /                               controllers.SiProtectedUserController.homepage()
-GET         /view-entry/:entryId            controllers.SiProtectedUserController.view(entryId)
+GET         /                               controllers.HomeController.homepage()
+GET         /view-entry/:entryId            controllers.HomeController.view(entryId)
 
 GET         /add                            controllers.AddEntryController.show()
 POST        /add                            controllers.AddEntryController.submit()

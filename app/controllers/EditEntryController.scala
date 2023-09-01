@@ -39,7 +39,10 @@ class EditEntryController @Inject() (
   def show(entryID: String): Action[AnyContent] = StrideAction.async { implicit request =>
     backendConnector
       .findBy(entryID)
-      .map(protectedUserRecord => Ok(views.edit(Update.form fill Update(protectedUserRecord), entryID)))
+      .map { record =>
+        val update = Update(record.body.identityProviderId, record.body.group, record.body.team)
+        Ok(views.edit(Update.form fill update, entryID))
+      }
       .recover { case UpstreamErrorResponse(_, NOT_FOUND, _, _) =>
         NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
       }
@@ -52,7 +55,7 @@ class EditEntryController @Inject() (
         errorForm => Future.successful(BadRequest(views.edit(errorForm, entryID))),
         update =>
           backendConnector
-            .updateBy(entryID, update.toRequestJSON(request.getUserPid))
+            .updateBy(entryID, update)
             .map(_ => Ok(views.editSuccess()))
             .recover {
               case _: NotFoundException => NotFound(views.errorTemplate("edit.error.not.found", "edit.error.not.found", "edit.error.already.deleted"))

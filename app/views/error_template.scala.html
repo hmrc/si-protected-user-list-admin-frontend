@@ -29,7 +29,7 @@
 
 @mainLayout(
     pageTitle = Messages(title),
-    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
+    backLink = Some(BackLink(href = routes.HomeController.homepage().url))
 ) {
     @contentHeader
     @mainContent

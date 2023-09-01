@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package controllers.base
+package controllers.scenarios
 
-import play.api.mvc.{MessagesRequest, WrappedRequest}
+import models.backend.ProtectedUserRecord
 
-final case class StrideRequest[A](
-  underlying: MessagesRequest[A],
-  userPID:    String
-) extends WrappedRequest[A](underlying)
+abstract class AbstractScenario(
+  val initRecords: Seq[ProtectedUserRecord]
+) {
+  val strideUserPID: String
+}

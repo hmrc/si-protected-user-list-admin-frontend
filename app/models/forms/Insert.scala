@@ -17,10 +17,11 @@
 package models.forms
 
 import controllers.base.StrideRequest
-import models.backend.{IdentityProviderId, TaxIdentifier, TaxIdentifierType}
+import models.backend.TaxIdentifierType.{NINO, SAUTR}
+import models.backend.{IdentityProviderId, TaxIdentifier}
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{Json, Writes}
 import uk.gov.voa.play.form.ConditionalMappings.mandatoryIfEqual
 
 final case class Insert(
@@ -29,23 +30,7 @@ final case class Insert(
   optIdpID: Option[IdentityProviderId],
   group:    String,
   team:     String
-) {
-  import TaxIdentifierType._
-
-  def toRequestJSON(implicit request: StrideRequest[_]): JsValue = {
-    val taxID = optNINO.map(TaxIdentifier(NINO, _)) orElse optSAUTR.map(TaxIdentifier(SAUTR, _))
-
-    Json.obj(
-      "stride_pid" -> request.getUserPid,
-      "protectedUser" -> Json.obj(
-        "tax_id" -> taxID,
-        "idp_id" -> optIdpID,
-        "group"  -> group,
-        "team"   -> team
-      )
-    )
-  }
-}
+)
 object Insert {
   private val ninoRegex = "((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]"
   private val saUtrRegex = "[0-9]{10}"
@@ -85,4 +70,20 @@ object Insert {
     }
       .verifying("form.nino.sautr.required", insert => (insert.optNINO orElse insert.optSAUTR).isDefined)
   )
+
+  implicit def wrt(implicit request: StrideRequest[_]): Writes[Insert] =
+    insert => {
+      val taxID = insert.optNINO.map(TaxIdentifier(NINO, _)) orElse
+        insert.optSAUTR.map(TaxIdentifier(SAUTR, _))
+
+      Json.obj(
+        "stride_pid" -> request.userPID,
+        "protectedUser" -> Json.obj(
+          "tax_id" -> taxID,
+          "idp_id" -> insert.optIdpID,
+          "group"  -> insert.group,
+          "team"   -> insert.team
+        )
+      )
+    }
 }

@@ -33,12 +33,12 @@
 
 @mainLayout(
     pageTitle = Messages("confirm.delete.entry.title"),
-    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
+    backLink = Some(BackLink(href = routes.HomeController.homepage().url))
 ) {
     @h1("confirm.delete.entry.header")
     @details(protectedUserRecord)
     @govukWarningText(WarningText(content = Text(Messages("confirm.delete.warning"))))
-    @govukButton(Button(href = Some(controllers.routes.DeleteEntryController.delete(protectedUserRecord.entryId).url),  content = Text(Messages("continue.button"))))
-    @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("cancel.button")), classes = "govuk-button govuk-button--secondary"))
+    @govukButton(Button(href = Some(routes.DeleteEntryController.delete(protectedUserRecord.entryId).url),  content = Text(Messages("continue.button"))))
+    @govukButton(Button(href = Some(routes.HomeController.homepage().url), content = Text(Messages("cancel.button")), classes = "govuk-button govuk-button--secondary"))
 
 }

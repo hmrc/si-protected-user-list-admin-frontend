@@ -16,83 +16,59 @@
 
 package controllers
 
-import com.github.tomakehurst.wiremock.client.WireMock._
-import models.{Entry, ProtectedUser, ProtectedUserRecord}
-import play.api.libs.json.Json
-import play.api.test.ResultExtractors
-import util.Generators
+import controllers.scenarios.{Insert201Scenario, Insert400Scenario, Insert409Scenario}
+import models.forms.Insert
 
-class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Generators {
-  "AddEntryController" should {
-    "return CREATED when add is successful" in new Setup {
-      forAll(validRequestEntryGen, protectedUserRecords, nonEmptyStringGen) { (entry, record, pid) =>
-        expectUserToBeStrideAuthenticated(pid)
-        val expectedEntry = entry.copy(addedByUser = Some(pid))
+class AddEntryControllerISpec extends BaseISpec {
+  private val wsRequest = wsClient.url(resource(s"$frontEndBaseUrl/add"))
 
-        expectAddEntryToBeSuccessful(record, expectedEntry.toProtectedUser())
+  "GET /add" should {
+    s"return $OK when viewing insert form" in
+      forAllStridePIDs {
+        val response = await(wsRequest.withCookies(mockSessionCookie).get())
 
-        val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/add"))
+        response.status shouldBe OK
+      }
+  }
+  "POST /add" should {
+    s"return $SEE_OTHER when add is successful" in
+      forAllScenarios { scenario: Insert201Scenario =>
+        val payload = Insert.form.mapping unbind scenario.formModel
+
+        val response = wsRequest
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .withFollowRedirects(false)
-          .post(toRequestFields(expectedEntry).toMap)
+          .post(payload)
           .futureValue
 
         response.status shouldBe SEE_OTHER
       }
-    }
 
-    "Return CONFLICT when upstream api indicates a conflict" in new Setup {
-      forAll(validRequestEntryGen, nonEmptyStringGen) { (entry, pid) =>
-        expectUserToBeStrideAuthenticated(pid)
-        val expectedEntry = entry.copy(addedByUser = Some(pid))
+    s"return $BAD_REQUEST when upstream api indicates a conflict" in
+      forAllScenarios { scenario: Insert400Scenario =>
+        val payload = Insert.form.mapping unbind scenario.formModel
 
-        expectAddEntryToFailWithConflictStatus(expectedEntry.toProtectedUser())
-        val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/add"))
+        val response = wsRequest
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
-          .post(toRequestFields(expectedEntry).toMap)
+          .post(payload)
+          .futureValue
+
+        response.status shouldBe BAD_REQUEST
+      }
+
+    s"return $CONFLICT when upstream api indicates a conflict" in
+      forAllScenarios { scenario: Insert409Scenario =>
+        val payload = Insert.form.mapping unbind scenario.formModel
+
+        val response = wsRequest
+          .withHttpHeaders("Csrf-Token" -> "nocheck")
+          .withCookies(mockSessionCookie)
+          .post(payload)
           .futureValue
 
         response.status shouldBe CONFLICT
       }
-    }
-  }
-
-  trait Setup {
-
-    def expectUserToBeStrideAuthenticated(pid: String): Unit = {
-      stubFor(post("/auth/authorise").willReturn(okJson(Json.obj("clientId" -> pid).toString())))
-    }
-
-    def expectAddEntryToBeSuccessful(protectedUserRecord: ProtectedUserRecord, protectedUser: ProtectedUser): Unit = {
-      stubFor(
-        post(urlEqualTo(s"$backendBaseUrl/add"))
-          .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString()))
-          .willReturn(ok(Json.toJsObject(protectedUserRecord).toString()))
-      )
-    }
-    def expectAddEntryToFailWithConflictStatus(protectedUser: ProtectedUser): Unit = {
-      stubFor(
-        post(urlEqualTo(s"$backendBaseUrl/add"))
-          .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString()))
-          .willReturn(aResponse().withStatus(CONFLICT))
-      )
-    }
-
-    def toRequestFields(entry: Entry): Seq[(String, String)] = {
-      Seq(
-        Some("action" -> entry.action),
-        entry.nino.map(n => "nino" -> n),
-        entry.sautr.map(s => "sautr" -> s),
-        entry.identityProvider.map(s => "identityProvider" -> s),
-        entry.identityProviderId.map(s => "identityProviderId" -> s),
-        entry.group.map(s => "group" -> s),
-        entry.addedByTeam.map(s => "addedByTeam" -> s),
-        entry.updatedByTeam.map(s => "updatedByTeam" -> s)
-      ).flatten
-    }
   }
 }

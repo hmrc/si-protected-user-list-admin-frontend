@@ -38,7 +38,7 @@
     <link rel='stylesheet' href='@routes.Assets.at("application.css")'>
 }
 @viewLink(entryId: String) = {
-    <a href=@controllers.routes.SiProtectedUserController.view(entryId)>@entryId</a>
+    <a href=@controllers.routes.HomeController.view(entryId)>@entryId</a>
 }
 @layout(
     pageTitle = Some(messages("home.page.title")),
@@ -52,7 +52,7 @@
     <div id="actions">
         <div class="action">
         @button(Button(
-            href = Some(controllers.routes.AddEntryController.show().url),
+            href = Some(routes.AddEntryController.show().url),
             content = Text(messages("home.page.add"))
         ))
         </div>

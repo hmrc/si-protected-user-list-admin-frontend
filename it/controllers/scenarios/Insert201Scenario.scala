@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-package controllers.base
+package controllers.scenarios
 
-import play.api.mvc.{MessagesRequest, WrappedRequest}
+import models.Generators
+import models.forms.Insert
 
-final case class StrideRequest[A](
-  underlying: MessagesRequest[A],
-  userPID:    String
-) extends WrappedRequest[A](underlying)
+final case class Insert201Scenario(strideUserPID: String, formModel: Insert) extends AbstractScenario(Seq.empty)
+object Insert201Scenario extends Generators {
+  import org.scalacheck.Arbitrary
+
+  implicit val arb: Arbitrary[Insert201Scenario] = Arbitrary(
+    for {
+      stridePID   <- randomNonEmptyAlphaNumStrings
+      insertModel <- validInsertModels
+    } yield apply(stridePID, insertModel)
+  )
+}

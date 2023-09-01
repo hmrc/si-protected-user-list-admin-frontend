@@ -19,7 +19,6 @@ package controllers.base
 import com.google.inject.name.Named
 import config.AppConfig.StrideConfig
 import play.api.Logging
-import play.api.mvc.Results.{Redirect, Unauthorized}
 import play.api.mvc.{ActionRefiner, MessagesRequest, Result, Results}
 import uk.gov.hmrc.auth.core.AuthProvider.PrivilegedApplication
 import uk.gov.hmrc.auth.core._
@@ -38,6 +37,7 @@ class StrideAction @Inject() (
     extends ActionRefiner[MessagesRequest, StrideRequest]
     with FrontendHeaderCarrierProvider
     with AuthorisedFunctions
+    with Results
     with Logging {
   def refine[A](request: MessagesRequest[A]): Future[Either[Result, StrideRequest[A]]] = {
     implicit val req: MessagesRequest[A] = request
@@ -46,22 +46,25 @@ class StrideAction @Inject() (
     val hasAnyOfRequiredRoles = config.enrolments.reduceOption[Predicate](_ or _) getOrElse EmptyPredicate
 
     authorised(hasPrivilegedApp and hasAnyOfRequiredRoles)
-      .retrieve(clientId) { userPidOpt =>
-        logger.debug("User Authenticated with Stride auth")
-        Future.successful(Right(StrideRequest(request, userPidOpt)))
+      .retrieve(clientId) {
+        case Some(stridePID) =>
+          logger.debug("User Authenticated with Stride auth")
+          Future.successful(Right(StrideRequest(request, stridePID)))
+        case None =>
+          Future.successful(Left(Forbidden("Unable to retrieve Stride PID.")))
       }
       .recover {
         case ex: NoActiveSession =>
           logger.info(s"Failed Stride Auth: ${ex.reason}")
 
           val protocol = if (request.secure) "https" else "http"
-          val callbackURL = s"$protocol://${request.host}${request.path}"
+          val redirectURL = s"$protocol://${request.host}${request.path}"
 
           Left(
             Redirect(
               config.outboundURL,
               Map(
-                "successURL" -> Seq(callbackURL),
+                "successURL" -> Seq(redirectURL),
                 "origin"     -> Seq(appName)
               )
             )

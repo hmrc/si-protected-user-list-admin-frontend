@@ -16,25 +16,18 @@
 
 package models.forms
 
-import models.backend.{IdentityProviderId, ProtectedUserRecord}
+import controllers.base.StrideRequest
+import models.backend.IdentityProviderId
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{Json, Writes}
 import uk.gov.voa.play.form.ConditionalMappings.mandatoryIfEqual
 
 final case class Update(
   optIdpID: Option[IdentityProviderId],
   group:    String,
   team:     String
-) {
-  def toRequestJSON(stridePID: String): JsValue =
-    Json.obj(
-      "stride_pid" -> stridePID,
-      "idp_id"     -> optIdpID,
-      "group"      -> group,
-      "team"       -> team
-    )
-}
+)
 object Update {
   val form: Form[Update] = Form(
     mapping(
@@ -65,9 +58,11 @@ object Update {
     }
   )
 
-  def apply(record: ProtectedUserRecord): Update = apply(
-    record.body.identityProviderId,
-    record.body.group,
-    record.body.team
-  )
+  implicit def wrt(implicit request: StrideRequest[_]): Writes[Update] = update =>
+    Json.obj(
+      "stride_pid" -> request.userPID,
+      "idp_id"     -> update.optIdpID,
+      "group"      -> update.group,
+      "team"       -> update.team
+    )
 }

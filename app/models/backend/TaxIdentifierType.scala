@@ -28,13 +28,8 @@ object TaxIdentifierType {
 
   private def parseErr(str: String) = s"Could not read tax ID type from $str."
 
-  def from(string: String): Either[String, TaxIdentifierType] =
-    values
-      .find(_.toString.toLowerCase == string.toLowerCase)
-      .toRight(parseErr(string))
-
-  private val reads: Reads[TaxIdentifierType] =
-    _.validate[String].flatMap { str =>
+  private def reads(json: JsValue) =
+    json.validate[String].flatMap { str =>
       values.find(_.toString equalsIgnoreCase str) match {
         case Some(taxIdType) => JsSuccess(taxIdType)
         case None            => JsError(parseErr(str))
@@ -43,5 +38,5 @@ object TaxIdentifierType {
 
   private def writes(taxIdType: TaxIdentifierType) = JsString(taxIdType.toString)
 
-  implicit val format: Format[TaxIdentifierType] = Format(reads, writes _)
+  implicit val format: Format[TaxIdentifierType] = Format(reads, writes)
 }

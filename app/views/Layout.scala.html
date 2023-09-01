@@ -35,7 +35,7 @@
 @hmrcStandardPage(
     HmrcStandardPageParams(
         pageTitle = Some(pageTitle),
-        serviceURLs = ServiceURLs(serviceUrl = Some(controllers.routes.SiProtectedUserController.homepage().url)),
+        serviceURLs = ServiceURLs(serviceUrl = Some(routes.HomeController.homepage().url)),
         templateOverrides = TemplateOverrides(
             additionalHeadBlock = headBlock,
             beforeContentBlock = beforeContentBlock,

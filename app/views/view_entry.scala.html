@@ -31,11 +31,11 @@
 
 @mainLayout(
     pageTitle = Messages("view.entry.title"),
-    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
+    backLink = Some(BackLink(href = routes.HomeController.homepage().url))
 ) {
     @h1("view.entry.header")
     @details(protectedUserRecord)
     @govukButton(Button(href = Some(controllers.routes.EditEntryController.show(protectedUserRecord.entryId).url), content = Text(Messages("edit.button"))))
     @govukButton(Button(href = Some(controllers.routes.DeleteEntryController.showConfirmDeletePage(protectedUserRecord.entryId).url), content = Text(Messages("delete.button")), classes = "govuk-button govuk-button--warning"))
-    @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("home.button"))))
+    @govukButton(Button(href = Some(routes.HomeController.homepage().url), content = Text(Messages("home.button"))))
 }

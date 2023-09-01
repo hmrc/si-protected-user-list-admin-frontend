@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package util
+package models
 
-import config.{SiProtectedUserConfig, StrideConfig}
-import models.InputForms.groupMaxLength
-import models._
+import config.AppConfig.{SiProtectedUserConfig, StrideConfig}
+import models.backend.TaxIdentifierType.{NINO, SAUTR}
+import models.backend._
+import models.forms.{Insert, groupMaxLength}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import uk.gov.hmrc.auth.core.Enrolment
@@ -33,35 +34,6 @@ trait Generators {
 
   val sautrGen: Gen[SaUtr] = Gen.const(new SaUtrGenerator().nextSaUtr)
 
-  val entryGen: Gen[Entry] = for {
-    entryId            <- Gen.some(randomNonEmptyAlphaNumStrings)
-    action             <- Gen.oneOf(InputForms.addEntryActionBlock, InputForms.addEntryActionLock)
-    nino               <- Gen.some(ninoGen.map(_.nino))
-    sautr              <- Gen.some(sautrGen.map(_.utr))
-    identityProvider   <- Gen.some(randomNonEmptyAlphaNumStrings)
-    identityProviderId <- Gen.some(randomNonEmptyAlphaNumStrings)
-    group              <- Gen.some(nonEmptyStringOfGen(groupMaxLength))
-    addedByTeam        <- Gen.some(randomNonEmptyAlphaNumStrings)
-    updatedByTeam      <- Gen.some(randomNonEmptyAlphaNumStrings)
-    updatedByUser      <- Gen.some(randomNonEmptyAlphaNumStrings)
-    addedByUser        <- Gen.some(randomNonEmptyAlphaNumStrings)
-  } yield Entry(
-    entryId            = entryId,
-    action             = action,
-    nino               = nino,
-    sautr              = sautr,
-    identityProvider   = identityProvider,
-    identityProviderId = identityProviderId,
-    group              = group,
-    addedByTeam        = addedByTeam,
-    updatedByTeam      = updatedByTeam,
-    updatedByUser      = updatedByUser,
-    addedByUser        = addedByUser
-  )
-
-  val validRequestEntryGen: Gen[Entry] = entryGen.map(_.copy(entryId = None, addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
-  val validEditEntryGen = entryGen.map(_.copy(addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
-
   val siProtectedUserConfigGen: Gen[SiProtectedUserConfig] = for {
     num               <- Gen.chooseNum(1, 10)
     addedByTeams      <- Gen.listOfN(num, randomNonEmptyAlphaNumStrings)
@@ -74,34 +46,29 @@ trait Generators {
 
   val authStrideEnrolmentsConfigGen: Gen[StrideConfig] = for {
     strideLoginBaseUrl <- randomNonEmptyAlphaNumStrings
-    strideSuccessUrl   <- randomNonEmptyAlphaNumStrings
     strideEnrolments   <- Gen.const(Set.empty[Enrolment])
-  } yield StrideConfig(strideLoginBaseUrl = strideLoginBaseUrl, strideSuccessUrl = strideSuccessUrl, strideEnrolments = strideEnrolments)
+  } yield StrideConfig(strideLoginBaseUrl, strideEnrolments)
 
-  val taxIdTypeGen: Gen[TaxIdentifierType] = Gen.oneOf(TaxIdentifierType.values)
+  val genNINO: Gen[String] = for {
+    char1  <- Gen const 'A'
+    char2  <- Gen const 'A'
+    digits <- Gen.listOfN(6, Gen.numChar)
+    char3  <- Gen.oneOf('A' to 'D')
+  } yield s"$char1$char2${digits.mkString}$char3"
 
-  val taxIdProviderIdGen: Gen[IdentityProviderId] = for {
-    authProviderIdType  <- Gen oneOf Seq("GovernmentGateway", "OLfG")
-    authProviderIdValue <- Gen.alphaNumStr
-  } yield IdentityProviderId(authProviderIdType, authProviderIdValue)
+  val genSAUTR: Gen[String] = Gen.listOfN(10, Gen.numChar).map(_.mkString)
 
-  val taxIdGen: Gen[TaxIdentifier] = for {
-    typeName <- Gen oneOf TaxIdentifierType.values
-    value    <- randomNonEmptyAlphaNumStrings
-  } yield TaxIdentifier(typeName, value)
+  val genTaxId: Gen[TaxIdentifier] = Gen.oneOf(
+    genNINO.map(TaxIdentifier(NINO, _)),
+    genSAUTR.map(TaxIdentifier(SAUTR, _))
+  )
 
   val protectedUserGen: Gen[ProtectedUser] = for {
-    taxIdType          <- taxIdTypeGen
-    taxIdValue         <- randomNonEmptyAlphaNumStrings
-    identityProviderId <- Gen.some(taxIdProviderIdGen)
-    group              <- randomNonEmptyAlphaNumStrings
-    addedByTeam        <- Gen.some(randomNonEmptyAlphaNumStrings)
-  } yield ProtectedUser(
-    taxId              = TaxIdentifier(taxIdType, taxIdValue),
-    identityProviderId = identityProviderId,
-    team               = addedByTeam getOrElse "",
-    group              = group
-  )
+    taxId              <- genTaxId
+    identityProviderId <- arbitrary[Option[IdentityProviderId]]
+    group              <- Gen.asciiPrintableStr
+    team               <- randomNonEmptyAlphaNumStrings
+  } yield ProtectedUser(taxId, identityProviderId, team, group)
 
   implicit val protectedUserRecordArb: Arbitrary[ProtectedUserRecord] = Arbitrary(
     for {
@@ -119,12 +86,17 @@ trait Generators {
     } yield Modified(calendar.toInstant, strideUserPid)
   )
 
+  implicit val genGroup: Gen[String] = for {
+    length <- Gen.chooseNum(1, groupMaxLength)
+    chars  <- Gen.listOfN(length, Gen.asciiPrintableChar)
+  } yield chars.mkString
+
   implicit val arbProtectedUser: Arbitrary[ProtectedUser] = Arbitrary(
     for {
-      taxId    <- arbitrary[TaxIdentifier]
+      taxId    <- genTaxId
       optIdpID <- arbitrary[Option[IdentityProviderId]]
       team     <- Gen.alphaNumStr if team.nonEmpty
-      group    <- Gen.asciiPrintableStr
+      group    <- genGroup
     } yield ProtectedUser(taxId, optIdpID, team, group)
   )
 
@@ -143,4 +115,22 @@ trait Generators {
         value    <- Gen.uuid.map(_.toString)
       } yield TaxIdentifier(typeName, value)
     )
+
+  val idpNames: Gen[String] = Gen.oneOf("GG", "OL")
+
+  val idpValues: Gen[String] = Gen.alphaNumStr.filter(_.nonEmpty)
+
+  val genIdpID: Gen[IdentityProviderId] = for {
+    name  <- idpNames
+    value <- idpValues
+  } yield IdentityProviderId(name, value)
+
+  val validInsertModels: Gen[Insert] = for {
+    taxID <- genTaxId
+    optNINO = if (taxID.name == NINO) Some(taxID.value) else None
+    optSAUTR = if (taxID.name == SAUTR) Some(taxID.value) else None
+    optIdpID <- arbitrary[Option[IdentityProviderId]]
+    group    <- genGroup
+    team     <- Gen.alphaStr if team.nonEmpty
+  } yield Insert(optNINO, optSAUTR, optIdpID, group, team)
 }

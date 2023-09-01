@@ -14,11 +14,21 @@
  * limitations under the License.
  */
 
-package controllers.base
+package controllers.scenarios
 
-import play.api.mvc.{MessagesRequest, WrappedRequest}
+import models.Generators
+import org.scalacheck.{Arbitrary, Gen}
 
-final case class StrideRequest[A](
-  underlying: MessagesRequest[A],
-  userPID:    String
-) extends WrappedRequest[A](underlying)
+final case class View404Scenario(
+  entryID:       String,
+  strideUserPID: String
+) extends AbstractScenario(initRecords = Seq.empty)
+
+object View404Scenario extends Generators {
+  implicit val arb: Arbitrary[View404Scenario] = Arbitrary(
+    for {
+      entryID <- Gen.alphaNumStr if entryID.nonEmpty
+      pid     <- Gen.alphaNumStr if pid.nonEmpty
+    } yield apply(entryID, pid)
+  )
+}

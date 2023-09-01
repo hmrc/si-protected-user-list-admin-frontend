@@ -31,8 +31,9 @@ class AppConfigModule(environment: Environment, configuration: Configuration) ex
     bind(classOf[AppConfig]).asEagerSingleton()
 
     val isShuttered = configuration.get[Boolean]("si-protected-user.shutter-service")
-    if (isShuttered)
-      bind(classOf[StrideAction]).to(classOf[StrideAction.Shuttered])
+    if (isShuttered) {
+      bind(classOf[StrideAction]) to classOf[StrideAction.Shuttered]
+    }
   }
 
   @Provides @Singleton

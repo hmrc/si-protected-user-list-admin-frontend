@@ -26,7 +26,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class SiProtectedUserController @Inject() (
+class HomeController @Inject() (
   val strideAction: StrideAction,
   backendConnector: BackendConnector,
   views:            Views,
@@ -44,10 +44,8 @@ class SiProtectedUserController @Inject() (
     backendConnector
       .findBy(entryId)
       .map(protectedUser => Ok(views.view(protectedUser)))
-      .recover {
-        case UpstreamErrorResponse(_, NOT_FOUND, _, _) =>
-          NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
-        case _ => InternalServerError(views.somethingWentWrong())
+      .recover { case UpstreamErrorResponse(_, NOT_FOUND, _, _) =>
+        NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
       }
   }
 }

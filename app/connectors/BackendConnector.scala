@@ -18,7 +18,8 @@ package connectors
 
 import controllers.base.StrideRequest
 import models.backend.ProtectedUserRecord
-import play.api.libs.json.{JsValue, Json}
+import models.forms.{Insert, Update}
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
@@ -39,28 +40,34 @@ class BackendConnector @Inject() (
   def findAll()(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] =
     httpClient.GET[Seq[ProtectedUserRecord]](resource("record/"))
 
-  def insertNew(protectedUser: JsValue)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
-    withAuditEvent("", "") {
-      httpClient.POST[JsValue, ProtectedUserRecord](resource("record/"), protectedUser)
+  def insertNew(insertion: Insert)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
+    withAuditEvent(
+      "AddUserToProtectedUserList",
+      "add user's tax ID to the protected access list"
+    ) {
+      httpClient.POST[Insert, ProtectedUserRecord](resource("record/"), insertion)
     }
 
   def findBy(entryId: String)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
     httpClient.GET[ProtectedUserRecord](resource("record", entryId))
 
-  def updateBy(entryId: String, update: JsValue)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
-    withAuditEvent("", "") {
-      httpClient.PATCH[JsValue, ProtectedUserRecord](resource("record", entryId), update)
+  def updateBy(entryId: String, update: Update)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
+    withAuditEvent(
+      "EditUserInProtectedUserList",
+      "edit user's tax ID in the protected access list"
+    ) {
+      httpClient.PATCH[Update, ProtectedUserRecord](resource("record", entryId), update)
     }
 
   def deleteBy(entryId: String)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
-    withAuditEvent("", "") {
+    withAuditEvent(
+      "DeleteUserFromProtectedUserList",
+      "delete record from the protected access list"
+    ) {
       httpClient.DELETE[ProtectedUserRecord](resource("record", entryId))
     }
 
-  private def withAuditEvent(
-    auditType:       String,
-    transactionType: String
-  )(
+  private def withAuditEvent(auditType: String, transactionType: String)(
     block: => Future[ProtectedUserRecord]
   )(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
     block.map { record =>
@@ -70,7 +77,7 @@ class BackendConnector @Inject() (
           auditType   = auditType,
           tags        = hc.toAuditTags(s"HMRC Session Creation - SI Protected User List - $transactionType", request.path),
           detail = Json.obj(
-            "pid"   -> request.getUserPid,
+            "pid"   -> request.userPID,
             "group" -> record.body.group,
             "team"  -> record.body.team,
             "entry" -> Json.obj(
