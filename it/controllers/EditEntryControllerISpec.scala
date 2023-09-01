@@ -89,7 +89,6 @@ class EditEntryControllerISpec extends BaseISpec {
             .withCookies(mockSessionCookie)
             .post(payload)
         )
-        println(s"Response body: ${response.body}")
         response.status shouldBe CONFLICT
       }
   }

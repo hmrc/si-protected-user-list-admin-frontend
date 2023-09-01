@@ -16,26 +16,33 @@
 
 package controllers
 
+import controllers.scenarios.{DeleteForm200Scenario, DeleteForm404Scenario}
 import play.api.test.ResultExtractors
 
 class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
-//  "SiProtectedUserController" should {
-//    "return OK when confirm-delete successful" in new Setup {
-//      forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
-//        expectUserToBeStrideAuthenticated(pid)
-//        expectFindEntryToBeSuccessful(record)
-//
-//        val response = wsClient
-//          .url(resource(s"$frontEndBaseUrl/confirm-delete/${record.entryId}"))
-//          .withHttpHeaders("Csrf-Token" -> "nocheck")
-//          .withCookies(mockSessionCookie)
-//          .get()
-//          .futureValue
-//
-//        response.status shouldBe OK
-//      }
-//    }
-//
+  "GET /confirm-delete/:entryId" should {
+    s"return $OK when entry ID does exist" in
+      forAllScenarios { scenario: DeleteForm200Scenario =>
+        val response = await(
+          frontendRequest(s"/confirm-delete/${scenario.record.entryId}")
+            .withCookies(mockSessionCookie)
+            .get()
+        )
+
+        response.status shouldBe OK
+      }
+    s"return $NOT_FOUND when entry ID does not exist" in
+      forAllScenarios { scenario: DeleteForm404Scenario =>
+        val response = await(
+          frontendRequest(s"/confirm-delete/${scenario.entryID}")
+            .withCookies(mockSessionCookie)
+            .get()
+        )
+
+        response.status shouldBe NOT_FOUND
+      }
+  }
+//  "SiProtectedUserController" should {//
 //    "return OK when entry is deleted" in new Setup {
 //      forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
 //        expectUserToBeStrideAuthenticated(pid)
@@ -70,31 +77,4 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
 //
 //  }
 //
-//  trait Setup {
-//
-//    def expectUserToBeStrideAuthenticated(pid: String): Unit = {
-//      stubFor(post("/auth/authorise").willReturn(okJson(Json.obj("clientId" -> pid).toString())))
-//    }
-//
-//    def expectFindEntryToBeSuccessful(protectedUser: ProtectedUserRecord): Unit = {
-//      stubFor(
-//        get(urlEqualTo(s"$backendBaseUrl/entry-id/${protectedUser.entryId}"))
-//          .willReturn(ok(Json.toJsObject(protectedUser).toString()))
-//      )
-//    }
-//
-//    def expectDeleteEntryToBeSuccessful(protectedUser: ProtectedUserRecord): Unit = {
-//      stubFor(
-//        delete(urlEqualTo(s"$backendBaseUrl/entry-id/${protectedUser.entryId}"))
-//          .willReturn(aResponse().withStatus(NO_CONTENT))
-//      )
-//    }
-//
-//    def expectDeleteEntryToFailWithNotFound(protectedUser: ProtectedUserRecord): Unit = {
-//      stubFor(
-//        delete(urlEqualTo(s"$backendBaseUrl/entry-id/${protectedUser.entryId}"))
-//          .willReturn(aResponse().withStatus(NOT_FOUND))
-//      )
-//    }
-//  }
 }
