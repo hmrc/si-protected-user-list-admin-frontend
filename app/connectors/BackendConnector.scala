@@ -32,8 +32,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class BackendConnector @Inject() (
-  val auditConnector:               AuditConnector,
+  @Named("appName") appName:        String,
   @Named("backend_url") backendURL: String,
+  val auditConnector:               AuditConnector,
   httpClient:                       HttpClient
 )(implicit ec: ExecutionContext)
     extends Logging {
@@ -76,7 +77,7 @@ class BackendConnector @Inject() (
       { record =>
         auditConnector.sendExtendedEvent(
           ExtendedDataEvent(
-            auditSource = "si-protected-user-list-admin",
+            auditSource = appName,
             auditType   = auditType,
             tags        = hc.toAuditTags(s"HMRC Session Creation - SI Protected User List - $transactionType", request.path),
             detail = Json.obj(
