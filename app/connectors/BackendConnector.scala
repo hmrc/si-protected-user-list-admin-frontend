@@ -19,9 +19,10 @@ package connectors
 import controllers.base.StrideRequest
 import models.backend.ProtectedUserRecord
 import models.forms.{Insert, Update}
+import play.api.Logging
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, UpstreamErrorResponse}
 import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
@@ -34,7 +35,8 @@ class BackendConnector @Inject() (
   val auditConnector:               AuditConnector,
   @Named("backend_url") backendURL: String,
   httpClient:                       HttpClient
-)(implicit ec: ExecutionContext) {
+)(implicit ec: ExecutionContext)
+    extends Logging {
   private def resource(pathSegments: String*) = backendURL +: pathSegments mkString "/"
 
   def findAll()(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] =
@@ -70,26 +72,36 @@ class BackendConnector @Inject() (
   private def withAuditEvent(auditType: String, transactionType: String)(
     block: => Future[ProtectedUserRecord]
   )(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
-    block.map { record =>
-      auditConnector.sendExtendedEvent(
-        ExtendedDataEvent(
-          auditSource = "si-protected-user-list-admin",
-          auditType   = auditType,
-          tags        = hc.toAuditTags(s"HMRC Session Creation - SI Protected User List - $transactionType", request.path),
-          detail = Json.obj(
-            "pid"   -> request.userPID,
-            "group" -> record.body.group,
-            "team"  -> record.body.team,
-            "entry" -> Json.obj(
-              "id"                                        -> record.entryId,
-              "action"                                    -> (if (record.body.identityProviderId.isEmpty) "block" else "lock"),
-              record.body.taxId.name.toString.toLowerCase -> record.body.taxId.value,
-              "identityProviderType"                      -> record.body.identityProviderId.fold("-")(_.name),
-              "identityProviderId"                        -> record.body.identityProviderId.fold("-")(_.value)
+    block.transform(
+      { record =>
+        auditConnector.sendExtendedEvent(
+          ExtendedDataEvent(
+            auditSource = "si-protected-user-list-admin",
+            auditType   = auditType,
+            tags        = hc.toAuditTags(s"HMRC Session Creation - SI Protected User List - $transactionType", request.path),
+            detail = Json.obj(
+              "pid"   -> request.userPID,
+              "group" -> notBlankOrHyphen(record.body.group),
+              "team"  -> notBlankOrHyphen(record.body.team),
+              "entry" -> Json.obj(
+                "id"                                        -> record.entryId,
+                "action"                                    -> (if (record.body.identityProviderId.isEmpty) "block" else "lock"),
+                record.body.taxId.name.toString.toLowerCase -> record.body.taxId.value,
+                "identityProviderType"                      -> record.body.identityProviderId.fold("-")(_.name),
+                "identityProviderId"                        -> record.body.identityProviderId.fold("-")(_.value)
+              )
             )
           )
         )
-      )
-      record
-    }
+        record
+      },
+      {
+        case ex @ UpstreamErrorResponse(_, statusCode, _, _) =>
+          logger.error(s"[GG-7210] backend data change failed for $auditType, status code: $statusCode")
+          ex
+        case ex => ex
+      }
+    )
+
+  private def notBlankOrHyphen(string: String) = if (string.isBlank) "-" else string
 }
