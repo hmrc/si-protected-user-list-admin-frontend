@@ -21,7 +21,6 @@ import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
-import scala.util.Try
 
 @Singleton
 class AppConfig @Inject() (val configuration: Configuration, servicesConfig: ServicesConfig) {

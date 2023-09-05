@@ -46,10 +46,10 @@ class DeleteEntryController @Inject() (
   def delete(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
     siProtectedUserListService
       .deleteEntry(entryId)
-      .map {
-        case Right(_)                                  => Ok(views.deleteSuccess())
-        case Left(UpstreamErrorResponse(_, 404, _, _)) => NotFound(views.errorTemplate("delete.entry.not.found", "delete.entry.not.found", "delete.entry.already.deleted"))
-        case Left(err)                                 => InternalServerError(views.somethingWentWrong())
+      .map(_ => Ok(views.deleteSuccess()))
+      .recover {
+        case UpstreamErrorResponse(_, 404, _, _) => NotFound(views.errorTemplate("delete.entry.not.found", "delete.entry.not.found", "delete.entry.already.deleted"))
+        case _                                   => InternalServerError(views.somethingWentWrong())
       }
   }
 }

@@ -31,7 +31,10 @@ case class Entry(entryId: Option[String],
                  addedByTeam: Option[String],
                  updatedByTeam: Option[String]
                 ) {
-  def toProtectedUser(isUpdate: Boolean)(implicit request: StrideRequest[_]): ProtectedUser = {
+  def toProtectedUser(isUpdate: Boolean)(implicit request: StrideRequest[_]): ProtectedUser =
+    toProtectedUserImpl(isUpdate, request.getUserPid)
+
+  def toProtectedUserImpl(isUpdate: Boolean, stridePID: String): ProtectedUser =
     ProtectedUser(
       taxId = (nino, sautr) match {
         case (Some(nino), _)     => TaxIdentifier(TaxIdentifierType.NINO, nino)
@@ -42,13 +45,12 @@ case class Entry(entryId: Option[String],
         provider <- identityProvider
         creds    <- identityProviderId
       } yield IdentityProviderId(provider, creds),
-      addedByUser = if (isUpdate) None else Some(request.getUserPid),
+      addedByUser = if (isUpdate) None else Some(stridePID),
       addedByTeam = addedByTeam,
-      updatedByUser = if (isUpdate) Some(request.getUserPid) else None,
+      updatedByUser = if (isUpdate) Some(stridePID) else None,
       updatedByTeam = updatedByTeam,
       group = group.getOrElse("")
     )
-  }
 }
 object Entry {
   implicit val formats: OFormat[Entry] = Json.format[Entry]

@@ -16,9 +16,8 @@
 
 package controllers
 
-import play.api.http.Status
 import play.api.test.FakeRequest
-import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -64,8 +63,8 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
       forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated { _ =>
           when {
-            mockBackendService.deleteEntry(eqTo(record.entryId))(*)
-          } thenReturn Future.successful(Right(HttpResponse(Status.NO_CONTENT, "")))
+            mockBackendService.deleteEntry(eqTo(record.entryId))(*, *)
+          } thenReturn Future.successful(record)
 
           val result = deleteEntryController.delete(record.entryId)(FakeRequest().withMethod("DELETE"))
 
@@ -82,8 +81,8 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
       forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated {
           when {
-            mockBackendService.deleteEntry(eqTo(record.entryId))(*)
-          } thenReturn Future.successful(Left(UpstreamErrorResponse("not found", NOT_FOUND)))
+            mockBackendService.deleteEntry(eqTo(record.entryId))(*, *)
+          } thenReturn Future.failed(UpstreamErrorResponse("not found", NOT_FOUND))
 
           val result = deleteEntryController.delete(record.entryId)(FakeRequest().withMethod("DELETE"))
 
@@ -99,8 +98,8 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
       forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated {
           when {
-            mockBackendService.deleteEntry(eqTo(record.entryId))(*)
-          } thenReturn Future.successful(Left(UpstreamErrorResponse("internal server error", INTERNAL_SERVER_ERROR)))
+            mockBackendService.deleteEntry(eqTo(record.entryId))(*, *)
+          } thenReturn Future.failed(UpstreamErrorResponse("internal server error", INTERNAL_SERVER_ERROR))
 
           val result = deleteEntryController.delete(record.entryId)(FakeRequest().withMethod("DELETE"))
 

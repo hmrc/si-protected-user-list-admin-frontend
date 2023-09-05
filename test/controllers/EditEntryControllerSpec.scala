@@ -52,7 +52,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
 
-          when(mockBackendService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(record))
+          when(mockBackendService.updateEntry(eqTo(expectedEntry))(*, *)).thenReturn(Future.successful(record))
 
           val result = editEntryController.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 
@@ -69,7 +69,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
 
-          when(mockBackendService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.failed(new NotFoundException("not found")))
+          when(mockBackendService.updateEntry(eqTo(expectedEntry))(*, *)).thenReturn(Future.failed(new NotFoundException("not found")))
 
           val result = editEntryController.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 
@@ -86,7 +86,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
 
-          when(mockBackendService.updateEntry(eqTo(expectedEntry))(*)).thenReturn(Future.failed(new ConflictException("conflict")))
+          when(mockBackendService.updateEntry(eqTo(expectedEntry))(*, *)).thenReturn(Future.failed(new ConflictException("conflict")))
 
           val result = editEntryController.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 

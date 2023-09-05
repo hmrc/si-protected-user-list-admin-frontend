@@ -16,90 +16,34 @@
 
 package services
 
-import com.google.inject.name.Named
 import connectors.SiProtectedUserAdminBackendConnector
 import controllers.base.StrideRequest
 import models.{Entry, ProtectedUserRecord}
-import play.api.Logging
-import play.api.libs.json.Json
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
-import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
+import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 @Singleton
 class SiProtectedUserListService @Inject() (
-  @Named("appName") appName: String,
-  auditConnector: AuditConnector,
   backendConnector: SiProtectedUserAdminBackendConnector
-)(implicit ec: ExecutionContext)
-    extends Logging {
+) {
   def addEntry(entry: Entry)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
-    withAuditEvent(
-      "AddUserToProtectedUserList",
-      "add user's tax ID to the protected access list"
-    ) {
-      backendConnector.addEntry(entry.toProtectedUser(isUpdate = false))
-    }
+    backendConnector.addEntry(entry.toProtectedUser(isUpdate = false))
 
   def updateEntry(entry: Entry)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
     entry.entryId match {
-      case Some(entryId) =>
-        withAuditEvent(
-          "EditUserInProtectedUserList",
-          "edit user's tax ID in the protected access list"
-        ) {
-          backendConnector.updateEntry(entryId, entry.toProtectedUser(isUpdate = true))
-        }
-      case None => Future.failed(new IllegalArgumentException("entryId not present for update"))
+      case Some(entryId) => backendConnector.updateEntry(entryId, entry.toProtectedUser(isUpdate = true))
+      case None          => Future.failed(new IllegalArgumentException("entryId not present for update"))
     }
 
   def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
     backendConnector.findEntry(entryId)
   }
 
-  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] =
+  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
     backendConnector.deleteEntry(entryId)
 
   def findEntries(teamOpt: Option[String], queryOpt: Option[String])(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] =
     backendConnector.findEntries(teamOpt, queryOpt)
-
-  private def withAuditEvent(auditType: String, transactionType: String)(
-    block: => Future[ProtectedUserRecord]
-  )(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
-    block.transform(
-      { record =>
-        auditConnector.sendExtendedEvent(
-          ExtendedDataEvent(
-            auditSource = appName,
-            auditType = auditType,
-            tags = hc.toAuditTags(s"HMRC Session Creation - SI Protected User List - $transactionType", request.path),
-            detail = Json.obj(
-              "pid"   -> request.getUserPid,
-              "group" -> notBlankOrHyphen(record.body.group),
-              "team"  -> record.body.addedByTeam.getOrElse("-"),
-              "entry" -> Json.obj(
-                "id"                                        -> record.entryId,
-                "action"                                    -> (if (record.body.identityProviderId.isEmpty) "block" else "lock"),
-                record.body.taxId.name.toString.toLowerCase -> record.body.taxId.value,
-                "identityProviderType"                      -> record.body.identityProviderId.fold("-")(_.name),
-                "identityProviderId"                        -> record.body.identityProviderId.fold("-")(_.value)
-              )
-            )
-          )
-        )
-        record
-      },
-      {
-        case ex @ UpstreamErrorResponse(_, statusCode, _, _) =>
-          logger.error(s"[GG-7210] backend data change failed for $auditType, status code: $statusCode")
-          ex
-        case ex => ex
-      }
-    )
-
-  private def notBlankOrHyphen(string: String) = if (string.isBlank) "-" else string
 }
