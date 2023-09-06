@@ -30,14 +30,18 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
 
   lazy val analyticsConfig: AnalyticsConfig = AnalyticsConfig(analyticsToken = getString(s"google-analytics.token"), analyticsHost = getString(s"google-analytics.host"))
 
-  lazy val authStrideEnrolments: StrideConfig = StrideConfig(
-    strideLoginBaseUrl = getString("authentication.stride.loginBaseUrl"),
-    strideSuccessUrl = getString("authentication.stride.successReturnUrl"),
-    strideEnrolments = configuration
-      .get[Seq[String]]("authentication.stride.enrolments")
-      .map(Enrolment.apply)
-      .toSet
-  )
+  lazy val authStrideEnrolments: StrideConfig = {
+    val service = "stride-auth-frontend"
+    val configPath = s"microservice.services.$service."
+
+    StrideConfig(
+      strideLoginBaseUrl = servicesConfig.baseUrl(service) + servicesConfig.getString(configPath + "path"),
+      strideEnrolments = configuration
+        .get[Seq[String]](configPath + "enrolments")
+        .map(Enrolment.apply)
+        .toSet
+    )
+  }
 
   lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
     dashboardUrl = configuration.get[String]("account-protection-tools-dashboard-linkUrl"),
@@ -60,7 +64,7 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
 }
 
 case class AnalyticsConfig(analyticsToken: String, analyticsHost: String)
-case class StrideConfig(strideLoginBaseUrl: String, strideSuccessUrl: String, strideEnrolments: Set[Enrolment])
+case class StrideConfig(strideLoginBaseUrl: String, strideEnrolments: Set[Enrolment])
 case class SiProtectedUserConfig(
   dashboardUrl: String,
   identityProviders: Seq[String],
