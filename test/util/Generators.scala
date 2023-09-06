@@ -76,9 +76,8 @@ trait Generators {
 
   val authStrideEnrolmentsConfigGen: Gen[StrideConfig] = for {
     strideLoginBaseUrl <- nonEmptyStringGen
-    strideSuccessUrl   <- nonEmptyStringGen
     strideEnrolments   <- Gen.const(Set.empty[Enrolment])
-  } yield StrideConfig(strideLoginBaseUrl = strideLoginBaseUrl, strideSuccessUrl = strideSuccessUrl, strideEnrolments = strideEnrolments)
+  } yield StrideConfig(strideLoginBaseUrl = strideLoginBaseUrl, strideEnrolments = strideEnrolments)
 
   val taxIdTypeGen: Gen[TaxIdentifierType] = Gen.oneOf(TaxIdentifierType.values)
 

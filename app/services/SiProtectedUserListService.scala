@@ -17,21 +17,23 @@
 package services
 
 import connectors.SiProtectedUserAdminBackendConnector
+import controllers.base.StrideRequest
 import models.{Entry, ProtectedUserRecord}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class SiProtectedUserListService @Inject() (backendConnector: SiProtectedUserAdminBackendConnector) {
-  def addEntry(entry: Entry)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] = {
-    backendConnector.addEntry(entry.toProtectedUser())
-  }
+class SiProtectedUserListService @Inject() (
+  backendConnector: SiProtectedUserAdminBackendConnector
+) {
+  def addEntry(entry: Entry)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
+    backendConnector.addEntry(entry.toProtectedUser(isUpdate = false))
 
-  def updateEntry(entry: Entry)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
+  def updateEntry(entry: Entry)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
     entry.entryId match {
-      case Some(entryId) => backendConnector.updateEntry(entryId, entry.toProtectedUser())
+      case Some(entryId) => backendConnector.updateEntry(entryId, entry.toProtectedUser(isUpdate = true))
       case None          => Future.failed(new IllegalArgumentException("entryId not present for update"))
     }
 
@@ -39,9 +41,8 @@ class SiProtectedUserListService @Inject() (backendConnector: SiProtectedUserAdm
     backendConnector.findEntry(entryId)
   }
 
-  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] = {
+  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
     backendConnector.deleteEntry(entryId)
-  }
 
   def findEntries(teamOpt: Option[String], queryOpt: Option[String])(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] =
     backendConnector.findEntries(teamOpt, queryOpt)

@@ -17,57 +17,84 @@
 package connectors
 
 import config.BackendConfig
+import controllers.base.StrideRequest
 import models.{ProtectedUser, ProtectedUserRecord}
+import play.api.Logging
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, HttpResponse, NotFoundException, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, NotFoundException, UpstreamErrorResponse}
+import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Named, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-import util.{Failure, Success}
+import scala.util.{Failure, Success}
 
 @Singleton
 class SiProtectedUserAdminBackendConnector @Inject() (
+  @Named("appName") appName: String,
+  auditConnector: AuditConnector,
   backendConfig: BackendConfig,
   httpClient: HttpClient
-)(implicit ec: ExecutionContext) {
+)(implicit ec: ExecutionContext)
+    extends Logging {
   private val backendUrl = backendConfig.endpoint + "/" + backendConfig.contextRoot
 
-  def addEntry(protectedUser: ProtectedUser)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
-    httpClient
-      .POST[ProtectedUser, ProtectedUserRecord](s"$backendUrl/add", protectedUser)
-      .transform(
-        identity,
-        {
-          case UpstreamErrorResponse(_, 409, _, _) => new ConflictException("Conflict")
-          case err                                 => err
-        }
-      )
+  def addEntry(protectedUser: ProtectedUser)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
+    withAuditEvent(
+      "AddUserToProtectedUserList",
+      "add user's tax ID to the protected access list"
+    ) {
+      httpClient
+        .POST[ProtectedUser, ProtectedUserRecord](s"$backendUrl/add", protectedUser)
+        .transform(
+          identity,
+          {
+            case UpstreamErrorResponse(_, 409, _, _) => new ConflictException("Conflict")
+            case err                                 => err
+          }
+        )
+    }
 
-  def updateEntry(entryId: String, protectedUser: ProtectedUser)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
-    httpClient
-      .PATCH[ProtectedUser, ProtectedUserRecord](s"$backendUrl/update/$entryId", protectedUser)
-      .transform(
-        identity,
-        {
-          case UpstreamErrorResponse(_, 409, _, _) => new ConflictException("Conflict")
-          case UpstreamErrorResponse(_, 404, _, _) => new NotFoundException("Entry to update was already deleted")
-          case err                                 => err
-        }
-      )
+  def updateEntry(entryId: String, protectedUser: ProtectedUser)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
+    withAuditEvent(
+      "EditUserInProtectedUserList",
+      "edit user's tax ID in the protected access list"
+    ) {
+      httpClient
+        .PATCH[ProtectedUser, ProtectedUserRecord](s"$backendUrl/update/$entryId", protectedUser)
+        .transform(
+          identity,
+          {
+            case UpstreamErrorResponse(_, 409, _, _) => new ConflictException("Conflict")
+            case UpstreamErrorResponse(_, 404, _, _) => new NotFoundException("Entry to update was already deleted")
+            case err                                 => err
+          }
+        )
+    }
+
+  private def findBy(id: String)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
+    httpClient.GET[ProtectedUserRecord](s"$backendUrl/entry-id/$id")
 
   def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
-    httpClient
-      .GET[ProtectedUserRecord](s"$backendUrl/entry-id/$entryId")
-      .transform {
-        case Success(user)                                => Success(Some(user))
-        case Failure(UpstreamErrorResponse(_, 404, _, _)) => Success(None)
-        case Failure(err)                                 => Failure(err)
-      }
+    findBy(entryId).transform {
+      case Success(user)                                => Success(Some(user))
+      case Failure(UpstreamErrorResponse(_, 404, _, _)) => Success(None)
+      case Failure(err)                                 => Failure(err)
+    }
   }
 
-  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, HttpResponse]] =
-    httpClient
-      .DELETE[Either[UpstreamErrorResponse, HttpResponse]](url = s"$backendUrl/entry-id/$entryId")
+  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
+    withAuditEvent(
+      "DeleteUserFromProtectedUserList",
+      "delete record from the protected access list"
+    ) {
+      for {
+        record <- findBy(entryId)
+        _      <- httpClient.DELETE[Unit](url = s"$backendUrl/entry-id/$entryId")
+      } yield record
+    }
 
   def findEntries(teamOpt: Option[String], queryOpt: Option[String])(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] = {
     var queryString = Map(
@@ -81,4 +108,40 @@ class SiProtectedUserAdminBackendConnector @Inject() (
 
     httpClient.GET[Seq[ProtectedUserRecord]](s"$backendUrl/record/$queryString")
   }
+
+  private def withAuditEvent(auditType: String, transactionType: String)(
+    block: => Future[ProtectedUserRecord]
+  )(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
+    block.transform(
+      { record =>
+        val team = record.body.addedByTeam.getOrElse("-")
+
+        auditConnector.sendExtendedEvent(
+          ExtendedDataEvent(
+            auditSource = appName,
+            auditType = auditType,
+            tags = hc.toAuditTags(s"HMRC Session Creation - SI Protected User List - $transactionType", request.path),
+            detail = Json.obj(
+              "pid"   -> request.getUserPid,
+              "group" -> (if (record.body.group.isBlank) "-" else record.body.group),
+              "team"  -> team,
+              "entry" -> Json.obj(
+                "id"                                        -> record.entryId,
+                "action"                                    -> (if (record.body.identityProviderId.isEmpty) "block" else "lock"),
+                record.body.taxId.name.toString.toLowerCase -> record.body.taxId.value,
+                "identityProviderType"                      -> record.body.identityProviderId.fold("-")(_.name),
+                "identityProviderId"                        -> record.body.identityProviderId.fold("-")(_.value)
+              )
+            )
+          )
+        )
+        record
+      },
+      {
+        case ex @ UpstreamErrorResponse(_, statusCode, _, _) =>
+          logger.error(s"[GG-7210] backend data change failed for $auditType, status code: $statusCode")
+          ex
+        case ex => ex
+      }
+    )
 }

@@ -51,7 +51,7 @@ class AddEntryControllerSpec extends BaseControllerSpec {
           val requestFields = toRequestFields(entry)
           val expectedEntry = entry.copy(addedByUser = Some(pid))
 
-          when(mockBackendService.addEntry(eqTo(expectedEntry))(*)).thenReturn(Future.successful(record))
+          when(mockBackendService.addEntry(eqTo(expectedEntry))(*, *)) thenReturn Future.successful(record)
 
           val result = controller.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 
@@ -59,7 +59,7 @@ class AddEntryControllerSpec extends BaseControllerSpec {
           redirectLocation(result) shouldBe Some(
             controllers.routes.SiProtectedUserController.view(record.entryId).url
           )
-          verify(mockBackendService).addEntry(eqTo(expectedEntry))(*)
+          verify(mockBackendService).addEntry(eqTo(expectedEntry))(*, *)
         }
       }
     }
@@ -70,7 +70,7 @@ class AddEntryControllerSpec extends BaseControllerSpec {
           val requestFields = toRequestFields(entry)
           val expectedEntry = entry.copy(addedByUser = Some(pid))
 
-          when(mockBackendService.addEntry(eqTo(expectedEntry))(*)).thenReturn(Future.failed(new ConflictException("test conflict")))
+          when(mockBackendService.addEntry(eqTo(expectedEntry))(*, *)) thenReturn Future.failed(new ConflictException("test conflict"))
 
           val result = controller.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
           val body = contentAsString(result)

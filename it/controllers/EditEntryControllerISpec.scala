@@ -28,7 +28,7 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
 
-        expectEditEntryToBeSuccessful(expectedEntry.entryId.value, record, expectedEntry.toProtectedUser())
+        expectEditEntryToBeSuccessful(expectedEntry.entryId.value, record, expectedEntry.toProtectedUserImpl(isUpdate = true, pid))
 
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/edit"))
@@ -46,7 +46,7 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
 
-        expectEditEntryToFailWithStatus(expectedEntry.entryId.value, expectedEntry.toProtectedUser(), NOT_FOUND)
+        expectEditEntryToFailWithStatus(expectedEntry.entryId.value, expectedEntry.toProtectedUserImpl(isUpdate = true, pid), NOT_FOUND)
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/edit"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
@@ -62,7 +62,7 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
 
-        expectEditEntryToFailWithStatus(expectedEntry.entryId.value, expectedEntry.toProtectedUser(), CONFLICT)
+        expectEditEntryToFailWithStatus(expectedEntry.entryId.value, expectedEntry.toProtectedUserImpl(isUpdate = true, pid), CONFLICT)
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/edit"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")

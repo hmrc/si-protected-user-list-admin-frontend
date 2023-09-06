@@ -29,7 +29,7 @@ class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Gener
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(addedByUser = Some(pid))
 
-        expectAddEntryToBeSuccessful(record, expectedEntry.toProtectedUser())
+        expectAddEntryToBeSuccessful(record, expectedEntry.toProtectedUserImpl(isUpdate = false, pid))
 
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/add"))
@@ -48,7 +48,7 @@ class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Gener
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(addedByUser = Some(pid))
 
-        expectAddEntryToFailWithConflictStatus(expectedEntry.toProtectedUser())
+        expectAddEntryToFailWithConflictStatus(expectedEntry.toProtectedUserImpl(isUpdate = false, pid))
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/add"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")

@@ -42,6 +42,7 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
     "return OK when entry is deleted" in new Setup {
       forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
+        expectFindEntryToBeSuccessful(record)
         expectDeleteEntryToBeSuccessful(record)
 
         val response = wsClient
@@ -58,7 +59,11 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
     "return NOT_FOUND when no entry is found to delete" in new Setup {
       forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
-        expectDeleteEntryToFailWithNotFound(record)
+        stubFor(
+          get {
+            urlEqualTo(s"$backendBaseUrl/entry-id/${record.entryId}")
+          } willReturn notFound()
+        )
 
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/delete-entry/${record.entryId}"))

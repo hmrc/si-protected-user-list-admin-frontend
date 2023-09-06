@@ -39,9 +39,6 @@ class StrideAction @Inject() (
     with FrontendHeaderCarrierProvider
     with AuthorisedFunctions
     with Logging {
-  private lazy val strideLoginUrl: String = s"${strideConfig.strideLoginBaseUrl}/stride/sign-in"
-  private lazy val strideSuccessUrl: String = strideConfig.strideSuccessUrl
-
   def refine[A](request: MessagesRequest[A]): Future[Either[Result, StrideRequest[A]]] = {
     implicit val req: MessagesRequest[A] = request
 
@@ -60,9 +57,13 @@ class StrideAction @Inject() (
           Left(Unauthorized(msg))
         case _: NoActiveSession =>
           logger.info("Failed Stride Auth - NoActiveSession")
+
+          val protocol = if (request.secure) "https" else "http"
+          val strideSuccessUrl = s"$protocol://${request.host}${request.path}"
+
           Left(
             Redirect(
-              strideLoginUrl,
+              strideConfig.strideLoginBaseUrl,
               Map(
                 "successURL" -> Seq(strideSuccessUrl),
                 "origin"     -> Seq(appName)
