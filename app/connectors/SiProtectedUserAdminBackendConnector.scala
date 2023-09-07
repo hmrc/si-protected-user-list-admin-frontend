@@ -125,13 +125,31 @@ class SiProtectedUserAdminBackendConnector @Inject() (
               "pid"   -> request.getUserPid,
               "group" -> (if (record.body.group.isBlank) "-" else record.body.group),
               "team"  -> team,
-              "entry" -> Json.obj(
-                "id"                                        -> record.entryId,
-                "action"                                    -> (if (record.body.identityProviderId.isEmpty) "block" else "lock"),
-                record.body.taxId.name.toString.toLowerCase -> record.body.taxId.value,
-                "identityProviderType"                      -> record.body.identityProviderId.fold("-")(_.name),
-                "identityProviderId"                        -> record.body.identityProviderId.fold("-")(_.value)
-              )
+              "entry" -> {
+                val taxIdFields = Json.obj(
+                  Seq("nino", "sautr").map { tidType =>
+                    tidType -> (
+                      if (record.body.taxId.name.toString equalsIgnoreCase tidType) record.body.taxId.value
+                      else "-"
+                    )
+                  }: _*
+                )
+                val idpIdFields = record.body.identityProviderId match {
+                  case Some(idpID) =>
+                    Json.obj(
+                      "action"               -> "lock",
+                      "identityProviderType" -> idpID.name,
+                      "identityProviderId"   -> idpID.value
+                    )
+                  case None =>
+                    Json.obj(
+                      "action"               -> "block",
+                      "identityProviderType" -> "-",
+                      "identityProviderId"   -> "-"
+                    )
+                }
+                Json.obj("id" -> record.entryId) ++ taxIdFields ++ idpIdFields
+              }
             )
           )
         )
