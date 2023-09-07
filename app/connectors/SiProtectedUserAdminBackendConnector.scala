@@ -18,6 +18,7 @@ package connectors
 
 import config.BackendConfig
 import controllers.base.StrideRequest
+import models.TaxIdentifierType.{NINO, SAUTR}
 import models.{ProtectedUser, ProtectedUserRecord}
 import play.api.Logging
 import play.api.libs.json.Json
@@ -126,14 +127,10 @@ class SiProtectedUserAdminBackendConnector @Inject() (
               "group" -> (if (record.body.group.isBlank) "-" else record.body.group),
               "team"  -> team,
               "entry" -> {
-                val taxIdFields = Json.obj(
-                  Seq("nino", "sautr").map { tidType =>
-                    tidType -> (
-                      if (record.body.taxId.name.toString equalsIgnoreCase tidType) record.body.taxId.value
-                      else "-"
-                    )
-                  }: _*
-                )
+                val taxIdFields = record.body.taxId.name match {
+                  case NINO  => Json.obj("nino" -> record.body.taxId.value, "sautr" -> "-")
+                  case SAUTR => Json.obj("nino" -> "-", "sautr" -> record.body.taxId.value)
+                }
                 val idpIdFields = record.body.identityProviderId match {
                   case Some(idpID) =>
                     Json.obj(
