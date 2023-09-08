@@ -7,10 +7,14 @@ Admin frontend microservice to manage restricted users.
 Start the service with ```sbt run``` in the terminal. By default, it runs on port `8508`.
 
 ### Run with Service Manager
+Standalone:
 ```bash
 sm2 --start SI_PROTECTED_USER_LIST_ADMIN_FRONTEND
 ```
-
+With dependent services:
+```bash
+sm2 --start SI_PROTECTED_USER_LIST_ADMIN_UI
+```
 ### Unit & Integration Tests with coverage report
 ```bash
 sbt clean compile coverage test it:test coverageReport

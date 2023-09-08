@@ -90,7 +90,7 @@ class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Gener
         entry.identityProvider.map(s => "identityProvider" -> s),
         entry.identityProviderId.map(s => "identityProviderId" -> s),
         entry.group.map(s => "group" -> s),
-        entry.addedByTeam.map(s => "addedByTeam" -> s),
+        Some("addedByTeam" -> entry.addedByTeam),
         entry.updatedByTeam.map(s => "updatedByTeam" -> s)
       ).flatten
     }

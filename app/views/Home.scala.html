@@ -23,7 +23,7 @@
         config: SiProtectedUserConfig,
         hmrcInternalHead: HmrcInternalHead,
         hmrcInternalHeader: HmrcInternalHeader,
-        layout: GovukLayout,
+        layout: Layout,
         backLink: GovukBackLink,
         h1: Heading1,
         button: GovukButton,
@@ -41,13 +41,10 @@
     <a href=@controllers.routes.SiProtectedUserController.view(entryId)>@entryId</a>
 }
 @layout(
-    pageTitle = Some(messages("home.page.title")),
-    headBlock = Some(hmrcInternalHead()),
-    headerBlock = Some(hmrcInternalHeader(InternalHeader(serviceName = Some(messages("service.name"))))),
-    beforeContentBlock = Some(beforeContent),
-    mainContentLayout = Some(identity)
+    pageTitle = messages("home.page.title"),
+    backLink = Some(BackLink(href = config.dashboardUrl)),
+    beforeContentBlock = Some(beforeContent)
 ) {
-    @backLink(BackLink(href = config.dashboardUrl))
     @h1("home.page.header")
     <div id="actions">
         <div class="action">

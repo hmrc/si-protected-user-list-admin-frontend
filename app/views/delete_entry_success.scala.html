@@ -31,7 +31,6 @@
 
 @mainLayout(
     pageTitle = messages("delete.entry.success.title"),
-    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
 ) {
     @h1("delete.entry.success.header")
     <p class="govuk-body"> @messages("delete.entry.success.body")</p>

@@ -31,7 +31,6 @@
 
 @mainLayout(
     pageTitle = Messages("confirm.delete.entry.title"),
-    backLink = Some(BackLink(href = controllers.routes.SiProtectedUserController.homepage().url))
 ) {
     @h1("confirm.delete.entry.header")
     @details(protectedUserRecord)

@@ -26,7 +26,7 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
     "return OK when edit is successful" in
       forAll(validEditEntryGen, protectedUserRecords, nonEmptyStringGen) { (entry, record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
-        val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
+        val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
         expectEditEntryToBeSuccessful(expectedEntry.entryId.value, record, expectedEntry.toProtectedUserImpl(isUpdate = true, pid))
 
@@ -44,7 +44,7 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
     "Return NOT_FOUND when upstream api return not found" in
       forAll(validEditEntryGen, nonEmptyStringGen) { (entry, pid) =>
         expectUserToBeStrideAuthenticated(pid)
-        val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
+        val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
         expectEditEntryToFailWithStatus(expectedEntry.entryId.value, expectedEntry.toProtectedUserImpl(isUpdate = true, pid), NOT_FOUND)
         val response = wsClient
@@ -60,7 +60,7 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
     "Return CONFLICT when upstream api indicates a conflict" in
       forAll(validEditEntryGen, nonEmptyStringGen) { (entry, pid) =>
         expectUserToBeStrideAuthenticated(pid)
-        val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = entry.addedByTeam)
+        val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
         expectEditEntryToFailWithStatus(expectedEntry.entryId.value, expectedEntry.toProtectedUserImpl(isUpdate = true, pid), CONFLICT)
         val response = wsClient
@@ -103,7 +103,7 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
       entry.identityProvider.map(s => "identityProvider" -> s),
       entry.identityProviderId.map(s => "identityProviderId" -> s),
       entry.group.map(s => "group" -> s),
-      entry.addedByTeam.map(s => "addedByTeam" -> s),
+      Some("addedByTeam" -> entry.addedByTeam),
       entry.updatedByTeam.map(s => "updatedByTeam" -> s)
     ).flatten
   }

@@ -36,6 +36,8 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
   val missingNinoAndSautr = allRequestFieldsPresent.updated("sautr", "").updated("nino", "")
   val actionLockNoCredId = allRequestFieldsPresent.updated("action", InputForms.addEntryActionLock).updated("identityProviderId", "")
   val groupIsLongerThanAllowed = allRequestFieldsPresent.updated("group", nonEmptyStringOfGen(groupMaxLength + 1).sample.get)
+  val missingAddedByTeam = allRequestFieldsPresent.updated("addedByTeam", "")
+
   val table = Table(
     ("Scenario", "Request fields", "Expected errors"),
     ("Nino regex fail when present and incorrect", allRequestFieldsPresent.updated("nino", "bad_nino"), Seq(FormError("nino", "form.nino.regex"))),
@@ -44,6 +46,7 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
     ("No sautr regex failure when not entered", allRequestFieldsPresent.updated("sautr", ""), Seq()),
     ("Group is longer than allowed", groupIsLongerThanAllowed, Seq(FormError("group", "error.maxLength", Seq(groupMaxLength)))),
     ("Nino or sautr is required when neither are present", missingNinoAndSautr, Seq(FormError("", "form.nino.sautr.required"))),
+    ("AddedByTeam is missing", missingAddedByTeam, Seq(FormError("addedByTeam", "form.addedByTeam.required"))),
     ("identityProviderId must be present when action is LOCK", actionLockNoCredId, Seq(FormError("identityProviderId", "form.identityProviderId.required")))
   )
 
