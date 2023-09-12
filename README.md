@@ -24,3 +24,5 @@ sbt clean compile coverage test it:test coverageReport
 ```bash
 sbt it:test
 ```
+
+Please see backend [si-protected-user-list-admin](https://github.com/hmrc/si-protected-user-list-admin#readme) for usage instructions
