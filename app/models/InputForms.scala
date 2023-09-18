@@ -19,7 +19,7 @@ package models
 import models.utils.StopOnFirstFail.constraint
 import models.utils.StopOnFirstFail
 import play.api.data.Forms._
-import play.api.data.{Form, Forms}
+import play.api.data.Form
 import uk.gov.voa.play.form.ConditionalMappings.mandatoryIfEqual
 
 object InputForms {
@@ -46,12 +46,15 @@ object InputForms {
       .verifying("form.nino.sautr.required", entry => entry.sautr.isDefined || entry.nino.isDefined)
   )
 
+  val searchRegex = "^(\\?:(?![\"';<=>\\\\^])[\\x20-\\x7E])+$"
+
   val searchForm: Form[Option[String]] = Form(
     "searchQuery" -> optional(
       text
         .verifying(
           StopOnFirstFail(
-            constraint[String]("errorCode", _.sizeIs < 64)
+            constraint[String]("errorCodeMaxLength", _.sizeIs < 64),
+            constraint[String]("errorCodeAllowedChars", _.matches(searchRegex))
           )
         )
     )

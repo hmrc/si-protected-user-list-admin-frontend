@@ -1,2 +1,8 @@
 @import "lib/govuk-frontend/govuk/settings/colours-applied";
 
+.pul-btn-search > button {
+    margin: -7px -7px -7px -5px;
+    padding: 4px 7px 0 5px;
+    background-color: govuk-colour("blue");
+    &:hover, &:active { background-color: govuk-colour("dark-blue"); }
+}

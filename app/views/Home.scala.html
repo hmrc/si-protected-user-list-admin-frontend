@@ -19,6 +19,7 @@
 @import models.TaxIdentifierType._
 @import views.html.fragments.Heading1
 @import views.html.fragments.SearchForm
+@import uk.gov.hmrc.hmrcfrontend.views.Implicits.RichErrorSummary
 
 @this(
         config: SiProtectedUserConfig,
@@ -31,7 +32,8 @@
         button: GovukButton,
         input: GovukInput,
         select: GovukSelect,
-        table: GovukTable
+        table: GovukTable,
+        govukErrorSummary: GovukErrorSummary
 )
 
 @(records: Seq[ProtectedUserRecord], filterByTeam: Option[String], form: Form[Option[String]], searchQuery: Option[String])(implicit req: StrideRequest[_], messages: Messages)
@@ -47,6 +49,9 @@
     backLink = Some(BackLink(href = config.dashboardUrl)),
     beforeContentBlock = Some(beforeContent)
 ) {
+    @if(form.errors.nonEmpty) {
+        @govukErrorSummary(ErrorSummary().withFormErrorsAsText(form))
+    }
     <div class="govuk-grid-row">
         @h1("home.page.header")
         <div class="govuk-grid-row">

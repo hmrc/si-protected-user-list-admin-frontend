@@ -18,7 +18,6 @@ package controllers
 
 import controllers.base.{StrideAction, StrideController}
 import models.InputForms.searchForm
-import play.api.i18n.Messages
 import play.api.mvc._
 import services.SiProtectedUserListService
 import views.Views
