@@ -36,7 +36,7 @@
         govukErrorSummary: GovukErrorSummary
 )
 
-@(records: Seq[ProtectedUserRecord], filterByTeam: Option[String], form: Form[Option[String]], searchQuery: Option[String])(implicit req: StrideRequest[_], messages: Messages)
+@(records: Seq[ProtectedUserRecord], filterByTeam: Option[String], form: Form[Option[String]])(implicit req: StrideRequest[_], messages: Messages)
 
 @beforeContent = {
     <link rel='stylesheet' href='@routes.Assets.at("application.css")'>
@@ -63,12 +63,12 @@
                     ))
                 </div>
             <div class="govuk-grid-column-one-third">
-                @searchForm(form, controllers.routes.SiProtectedUserController.homepage(), filterByTeam, searchQuery)
+                @searchForm(form, controllers.routes.SiProtectedUserController.homepage(), filterByTeam)
             </div>
         </div>
         @if(records.isEmpty) {
             <p class="govuk-body">
-                No results found@for(team <- filterByTeam) { for team <b>@team</b>}@for(str <- searchQuery) {
+                No results found@for(team <- filterByTeam) { for team <b>@team</b>}@for(str <- form("searchQuery").value) {
                 containing <b>@str</b>
             }.</p>
         } else {

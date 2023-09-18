@@ -29,7 +29,7 @@
         button: GovukButton
 )
 
-@(form: Form[Option[String]], call: Call, filterByTeam: Option[String], searchQuery: Option[String])(implicit request: Request[_], messages: Messages)
+@(form: Form[Option[String]], call: Call, filterByTeam: Option[String])(implicit request: Request[_], messages: Messages)
 @formTemplate(action = call, args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
     @select(Select(
         id = "filterByTeam",
@@ -60,7 +60,7 @@
                 ))
                 )
             )),
-            value = searchQuery
+            value = form("searchQuery").value
     ))
     </div>
 }

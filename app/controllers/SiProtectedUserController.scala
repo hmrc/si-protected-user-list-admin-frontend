@@ -39,13 +39,13 @@ class SiProtectedUserController @Inject() (
       .bindFromRequest()
       .fold(
         errorForm => {
-          Future.successful(BadRequest(views.home(Seq(), filterByTeam, errorForm, None)))
+          Future.successful(BadRequest(views.home(Seq(), filterByTeam, errorForm)))
         },
         searchValue => {
           val teamOpt = filterByTeam filterNot "all".equalsIgnoreCase
           backendService
             .findEntries(teamOpt, searchValue)
-            .map(entries => Ok(views.home(entries, teamOpt, searchForm.fill(searchValue), searchValue)))
+            .map(entries => Ok(views.home(entries, teamOpt, searchForm.fill(searchValue))))
         }
       )
   }

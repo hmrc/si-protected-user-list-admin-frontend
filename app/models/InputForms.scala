@@ -29,6 +29,7 @@ object InputForms {
   val addEntryActionLock = "LOCK"
   val addEntryActions = Seq(addEntryActionBlock, addEntryActionLock)
   val groupMaxLength = 12
+  val searchQueryMaxLength = 64
   val entryForm: Form[Entry] = Form(
     mapping(
       "entryId"            -> optional(nonEmptyText),
@@ -46,15 +47,15 @@ object InputForms {
       .verifying("form.nino.sautr.required", entry => entry.sautr.isDefined || entry.nino.isDefined)
   )
 
-  val searchRegex = "^(\\?:(?![\"';<=>\\\\^])[\\x20-\\x7E])+$"
+  val searchRegex = """^[\x20-\x7E]*$"""
 
   val searchForm: Form[Option[String]] = Form(
     "searchQuery" -> optional(
       text
         .verifying(
           StopOnFirstFail(
-            constraint[String]("errorCodeMaxLength", _.sizeIs < 64),
-            constraint[String]("errorCodeAllowedChars", _.matches(searchRegex))
+            constraint[String]("form.searchQuery.maxLength", _.sizeIs < searchQueryMaxLength),
+            constraint[String]("form.searchQuery.regex", _.matches(searchRegex))
           )
         )
     )

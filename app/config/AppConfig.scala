@@ -30,6 +30,8 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
 
   lazy val analyticsConfig: AnalyticsConfig = AnalyticsConfig(analyticsToken = getString(s"google-analytics.token"), analyticsHost = getString(s"google-analytics.host"))
 
+  lazy val searchQueryMaxValue: String = getString("search.query.max.length")
+
   lazy val authStrideEnrolments: StrideConfig = {
     val service = "stride-auth-frontend"
     val configPath = s"microservice.services.$service."

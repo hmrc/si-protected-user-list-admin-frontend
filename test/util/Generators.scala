@@ -29,6 +29,19 @@ trait Generators {
     str    <- Gen.listOfN(length, Gen.alphaChar).map(_.mkString)
   } yield str
 
+  val nonEmptyPrintableStringGen: Gen[String] = for {
+    length <- Gen.chooseNum(1, 64)
+    str    <- Gen.listOfN(length, Gen.asciiPrintableChar).map(_.mkString)
+  } yield str
+
+  val asciiUnprintableChars: Gen[Char] =
+    Gen.oneOf((1 to 31) ++ (127 to 255)).map(_.toChar)
+
+  val nonEmptyNonPrintableStringGen: Gen[String] = for {
+    length <- Gen.chooseNum(1, 64)
+    str    <- Gen.listOfN(length, asciiUnprintableChars).map(_.mkString)
+  } yield str
+
   def nonEmptyStringOfGen(length: Int): Gen[String] = Gen.listOfN(length, Gen.alphaChar).map(_.mkString)
 
   val ninoGen: Gen[Nino] = Gen.const(new Generator().nextNino)
