@@ -1,0 +1,68 @@
+@*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import config.SiProtectedUserConfig
+@import play.api.data.Form
+@import play.api.i18n.Messages
+@import play.api.mvc.Request
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.govukfrontend.views.html.components.implicits._
+@import uk.gov.hmrc.hmrcfrontend.views.Implicits.RichErrorSummary
+
+
+@this(
+        config: SiProtectedUserConfig,
+        formTemplate: FormWithCSRF,
+        input: GovukInput,
+        select: GovukSelect,
+        button: GovukButton,
+        govukErrorSummary: GovukErrorSummary
+)
+
+@(form: Form[Option[String]], call: Call, filterByTeam: Option[String], searchQuery: Option[String])(implicit request: Request[_], messages: Messages)
+@formTemplate(action = call, args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
+    @if(form.errors.nonEmpty) {
+        @govukErrorSummary(ErrorSummary().withFormErrorsAsText(form))
+    }
+    @select(Select(
+        id = "filterByTeam",
+        name = "filterByTeam",
+        items = "All" +: config.addedByTeams map { team =>
+        SelectItem(text = team, value = Some(team))
+        },
+        label = Label(content = Text(messages("home.page.filterBy"))),
+        classes = "govuk-!-display-inline-block",
+        attributes = Map("oninput" -> "this.form.submit()"),
+        value = filterByTeam
+    ))
+    <div class="govuk-input__wrapper">
+    @input(Input(
+            id = "searchQuery",
+            name = "searchQuery",
+            classes = "govuk-input govuk-input--width-8 govuk-!-display-inline",
+            value = searchQuery
+    ))
+    </div>
+    @button(Button(
+        classes = "gem-c-search__submit govuk-!-display-inline",
+        content = HtmlContent(
+        <svg class="gem-c-search__icon" width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+            <circle cx="12.0161" cy="11.0161" r="8.51613" stroke="currentColor" stroke-width="3"></circle>
+            <line x1="17.8668" y1="17.3587" x2="26.4475" y2="25.9393" stroke="currentColor" stroke-width="3"></line>
+        </svg>.toString
+        )
+    ))
+}

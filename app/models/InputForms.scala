@@ -16,8 +16,10 @@
 
 package models
 
-import play.api.data.Form
+import models.utils.StopOnFirstFail.constraint
+import models.utils.StopOnFirstFail
 import play.api.data.Forms._
+import play.api.data.{Form, Forms}
 import uk.gov.voa.play.form.ConditionalMappings.mandatoryIfEqual
 
 object InputForms {
@@ -42,6 +44,17 @@ object InputForms {
       "updatedByTeam"      -> optional(nonEmptyText)
     )(Entry.apply)(Entry.unapply)
       .verifying("form.nino.sautr.required", entry => entry.sautr.isDefined || entry.nino.isDefined)
+  )
+
+  val searchForm: Form[Option[String]] = Form(
+    "searchQuery" -> optional(
+      text
+        .verifying(
+          StopOnFirstFail(
+            constraint[String]("errorCode", _.sizeIs < 64)
+          )
+        )
+    )
   )
 
 }

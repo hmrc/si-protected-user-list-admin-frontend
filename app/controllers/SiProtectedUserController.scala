@@ -17,12 +17,14 @@
 package controllers
 
 import controllers.base.{StrideAction, StrideController}
+import models.InputForms.searchForm
+import play.api.i18n.Messages
 import play.api.mvc._
 import services.SiProtectedUserListService
 import views.Views
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SiProtectedUserController @Inject() (
@@ -33,13 +35,20 @@ class SiProtectedUserController @Inject() (
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
-  def homepage(filterByTeam: Option[String], searchQuery: Option[String]): Action[AnyContent] = StrideAction.async { implicit request =>
-    val teamOpt = filterByTeam filterNot "all".equalsIgnoreCase
-    val queryOpt = searchQuery filter (_.nonEmpty)
-
-    backendService
-      .findEntries(teamOpt, queryOpt)
-      .map(entries => Ok(views.home(entries, teamOpt, queryOpt)))
+  def homepage(filterByTeam: Option[String]): Action[AnyContent] = StrideAction.async { implicit request =>
+    searchForm
+      .bindFromRequest()
+      .fold(
+        errorForm => {
+          Future.successful(BadRequest(views.home(Seq(), filterByTeam, errorForm, None)))
+        },
+        searchValue => {
+          val teamOpt = filterByTeam filterNot "all".equalsIgnoreCase
+          backendService
+            .findEntries(teamOpt, searchValue)
+            .map(entries => Ok(views.home(entries, teamOpt, searchForm.fill(searchValue), searchValue)))
+        }
+      )
   }
 
   def view(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
