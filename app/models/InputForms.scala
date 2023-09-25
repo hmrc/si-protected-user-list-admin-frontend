@@ -16,8 +16,10 @@
 
 package models
 
-import play.api.data.Form
+import models.utils.StopOnFirstFail.constraint
+import models.utils.StopOnFirstFail
 import play.api.data.Forms._
+import play.api.data.Form
 import uk.gov.voa.play.form.ConditionalMappings.mandatoryIfEqual
 
 object InputForms {
@@ -27,6 +29,7 @@ object InputForms {
   val addEntryActionLock = "LOCK"
   val addEntryActions = Seq(addEntryActionBlock, addEntryActionLock)
   val groupMaxLength = 12
+  val searchQueryMaxLength = 64
   val entryForm: Form[Entry] = Form(
     mapping(
       "entryId"            -> optional(nonEmptyText),
@@ -42,6 +45,20 @@ object InputForms {
       "updatedByTeam"      -> optional(nonEmptyText)
     )(Entry.apply)(Entry.unapply)
       .verifying("form.nino.sautr.required", entry => entry.sautr.isDefined || entry.nino.isDefined)
+  )
+
+  val searchRegex = """^[\x20-\x7E]*$"""
+
+  val searchForm: Form[Option[String]] = Form(
+    "searchQuery" -> optional(
+      text
+        .verifying(
+          StopOnFirstFail(
+            constraint[String]("form.searchQuery.maxLength", _.sizeIs < searchQueryMaxLength),
+            constraint[String]("form.searchQuery.regex", _.matches(searchRegex))
+          )
+        )
+    )
   )
 
 }

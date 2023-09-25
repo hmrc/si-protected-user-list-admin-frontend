@@ -1,22 +1,5 @@
 @import "lib/govuk-frontend/govuk/settings/colours-applied";
 
-select.govuk-input--width-3 { min-width: 3.75em}
-
-#actions {
-    display: table; width: 100%;
-
-    > .action {
-        display: table-cell; vertical-align: bottom;
-
-        &:last-child { text-align: right; }
-
-        > [class|="govuk"] {
-            display: inline-block;
-            + [class|="govuk"] { margin-left: 1em; }
-        }
-    }
-}
-
 .pul-btn-search > button {
     margin: -7px -7px -7px -5px;
     padding: 4px 7px 0 5px;
