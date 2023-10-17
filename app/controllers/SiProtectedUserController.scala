@@ -16,8 +16,8 @@
 
 package controllers
 
-import controllers.base.{StrideAction, StrideController}
-import models.InputForms.searchForm
+import controllers.base.{StrideAction, StrideController, StrideRequest}
+import models.{InputForms, Search}
 import play.api.mvc._
 import services.SiProtectedUserListService
 import views.Views
@@ -30,22 +30,29 @@ class SiProtectedUserController @Inject() (
   val strideAction: StrideAction,
   backendService: SiProtectedUserListService,
   views: Views,
-  mcc: MessagesControllerComponents
+  mcc: MessagesControllerComponents,
+  inputForms: InputForms
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
-  def homepage(filterByTeam: Option[String]): Action[AnyContent] = StrideAction.async { implicit request =>
-    searchForm
+  def homepage(): Action[AnyContent] = StrideAction.async(implicit request => retrieveEntries(None, None))
+
+  private def retrieveEntries(filterByTeam: Option[String], searchValue: Option[String])(implicit request: StrideRequest[AnyContent]) = {
+    val teamOpt = filterByTeam filterNot "all".equalsIgnoreCase
+    backendService
+      .findEntries(teamOpt, searchValue)
+      .map(entries => Ok(views.home(entries, inputForms.searchForm.fill(Search(filterByTeam, searchValue)))))
+  }
+
+  def search(): Action[AnyContent] = StrideAction.async { implicit request =>
+    inputForms.searchForm
       .bindFromRequest()
       .fold(
         errorForm => {
-          Future.successful(BadRequest(views.home(Seq(), filterByTeam, errorForm)))
+          Future.successful(BadRequest(views.home(Seq(), errorForm)))
         },
-        searchValue => {
-          val teamOpt = filterByTeam filterNot "all".equalsIgnoreCase
-          backendService
-            .findEntries(teamOpt, searchValue)
-            .map(entries => Ok(views.home(entries, teamOpt, searchForm.fill(searchValue))))
+        search => {
+          retrieveEntries(search.filterByTeam, search.searchQuery)
         }
       )
   }

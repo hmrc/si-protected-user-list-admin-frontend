@@ -17,7 +17,7 @@
 package controllers
 
 import controllers.base.{StrideAction, StrideController}
-import models.InputForms.entryForm
+import models.InputForms
 import play.api.i18n.Messages
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.SiProtectedUserListService
@@ -32,14 +32,15 @@ class AddEntryController @Inject() (
   siProtectedUserListService: SiProtectedUserListService,
   views: Views,
   mcc: MessagesControllerComponents,
-  val strideAction: StrideAction
+  val strideAction: StrideAction,
+  inputForms: InputForms
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
-  def showAddEntryPage(): Action[AnyContent] = StrideAction(implicit request => Ok(views.add(entryForm)))
+  def showAddEntryPage(): Action[AnyContent] = StrideAction(implicit request => Ok(views.add(inputForms.entryForm)))
 
   def submit(): Action[AnyContent] = StrideAction.async { implicit request =>
-    entryForm
+    inputForms.entryForm
       .bindFromRequest()
       .fold(
         errorForm => Future.successful(BadRequest(views.add(errorForm))),
@@ -50,7 +51,7 @@ class AddEntryController @Inject() (
             .addEntry(entryWithUserId)
             .map(protectedUserRecord => Redirect(controllers.routes.SiProtectedUserController.view(protectedUserRecord.entryId)))
             .recover { case _: ConflictException =>
-              Conflict(views.add(entryForm.fill(entry).withGlobalError(Messages("add.error.conflict"))))
+              Conflict(views.add(inputForms.entryForm.fill(entry).withGlobalError(Messages("add.error.conflict"))))
             }
         }
       )

@@ -36,7 +36,7 @@
         govukErrorSummary: GovukErrorSummary
 )
 
-@(records: Seq[ProtectedUserRecord], filterByTeam: Option[String], form: Form[Option[String]])(implicit req: StrideRequest[_], messages: Messages)
+@(records: Seq[ProtectedUserRecord], form: Form[Search])(implicit req: StrideRequest[_], messages: Messages)
 
 @beforeContent = {
     <link rel='stylesheet' href='@routes.Assets.at("application.css")'>
@@ -63,37 +63,38 @@
                     ))
                 </div>
             <div class="govuk-grid-column-one-third">
-                @searchForm(form, controllers.routes.SiProtectedUserController.homepage(), filterByTeam)
+                @searchForm(form)
             </div>
         </div>
-        @if(records.isEmpty) {
+        @if(records.isEmpty && form.errors.isEmpty) {
             <p class="govuk-body">
-                No results found@for(team <- filterByTeam) { for team <b>@team</b>}@for(str <- form("searchQuery").value) {
-                containing <b>@str</b>
-            }.</p>
+                No results found for <b>@form("searchQuery").value.getOrElse("")</b>
+            </p>
         } else {
-            @table(Table(
-                head = Some(
-                    "entryId,saUtr,nino,idp,idpId,status,group,addedBy"
-                            .split(",").toIndexedSeq
-                            .map(prop => HeadCell(Text(messages(s"protectedUser.$prop"))))
-                ),
-                rows = records map { record =>
-                    val taxId = record.body.taxId match {
-                        case TaxIdentifier(SAUTR, value) => Seq(value, "")
-                        case TaxIdentifier(NINO, value) => Seq("", value)
-                    }
-                    val status = record.body.identityProviderId match {
-                        case Some(id) => Seq(id.name, id.value, "Locked")
-                        case None => Seq("", "", "Blocked")
-                    }
-                    val metaData = Seq(record.body.group, record.body.addedByTeam getOrElse "")
+            @if(form.errors.isEmpty) {
+                @table(Table(
+                    head = Some(
+                        "entryId,saUtr,nino,idp,idpId,status,group,addedBy"
+                        .split(",").toIndexedSeq
+                        .map(prop => HeadCell(Text(messages(s"protectedUser.$prop"))))
+                    ),
+                    rows = records map { record =>
+                        val taxId = record.body.taxId match {
+                            case TaxIdentifier(SAUTR, value) => Seq(value, "")
+                            case TaxIdentifier(NINO, value) => Seq("", value)
+                        }
+                        val status = record.body.identityProviderId match {
+                            case Some(id) => Seq(id.name, id.value, "Locked")
+                            case None => Seq("", "", "Blocked")
+                        }
+                        val metaData = Seq(record.body.group, record.body.addedByTeam getOrElse "")
 
-                   viewLink( record.entryId).body +: (taxId ++ status ++ metaData) map { data =>
-                        TableRow(HtmlContent(data))
+                        viewLink( record.entryId).body +: (taxId ++ status ++ metaData) map { data =>
+                            TableRow(HtmlContent(data))
+                        }
                     }
-                }
-            ))
+                ))
+            }
         }
     </div>
 

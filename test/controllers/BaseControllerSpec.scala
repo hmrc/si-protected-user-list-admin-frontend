@@ -17,6 +17,7 @@
 package controllers
 
 import controllers.base.StrideAction
+import models.InputForms
 import org.scalacheck.Gen
 import org.scalatest.Assertion
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -41,6 +42,7 @@ abstract class BaseControllerSpec extends UnitSpec with GuiceOneAppPerSuite with
 
   protected val mockBackendService: SiProtectedUserListService = mock[SiProtectedUserListService]
   protected val injectViews: Views = app.injector.instanceOf[Views]
+  protected val inputForms: InputForms = app.injector.instanceOf[InputForms]
 
   protected def expectStrideAuthenticated(assertionFrom: String => Unit): Unit = {
     val stridePid = nonEmptyStringGen.sample.get
