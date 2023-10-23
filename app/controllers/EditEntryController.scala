@@ -17,8 +17,7 @@
 package controllers
 
 import controllers.base.{StrideAction, StrideController}
-import models.Entry
-import models.InputForms.entryForm
+import models.{Entry, InputForms}
 import play.api.i18n.Messages
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.SiProtectedUserListService
@@ -33,7 +32,8 @@ class EditEntryController @Inject() (
   siProtectedUserListService: SiProtectedUserListService,
   views: Views,
   mcc: MessagesControllerComponents,
-  val strideAction: StrideAction
+  val strideAction: StrideAction,
+  inputForms: InputForms
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
@@ -41,13 +41,13 @@ class EditEntryController @Inject() (
     siProtectedUserListService
       .findEntry(entryId)
       .map {
-        case Some(protectedUserRecord) => Ok(views.edit(entryForm.fill(Entry.from(protectedUserRecord))))
+        case Some(protectedUserRecord) => Ok(views.edit(inputForms.entryForm.fill(Entry.from(protectedUserRecord))))
         case None                      => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
       }
   }
 
   def submit(): Action[AnyContent] = StrideAction.async { implicit request =>
-    entryForm
+    inputForms.entryForm
       .bindFromRequest()
       .fold(
         errorForm => {
@@ -59,7 +59,7 @@ class EditEntryController @Inject() (
             .map(_ => Ok(views.editSuccess()))
             .recover {
               case _: NotFoundException => NotFound(views.errorTemplate("edit.error.not.found", "edit.error.not.found", "edit.error.already.deleted"))
-              case _: ConflictException => Conflict(views.edit(entryForm.fill(entry).withGlobalError(Messages("edit.error.conflict"))))
+              case _: ConflictException => Conflict(views.edit(inputForms.entryForm.fill(entry).withGlobalError(Messages("edit.error.conflict"))))
             }
         }
       )

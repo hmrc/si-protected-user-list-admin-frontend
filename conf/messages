@@ -76,8 +76,11 @@ form.identityProviderId.required = Identity Provider Id is required when action 
 form.addedByTeam.required = Added by team is required
 error.maxLength = Maximum allowed characters is {0}
 
+form.filterByTeam.invalid = Select a valid option
+
+form.searchQuery.minLength = Enter a search term
 form.searchQuery.maxLength = Search queries must be 64 characters or less
-form.searchQuery.regex = Search queries must only include numbers, letters a to z, and special characters such as hyphens, spaces and apostrophes
+form.searchQuery.regex = Search queries must not include a period, plus sign, asterisk, question mark, caret, dollar sign, parenthesis, square bracket, brace, vertical bar, backslash or any control characters
 
 view.entry.header = View Entry
 view.entry.title = View Entry

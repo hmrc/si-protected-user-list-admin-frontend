@@ -31,7 +31,7 @@ trait Generators {
 
   val nonEmptyPrintableStringGen: Gen[String] = for {
     length <- Gen.chooseNum(1, 64)
-    str    <- Gen.listOfN(length, Gen.asciiPrintableChar).map(_.mkString)
+    str    <- Gen.listOfN(length, Gen.asciiPrintableChar).map(_.filterNot(ch => InputForms.disallowedCharacters.contains(ch)).mkString)
   } yield str
 
   val asciiUnprintableChars: Gen[Char] =
@@ -40,6 +40,10 @@ trait Generators {
   val nonEmptyNonPrintableStringGen: Gen[String] = for {
     length <- Gen.chooseNum(1, 64)
     str    <- Gen.listOfN(length, asciiUnprintableChars).map(_.mkString)
+  } yield str
+
+  val disallowedCharStringGen: Gen[String] = for {
+    str <- Gen.atLeastOne(InputForms.disallowedCharacters).map(_.mkString)
   } yield str
 
   def nonEmptyStringOfGen(length: Int): Gen[String] = Gen.listOfN(length, Gen.alphaChar).map(_.mkString)

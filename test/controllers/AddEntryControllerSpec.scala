@@ -31,7 +31,8 @@ class AddEntryControllerSpec extends BaseControllerSpec {
       mockBackendService,
       injectViews,
       Stubs.stubMessagesControllerComponents(),
-      stubStrideActions.sample.get
+      stubStrideActions.sample.get,
+      inputForms
     )
 
   "AddEntryController" should {

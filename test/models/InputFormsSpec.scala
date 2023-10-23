@@ -16,17 +16,20 @@
 
 package models
 
-import models.InputForms.{entryForm, groupMaxLength, searchForm, searchQueryMaxLength}
+import models.InputForms.{addEntryActionBlock, addEntryActionLock, groupMaxLength, searchQueryMaxLength}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.data.FormError
 import util.Generators
 
-class InputFormsSpec extends AnyWordSpec with Matchers with Generators with TableDrivenPropertyChecks {
+class InputFormsSpec extends AnyWordSpec with Matchers with Generators with TableDrivenPropertyChecks with GuiceOneAppPerSuite {
+
+  val inputForm = app.injector.instanceOf[InputForms]
 
   val allRequestFieldsPresentEntryForm = Map(
-    "action"             -> InputForms.addEntryActionBlock,
+    "action"             -> addEntryActionBlock,
     "nino"               -> ninoGen.sample.get.nino,
     "sautr"              -> sautrGen.sample.get.utr,
     "identityProvider"   -> nonEmptyStringGen.sample.get,
@@ -36,11 +39,16 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
   )
 
   val allRequestFieldsPresentSearchQuery = Map(
-    "action" -> nonEmptyPrintableStringGen.sample.get
+    "filterByTeam" -> "All",
+    "searchQuery"  -> nonEmptyPrintableStringGen.sample.get
+  )
+
+  val onlyFilterByTeamFieldPresentInSearchQuery = Map(
+    "filterByTeam" -> "All"
   )
 
   val missingNinoAndSautr = allRequestFieldsPresentEntryForm.updated("sautr", "").updated("nino", "")
-  val actionLockNoCredId = allRequestFieldsPresentEntryForm.updated("action", InputForms.addEntryActionLock).updated("identityProviderId", "")
+  val actionLockNoCredId = allRequestFieldsPresentEntryForm.updated("action", addEntryActionLock).updated("identityProviderId", "")
   val groupIsLongerThanAllowed = allRequestFieldsPresentEntryForm.updated("group", nonEmptyStringOfGen(groupMaxLength + 1).sample.get)
   val missingAddedByTeam = allRequestFieldsPresentEntryForm.updated("addedByTeam", "")
 
@@ -59,6 +67,7 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
   val tableSearchQueryForm = Table(
     ("Scenario", "Request fields", "Expected errors"),
     ("SearchQuery is valid no errors", allRequestFieldsPresentSearchQuery, Seq()),
+    ("SearchQuery isn't specified", onlyFilterByTeamFieldPresentInSearchQuery, Seq(FormError("searchQuery", "form.searchQuery.minLength"))),
     ("Length is past 64",
      allRequestFieldsPresentSearchQuery.updated("searchQuery", nonEmptyStringOfGen(searchQueryMaxLength + 1).sample.get),
      Seq(FormError("searchQuery", "form.searchQuery.maxLength"))
@@ -66,13 +75,17 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
     ("Character is not in the ascii range of 32 to 126",
      allRequestFieldsPresentSearchQuery.updated("searchQuery", nonEmptyNonPrintableStringGen.sample.get),
      Seq(FormError("searchQuery", "form.searchQuery.regex"))
+    ),
+    ("Character is in the list of disallowed characters",
+     allRequestFieldsPresentSearchQuery.updated("searchQuery", disallowedCharStringGen.sample.get),
+     Seq(FormError("searchQuery", "form.searchQuery.regex"))
     )
   )
 
   "EntryForm" should {
     "handle validation scenarios for table" in {
       forAll(tableEntryForm) { (_, request, expectedErrors) =>
-        val form = entryForm
+        val form = inputForm.entryForm
         val result = form.bind(request)
         result.errors should contain theSameElementsAs expectedErrors
       }
@@ -80,7 +93,7 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
 
     "Identity provider should be None when request field is empty string" in {
       val noIdpFields = allRequestFieldsPresentEntryForm.updated("identityProvider", "").updated("identityProviderId", "")
-      val result = entryForm.bind(noIdpFields).get
+      val result = inputForm.entryForm.bind(noIdpFields).get
       result.identityProvider   shouldBe None
       result.identityProviderId shouldBe None
     }
@@ -88,7 +101,7 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
   "searchForm" should {
     "handle validation scenarios for table" in {
       forAll(tableSearchQueryForm) { (_, request, expectedErrors) =>
-        val form = searchForm
+        val form = inputForm.searchForm
         val result = form.bind(request)
         result.errors should contain theSameElementsAs expectedErrors
       }

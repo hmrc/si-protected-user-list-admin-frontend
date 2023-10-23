@@ -16,21 +16,17 @@
 
 package models
 
+import com.google.inject.Inject
+import config.SiProtectedUserConfig
+import models.InputForms.{addEntryActionLock, disallowedCharacters, groupMaxLength, ninoRegex, saUtrRegex, searchQueryMaxLength, searchRegex}
 import models.utils.StopOnFirstFail.constraint
 import models.utils.StopOnFirstFail
 import play.api.data.Forms._
 import play.api.data.Form
 import uk.gov.voa.play.form.ConditionalMappings.mandatoryIfEqual
 
-object InputForms {
-  val ninoRegex = "((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]"
-  val saUtrRegex = "[0-9]{10}"
-  val addEntryActionBlock = "BLOCK"
-  val addEntryActionLock = "LOCK"
-  val addEntryActions = Seq(addEntryActionBlock, addEntryActionLock)
-  val groupMaxLength = 12
-  val searchQueryMaxLength = 64
-  val entryForm: Form[Entry] = Form(
+class InputForms @Inject() (config: SiProtectedUserConfig) {
+  def entryForm: Form[Entry] = Form(
     mapping(
       "entryId"            -> optional(nonEmptyText),
       "addedByUser"        -> ignored(Option.empty[String]),
@@ -47,18 +43,31 @@ object InputForms {
       .verifying("form.nino.sautr.required", entry => entry.sautr.isDefined || entry.nino.isDefined)
   )
 
-  val searchRegex = """^[\x20-\x7E]*$"""
-
-  val searchForm: Form[Option[String]] = Form(
-    "searchQuery" -> optional(
-      text
-        .verifying(
-          StopOnFirstFail(
-            constraint[String]("form.searchQuery.maxLength", _.sizeIs < searchQueryMaxLength),
-            constraint[String]("form.searchQuery.regex", _.matches(searchRegex))
+  def searchForm: Form[Search] = Form(
+    mapping(
+      "filterByTeam" -> optional(text.verifying("form.filterByTeam.invalid", ("All" +: config.addedByTeams).contains(_))),
+      "searchQuery" -> optional(
+        text
+          .verifying(
+            StopOnFirstFail(
+              constraint[String]("form.searchQuery.maxLength", _.sizeIs <= searchQueryMaxLength),
+              constraint[String]("form.searchQuery.regex", entryText => entryText.matches(searchRegex) && !entryText.exists(disallowedCharacters.contains(_)))
+            )
           )
-        )
-    )
+      ).verifying("form.searchQuery.minLength", value => value.isDefined && !value.get.isBlank)
+    )(Search.apply)(Search.unapply)
   )
 
+}
+
+object InputForms {
+  val ninoRegex = "((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]"
+  val saUtrRegex = "[0-9]{10}"
+  val addEntryActionBlock = "BLOCK"
+  val addEntryActionLock = "LOCK"
+  val addEntryActions = Seq(addEntryActionBlock, addEntryActionLock)
+  val groupMaxLength = 12
+  val searchQueryMaxLength = 64
+  val searchRegex = """^[\x20-\x7E]*$"""
+  val disallowedCharacters = Seq('.', '+', '*', '?', '^', '$', '(', ')', '[', ']', '{', '}', '|', '\\')
 }

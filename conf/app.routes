@@ -1,7 +1,9 @@
 # microservice specific routes
 
 
-GET         /                               controllers.SiProtectedUserController.homepage(filterByTeam: Option[String] ?= None)
+GET         /                               controllers.SiProtectedUserController.homepage()
+
+POST        /search                         controllers.SiProtectedUserController.search()
 
 GET         /add                            controllers.AddEntryController.showAddEntryPage()
 POST        /add                            controllers.AddEntryController.submit()

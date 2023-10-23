@@ -32,7 +32,8 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
       stubStrideActions.sample.get,
       mockBackendService,
       injectViews,
-      Stubs.stubMessagesControllerComponents()
+      Stubs.stubMessagesControllerComponents(),
+      inputForms
     )
 
   "homepage" should {
@@ -43,7 +44,7 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
             mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])
           } thenReturn Future(listOfRecords)
 
-          val result = await(siProtectedUserController.homepage(None)(FakeRequest()))
+          val result = await(siProtectedUserController.homepage()(FakeRequest()))
           status(result) shouldBe OK
           val body = contentAsString(result)
           body should include("home.page.title")
@@ -56,7 +57,7 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
         when(mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])).thenReturn(Future(listOfRecords))
         when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.failed(MissingBearerToken()))
 
-        val result = await(siProtectedUserController.homepage(None)(FakeRequest()))
+        val result = await(siProtectedUserController.homepage()(FakeRequest()))
         status(result) shouldBe SEE_OTHER
       }
     }
@@ -66,7 +67,7 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
         when(mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])).thenReturn(Future(listOfRecords))
         when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.failed(InsufficientEnrolments()))
 
-        val result = await(siProtectedUserController.homepage(None)(FakeRequest()))
+        val result = await(siProtectedUserController.homepage()(FakeRequest()))
         status(result) shouldBe UNAUTHORIZED
       }
     }

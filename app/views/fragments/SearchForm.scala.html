@@ -29,8 +29,8 @@
         button: GovukButton
 )
 
-@(form: Form[Option[String]], call: Call, filterByTeam: Option[String])(implicit request: Request[_], messages: Messages)
-@formTemplate(action = call, args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
+@(form: Form[Search])(implicit request: Request[_], messages: Messages)
+@formTemplate(action = controllers.routes.SiProtectedUserController.search(), args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
     @select(Select(
         id = "filterByTeam",
         name = "filterByTeam",
@@ -40,7 +40,7 @@
         label = Label(content = Text(messages("home.page.filterBy"))),
         classes = "govuk-!-display-inline-block",
         attributes = Map("oninput" -> "this.form.submit()"),
-        value = filterByTeam
+        value = form("filerByTeam").value
     ))
     <div class="govuk-input__wrapper">
     @input(Input(
