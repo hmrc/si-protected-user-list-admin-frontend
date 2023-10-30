@@ -46,7 +46,10 @@
     @input(Input(
             id = "searchQuery",
             name = "searchQuery",
-            attributes = Map("aria-label" -> messages("search.label")),
+            label = Label(
+                content = Text(messages("search.label")),
+                classes = "govuk-visually-hidden",
+            ),
             classes = "govuk-input govuk-input--width-8 govuk-!-display-inline",
             value = form("searchQuery").value
     ))
