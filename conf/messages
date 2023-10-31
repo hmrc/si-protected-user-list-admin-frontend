@@ -103,6 +103,7 @@ search.title = Admin Console
 search.header =SI Protected User List - Search for Allowlisted User
 search.search = Search
 search.scp = User ID
+search.label = Search For Entries
 
 confirm.delete.entry.title = Confirm deletion
 confirm.delete.entry.header = Confirm deletion
