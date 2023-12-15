@@ -19,8 +19,7 @@ package models
 import controllers.base.StrideRequest
 import play.api.libs.json.{Json, OFormat}
 
-case class Entry(entryId: Option[String],
-                 addedByUser: Option[String],
+case class Entry(addedByUser: Option[String],
                  updatedByUser: Option[String],
                  action: String,
                  nino: Option[String],
@@ -57,7 +56,6 @@ object Entry {
 
   def from(protectedUserRecord: ProtectedUserRecord): Entry = {
     Entry(
-      entryId = Some(protectedUserRecord.entryId),
       addedByUser = protectedUserRecord.body.addedByUser,
       updatedByUser = protectedUserRecord.body.updatedByUser,
       action = protectedUserRecord.action,

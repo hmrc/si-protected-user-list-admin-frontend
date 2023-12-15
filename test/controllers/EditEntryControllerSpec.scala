@@ -36,10 +36,10 @@ class EditEntryControllerSpec extends BaseControllerSpec {
 
   "EditEntryController" should {
     "forward to the edit entry view when GET /add is called" in
-      forAll(validEditEntryGen, protectedUserRecords) { (entry, record) =>
+      forAll(nonEmptyStringGen, validEditEntryGen, protectedUserRecords) { (entryId, entry, record) =>
         expectStrideAuthenticated {
-          when(mockBackendService.findEntry(eqTo(entry.entryId.value))(*)).thenReturn(Future.successful(Some(record)))
-          val result = editEntryController.showEditEntryPage(entry.entryId.value)(FakeRequest().withMethod("GET"))
+          when(mockBackendService.findEntry(eqTo(entryId))(*)).thenReturn(Future.successful(Some(record)))
+          val result = editEntryController.showEditEntryPage(entryId)(FakeRequest().withMethod("GET"))
           status(result) shouldBe OK
 
           val body = contentAsString(result)
@@ -48,14 +48,14 @@ class EditEntryControllerSpec extends BaseControllerSpec {
       }
 
     "Forward to confirmation page when edit is successful" in
-      forAll(validEditEntryGen, protectedUserRecords) { (entry, record) =>
+      forAll(nonEmptyStringGen, validEditEntryGen, protectedUserRecords) { (entryId, entry, record) =>
         expectStrideAuthenticated { pid =>
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
-          when(mockBackendService.updateEntry(eqTo(expectedEntry))(*, *)).thenReturn(Future.successful(record))
+          when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(*, *)).thenReturn(Future.successful(record))
 
-          val result = editEntryController.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+          val result = editEntryController.submit(entryId)(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 
           status(result) shouldBe OK
           val body = contentAsString(result)
@@ -65,14 +65,14 @@ class EditEntryControllerSpec extends BaseControllerSpec {
       }
 
     "Return not found when entry to update is not found" in
-      forAll(validEditEntryGen) { entry =>
+      forAll(nonEmptyStringGen, validEditEntryGen) { (entryId, entry) =>
         expectStrideAuthenticated { pid =>
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
-          when(mockBackendService.updateEntry(eqTo(expectedEntry))(*, *)).thenReturn(Future.failed(new NotFoundException("not found")))
+          when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(*, *)).thenReturn(Future.failed(new NotFoundException("not found")))
 
-          val result = editEntryController.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+          val result = editEntryController.submit(entryId)(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 
           status(result) shouldBe NOT_FOUND
           val body = contentAsString(result)
@@ -82,14 +82,14 @@ class EditEntryControllerSpec extends BaseControllerSpec {
       }
 
     "Return CONFLICT when /edit results in a conflict exception" in
-      forAll(validEditEntryGen) { entry =>
+      forAll(nonEmptyStringGen, validEditEntryGen) { (entryId, entry) =>
         expectStrideAuthenticated { pid =>
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
-          when(mockBackendService.updateEntry(eqTo(expectedEntry))(*, *)).thenReturn(Future.failed(new ConflictException("conflict")))
+          when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(*, *)).thenReturn(Future.failed(new ConflictException("conflict")))
 
-          val result = editEntryController.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+          val result = editEntryController.submit(entryId)(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
 
           status(result) shouldBe CONFLICT
           val body = contentAsString(result)
@@ -99,7 +99,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
 
     "Return BAD_REQUEST when POST /edit is called with invalid fields" in
       expectStrideAuthenticated {
-        val result = editEntryController.submit()(FakeRequest().withFormUrlEncodedBody())
+        val result = editEntryController.submit("123")(FakeRequest().withFormUrlEncodedBody())
         status(result) shouldBe BAD_REQUEST
 
         val body = contentAsString(result)
@@ -125,7 +125,6 @@ class EditEntryControllerSpec extends BaseControllerSpec {
 
   private def toEditRequestFields(entry: Entry): Seq[(String, String)] =
     Seq(
-      entry.entryId.map(e => "entryId" -> e),
       Some("action" -> entry.action),
       entry.nino.map(n => "nino" -> n),
       entry.sautr.map(s => "sautr" -> s),

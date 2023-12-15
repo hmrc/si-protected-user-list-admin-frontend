@@ -42,11 +42,11 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors {
     }
 
     "return OK when search is successful" in new Setup {
-      forAll(validEditEntryGen, protectedUserRecords, nonEmptyStringGen) { (entry, record, pid) =>
+      forAll(nonEmptyStringGen, protectedUserRecords, nonEmptyStringGen) { (entryId, record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
-        expectFindEntriesToBeSuccessful(record, entry.entryId.get)
+        expectFindEntriesToBeSuccessful(record, entryId)
 
-        val body = Map[String, Seq[String]]("filterByTeam" -> Seq("All"), "searchQuery" -> Seq(s"${entry.entryId.get}"))
+        val body = Map[String, Seq[String]]("filterByTeam" -> Seq("All"), "searchQuery" -> Seq(s"$entryId"))
 
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/search"))

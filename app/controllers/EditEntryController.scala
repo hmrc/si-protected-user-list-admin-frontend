@@ -41,25 +41,25 @@ class EditEntryController @Inject() (
     siProtectedUserListService
       .findEntry(entryId)
       .map {
-        case Some(protectedUserRecord) => Ok(views.edit(inputForms.entryForm.fill(Entry.from(protectedUserRecord))))
+        case Some(protectedUserRecord) => Ok(views.edit(entryId, inputForms.entryForm.fill(Entry.from(protectedUserRecord))))
         case None                      => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
       }
   }
 
-  def submit(): Action[AnyContent] = StrideAction.async { implicit request =>
+  def submit(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
     inputForms.entryForm
       .bindFromRequest()
       .fold(
         errorForm => {
-          Future.successful(BadRequest(views.edit(errorForm)))
+          Future.successful(BadRequest(views.edit(entryId, errorForm)))
         },
         entry => {
           siProtectedUserListService
-            .updateEntry(entry.copy(updatedByUser = Some(request.getUserPid), updatedByTeam = Option(entry.addedByTeam)))
+            .updateEntry(entryId, entry.copy(updatedByUser = Some(request.getUserPid), updatedByTeam = Option(entry.addedByTeam)))
             .map(_ => Ok(views.editSuccess()))
             .recover {
               case _: NotFoundException => NotFound(views.errorTemplate("edit.error.not.found", "edit.error.not.found", "edit.error.already.deleted"))
-              case _: ConflictException => Conflict(views.edit(inputForms.entryForm.fill(entry).withGlobalError(Messages("edit.error.conflict"))))
+              case _: ConflictException => Conflict(views.edit(entryId, inputForms.entryForm.fill(entry).withGlobalError(Messages("edit.error.conflict"))))
             }
         }
       )
