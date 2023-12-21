@@ -30,7 +30,6 @@
 )
 
 @(protectedUserRecord: ProtectedUserRecord)(implicit request: Request[_], messages: Messages)
-
     @mainLayout(
         pageTitle = Messages("confirm.delete.entry.title"),
     ) {
@@ -38,9 +37,9 @@
         @details(protectedUserRecord)
         @govukWarningText(WarningText(content = Text(Messages("confirm.delete.warning"))))
         @formTemplate(action = controllers.routes.DeleteEntryController.delete(), args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
-            @input(Input(id = "entryId", name = "entryId", inputType = "hidden"))
+            @input(Input(id = "entryId", name = "entryId", inputType = "hidden", value = Some(protectedUserRecord.entryId)))
             @govukButton(Button(content = Text(Messages("continue.button"))))
+            @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("cancel.button")), classes = "govuk-button govuk-button--secondary"))
         }
-        @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("cancel.button")), classes = "govuk-button govuk-button--secondary"))
 
     }
