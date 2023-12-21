@@ -32,7 +32,7 @@ entryForm: EntryForm,
 siProtectedUserConfig: SiProtectedUserConfig
 )
 
-@(form: Form[Entry])(implicit request: Request[_], messages: Messages)
+@(entryId: String, form: Form[Entry])(implicit request: Request[_], messages: Messages)
 @additionalScripts = {
     <script src='@controllers.routes.Assets.at("javascripts/entry-form.js")'></script>
 }
@@ -41,6 +41,6 @@ siProtectedUserConfig: SiProtectedUserConfig
     scripts = Some(additionalScripts)
 ) {
     @h1("edit.entry.header")
-    @entryForm(form,controllers.routes.EditEntryController.submit(),"edit.submit.button")
+    @entryForm(form,controllers.routes.EditEntryController.submit(entryId),"edit.submit.button")
 
 }

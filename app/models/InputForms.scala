@@ -28,7 +28,6 @@ import uk.gov.voa.play.form.ConditionalMappings.mandatoryIfEqual
 class InputForms @Inject() (config: SiProtectedUserConfig) {
   def entryForm: Form[Entry] = Form(
     mapping(
-      "entryId"            -> optional(nonEmptyText),
       "addedByUser"        -> ignored(Option.empty[String]),
       "updatedByUser"      -> ignored(Option.empty[String]),
       "action"             -> nonEmptyText,

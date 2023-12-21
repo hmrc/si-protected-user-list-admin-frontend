@@ -8,7 +8,7 @@ POST        /search                         controllers.SiProtectedUserControlle
 GET         /add                            controllers.AddEntryController.showAddEntryPage()
 POST        /add                            controllers.AddEntryController.submit()
 GET         /edit/:entryId                  controllers.EditEntryController.showEditEntryPage(entryId)
-POST        /edit                           controllers.EditEntryController.submit()
+POST        /edit/:entryId                  controllers.EditEntryController.submit(entryId)
 GET         /view-entry/:entryId            controllers.SiProtectedUserController.view(entryId)
 GET         /confirm-delete/:entryId        controllers.DeleteEntryController.showConfirmDeletePage(entryId)
 GET         /delete-entry/:entryId          controllers.DeleteEntryController.delete(entryId)

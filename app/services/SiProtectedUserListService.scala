@@ -31,11 +31,8 @@ class SiProtectedUserListService @Inject() (
   def addEntry(entry: Entry)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
     backendConnector.addEntry(entry.toProtectedUser(isUpdate = false))
 
-  def updateEntry(entry: Entry)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
-    entry.entryId match {
-      case Some(entryId) => backendConnector.updateEntry(entryId, entry.toProtectedUser(isUpdate = true))
-      case None          => Future.failed(new IllegalArgumentException("entryId not present for update"))
-    }
+  def updateEntry(entryId: String, entry: Entry)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
+    backendConnector.updateEntry(entryId, entry.toProtectedUser(isUpdate = true))
 
   def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
     backendConnector.findEntry(entryId)

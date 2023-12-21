@@ -24,14 +24,14 @@ import play.api.test.ResultExtractors
 class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
   "EditEntryController" should {
     "return OK when edit is successful" in
-      forAll(validEditEntryGen, protectedUserRecords, nonEmptyStringGen) { (entry, record, pid) =>
+      forAll(nonEmptyStringGen, validEditEntryGen, protectedUserRecords, nonEmptyStringGen) { (entryId, entry, record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
-        expectEditEntryToBeSuccessful(expectedEntry.entryId.value, record, expectedEntry.toProtectedUserImpl(isUpdate = true, pid))
+        expectEditEntryToBeSuccessful(entryId, record, expectedEntry.toProtectedUserImpl(isUpdate = true, pid))
 
         val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/edit"))
+          .url(resource(s"$frontEndBaseUrl/edit/$entryId"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .withFollowRedirects(false)
@@ -42,13 +42,13 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
       }
 
     "Return NOT_FOUND when upstream api return not found" in
-      forAll(validEditEntryGen, nonEmptyStringGen) { (entry, pid) =>
+      forAll(nonEmptyStringGen, validEditEntryGen, nonEmptyStringGen) { (entryId, entry, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
-        expectEditEntryToFailWithStatus(expectedEntry.entryId.value, expectedEntry.toProtectedUserImpl(isUpdate = true, pid), NOT_FOUND)
+        expectEditEntryToFailWithStatus(entryId, expectedEntry.toProtectedUserImpl(isUpdate = true, pid), NOT_FOUND)
         val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/edit"))
+          .url(resource(s"$frontEndBaseUrl/edit/$entryId"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .post(toEditRequestFields(expectedEntry).toMap)
@@ -58,13 +58,13 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
       }
 
     "Return CONFLICT when upstream api indicates a conflict" in
-      forAll(validEditEntryGen, nonEmptyStringGen) { (entry, pid) =>
+      forAll(nonEmptyStringGen, validEditEntryGen, nonEmptyStringGen) { (entryId, entry, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
-        expectEditEntryToFailWithStatus(expectedEntry.entryId.value, expectedEntry.toProtectedUserImpl(isUpdate = true, pid), CONFLICT)
+        expectEditEntryToFailWithStatus(entryId, expectedEntry.toProtectedUserImpl(isUpdate = true, pid), CONFLICT)
         val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/edit"))
+          .url(resource(s"$frontEndBaseUrl/edit/$entryId"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .post(toEditRequestFields(expectedEntry).toMap)
@@ -96,7 +96,6 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
 
   private def toEditRequestFields(entry: Entry): Seq[(String, String)] = {
     Seq(
-      entry.entryId.map(e => "entryId" -> e),
       Some("action" -> entry.action),
       entry.nino.map(n => "nino" -> n),
       entry.sautr.map(s => "sautr" -> s),

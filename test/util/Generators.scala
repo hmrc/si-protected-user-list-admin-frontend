@@ -53,7 +53,6 @@ trait Generators {
   val sautrGen: Gen[SaUtr] = Gen.const(new SaUtrGenerator().nextSaUtr)
 
   val entryGen: Gen[Entry] = for {
-    entryId            <- Gen.some(nonEmptyStringGen)
     action             <- Gen.oneOf(InputForms.addEntryActionBlock, InputForms.addEntryActionLock)
     nino               <- Gen.some(ninoGen.map(_.nino))
     sautr              <- Gen.some(sautrGen.map(_.utr))
@@ -65,7 +64,6 @@ trait Generators {
     updatedByUser      <- Gen.some(nonEmptyStringGen)
     addedByUser        <- Gen.some(nonEmptyStringGen)
   } yield Entry(
-    entryId = entryId,
     action = action,
     nino = nino,
     sautr = sautr,
@@ -78,7 +76,7 @@ trait Generators {
     addedByUser = addedByUser
   )
 
-  val validRequestEntryGen: Gen[Entry] = entryGen.map(_.copy(entryId = None, addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
+  val validRequestEntryGen: Gen[Entry] = entryGen.map(_.copy(addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
   val validEditEntryGen = entryGen.map(_.copy(addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
 
   val siProtectedUserConfigGen: Gen[SiProtectedUserConfig] = for {
