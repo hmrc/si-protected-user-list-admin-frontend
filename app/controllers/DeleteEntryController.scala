@@ -17,20 +17,22 @@
 package controllers
 
 import controllers.base.{StrideAction, StrideController}
+import models.InputForms
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.SiProtectedUserListService
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import views.Views
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class DeleteEntryController @Inject() (
   siProtectedUserListService: SiProtectedUserListService,
   views: Views,
   mcc: MessagesControllerComponents,
-  val strideAction: StrideAction
+  val strideAction: StrideAction,
+  inputForms: InputForms
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
@@ -43,13 +45,22 @@ class DeleteEntryController @Inject() (
       }
   }
 
-  def delete(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
-    siProtectedUserListService
-      .deleteEntry(entryId)
-      .map(_ => Ok(views.deleteSuccess()))
-      .recover {
-        case UpstreamErrorResponse(_, 404, _, _) => NotFound(views.errorTemplate("delete.entry.not.found", "delete.entry.not.found", "delete.entry.already.deleted"))
-        case _                                   => InternalServerError(views.somethingWentWrong())
-      }
+  def delete(): Action[AnyContent] = StrideAction.async { implicit request =>
+    inputForms.deleteForm
+      .bindFromRequest()
+      .fold(
+        errorForm => {
+          Future.successful(NotFound(views.errorTemplate("delete.entry.not.found", "delete.entry.not.found", "delete.entry.not.found")))
+        },
+        entryId => {
+          siProtectedUserListService
+            .deleteEntry(entryId)
+            .map(_ => Ok(views.deleteSuccess()))
+            .recover {
+              case UpstreamErrorResponse(_, 404, _, _) => NotFound(views.errorTemplate("delete.entry.not.found", "delete.entry.not.found", "delete.entry.already.deleted"))
+              case _                                   => InternalServerError(views.somethingWentWrong())
+            }
+        }
+      )
   }
 }

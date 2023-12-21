@@ -18,11 +18,11 @@ package models
 
 import com.google.inject.Inject
 import config.SiProtectedUserConfig
-import models.InputForms.{addEntryActionLock, disallowedCharacters, groupMaxLength, ninoRegex, saUtrRegex, searchQueryMaxLength, searchRegex}
-import models.utils.StopOnFirstFail.constraint
+import models.InputForms._
 import models.utils.StopOnFirstFail
-import play.api.data.Forms._
+import models.utils.StopOnFirstFail.constraint
 import play.api.data.Form
+import play.api.data.Forms._
 import uk.gov.voa.play.form.ConditionalMappings.mandatoryIfEqual
 
 class InputForms @Inject() (config: SiProtectedUserConfig) {
@@ -56,6 +56,10 @@ class InputForms @Inject() (config: SiProtectedUserConfig) {
           )
       ).verifying("form.searchQuery.minLength", value => value.isDefined && !value.get.isBlank)
     )(Search.apply)(Search.unapply)
+  )
+
+  def deleteForm: Form[String] = Form(
+    single("entryId" -> nonEmptyText)
   )
 
 }
