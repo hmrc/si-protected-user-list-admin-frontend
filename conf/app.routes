@@ -11,7 +11,7 @@ GET         /edit/:entryId                  controllers.EditEntryController.show
 POST        /edit                           controllers.EditEntryController.submit()
 GET         /view-entry/:entryId            controllers.SiProtectedUserController.view(entryId)
 GET         /confirm-delete/:entryId        controllers.DeleteEntryController.showConfirmDeletePage(entryId)
-POST        /delete-entry                   controllers.DeleteEntryController.delete()
+POST        /delete-entry/:entryId          controllers.DeleteEntryController.delete(entryId)
 
 GET         /clear                          controllers.AddEntryController.showAddEntryPage()
 

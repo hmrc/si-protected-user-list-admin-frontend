@@ -29,8 +29,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
       mockBackendService,
       injectViews,
       Stubs.stubMessagesControllerComponents(),
-      stubStrideActions.sample.get,
-      inputForms
+      stubStrideActions.sample.get
     )
   }
 
@@ -67,7 +66,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
             mockBackendService.deleteEntry(eqTo(record.entryId))(*, *)
           } thenReturn Future.successful(record)
 
-          val result = deleteEntryController.delete()(FakeRequest().withFormUrlEncodedBody("entryId" -> record.entryId).withMethod("POST"))
+          val result = deleteEntryController.delete(record.entryId)(FakeRequest().withMethod("DELETE"))
 
           status(result) shouldBe OK
           val body = contentAsString(result)
@@ -85,26 +84,12 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
             mockBackendService.deleteEntry(eqTo(record.entryId))(*, *)
           } thenReturn Future.failed(UpstreamErrorResponse("not found", NOT_FOUND))
 
-          val result = deleteEntryController.delete()(FakeRequest().withFormUrlEncodedBody("entryId" -> record.entryId).withMethod("POST"))
+          val result = deleteEntryController.delete(record.entryId)(FakeRequest().withMethod("DELETE"))
 
           status(result) shouldBe NOT_FOUND
           val body = contentAsString(result)
           body should include("delete.entry.not.found")
           body should include("delete.entry.already.deleted")
-        }
-      }
-    }
-
-    "Forward to error page when no entryId is specified with NOT_FOUND" in {
-      forAll(protectedUserRecords) { record =>
-        expectStrideAuthenticated {
-
-          val result = deleteEntryController.delete()(FakeRequest().withMethod("POST"))
-
-          status(result) shouldBe NOT_FOUND
-          val body = contentAsString(result)
-          body should include("delete.entry.not.found")
-          body should include("delete.entry.not.found")
         }
       }
     }
@@ -116,7 +101,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
             mockBackendService.deleteEntry(eqTo(record.entryId))(*, *)
           } thenReturn Future.failed(UpstreamErrorResponse("internal server error", INTERNAL_SERVER_ERROR))
 
-          val result = deleteEntryController.delete()(FakeRequest().withFormUrlEncodedBody("entryId" -> record.entryId).withMethod("POST"))
+          val result = deleteEntryController.delete(record.entryId)(FakeRequest().withMethod("DELETE"))
 
           status(result) shouldBe INTERNAL_SERVER_ERROR
           val body = contentAsString(result)

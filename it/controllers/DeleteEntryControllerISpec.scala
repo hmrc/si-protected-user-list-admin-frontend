@@ -46,10 +46,10 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
         expectDeleteEntryToBeSuccessful(record)
 
         val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/delete-entry"))
+          .url(resource(s"$frontEndBaseUrl/delete-entry/${record.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
-          .post(Map("entryId" -> record.entryId))
+          .post(Map.empty[String, String])
           .futureValue
 
         response.status shouldBe OK
@@ -66,22 +66,7 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
         )
 
         val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/delete-entry"))
-          .withHttpHeaders("Csrf-Token" -> "nocheck")
-          .withCookies(mockSessionCookie)
-          .post(Map("entryId" -> record.entryId))
-          .futureValue
-
-        response.status shouldBe NOT_FOUND
-      }
-    }
-
-    "return NOT_FOUND when no entryId is present" in new Setup {
-      forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
-        expectUserToBeStrideAuthenticated(pid)
-
-        val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/delete-entry"))
+          .url(resource(s"$frontEndBaseUrl/delete-entry/${record.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .post(Map.empty[String, String])

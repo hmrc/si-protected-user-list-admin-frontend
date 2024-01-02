@@ -36,8 +36,7 @@
         @h1("confirm.delete.entry.header")
         @details(protectedUserRecord)
         @govukWarningText(WarningText(content = Text(Messages("confirm.delete.warning"))))
-        @formTemplate(action = controllers.routes.DeleteEntryController.delete(), args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
-            @input(Input(id = "entryId", name = "entryId", inputType = "hidden", value = Some(protectedUserRecord.entryId)))
+        @formTemplate(action = controllers.routes.DeleteEntryController.delete(protectedUserRecord.entryId), args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
             @govukButton(Button(content = Text(Messages("continue.button"))))
             @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("cancel.button")), classes = "govuk-button govuk-button--secondary"))
         }
