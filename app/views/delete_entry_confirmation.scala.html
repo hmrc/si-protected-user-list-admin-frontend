@@ -24,18 +24,21 @@
         h1: Heading1,
         details: ProtectedUserRecordDetails,
         govukButton: GovukButton,
-        govukWarningText: GovukWarningText
+        govukWarningText: GovukWarningText,
+        formTemplate: FormWithCSRF,
+        input: GovukInput
 )
 
 @(protectedUserRecord: ProtectedUserRecord)(implicit request: Request[_], messages: Messages)
+    @mainLayout(
+        pageTitle = Messages("confirm.delete.entry.title"),
+    ) {
+        @h1("confirm.delete.entry.header")
+        @details(protectedUserRecord)
+        @govukWarningText(WarningText(content = Text(Messages("confirm.delete.warning"))))
+        @formTemplate(action = controllers.routes.DeleteEntryController.delete(protectedUserRecord.entryId), args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
+            @govukButton(Button(content = Text(Messages("continue.button"))))
+            @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("cancel.button")), classes = "govuk-button govuk-button--secondary"))
+        }
 
-@mainLayout(
-    pageTitle = Messages("confirm.delete.entry.title"),
-) {
-    @h1("confirm.delete.entry.header")
-    @details(protectedUserRecord)
-    @govukWarningText(WarningText(content = Text(Messages("confirm.delete.warning"))))
-    @govukButton(Button(href = Some(controllers.routes.DeleteEntryController.delete(protectedUserRecord.entryId).url),  content = Text(Messages("continue.button"))))
-    @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("cancel.button")), classes = "govuk-button govuk-button--secondary"))
-
-}
+    }

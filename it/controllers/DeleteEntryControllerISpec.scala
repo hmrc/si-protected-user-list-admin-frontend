@@ -49,7 +49,7 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
           .url(resource(s"$frontEndBaseUrl/delete-entry/${record.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
-          .get()
+          .post(Map.empty[String, String])
           .futureValue
 
         response.status shouldBe OK
@@ -69,7 +69,7 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
           .url(resource(s"$frontEndBaseUrl/delete-entry/${record.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
-          .delete()
+          .post(Map.empty[String, String])
           .futureValue
 
         response.status shouldBe NOT_FOUND
