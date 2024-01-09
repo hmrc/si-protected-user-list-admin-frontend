@@ -58,11 +58,6 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
       throw new RuntimeException(s"Could not find config key 'si-protected-user-list-admin.context-root'")
     )
   )
-
-  lazy val sessionCacheConfig: SessionCacheConfig = SessionCacheConfig(
-    baseUri = servicesConfig.baseUrl("cacheable.session-cache"),
-    domain = servicesConfig.getConfString("cacheable.session-cache.domain", throw new RuntimeException("missing required config cacheable.session-cache.domain"))
-  )
 }
 
 case class AnalyticsConfig(analyticsToken: String, analyticsHost: String)
@@ -72,5 +67,4 @@ case class SiProtectedUserConfig(
   identityProviders: Seq[String],
   addedByTeams: Seq[String]
 )
-case class SessionCacheConfig(baseUri: String, domain: String)
 case class BackendConfig(endpoint: String, contextRoot: String)
