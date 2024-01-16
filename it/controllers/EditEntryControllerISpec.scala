@@ -17,93 +17,88 @@
 package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import models.{Entry, ProtectedUser, ProtectedUserRecord}
+import models.ProtectedUserRecord
 import play.api.libs.json.Json
-import play.api.test.ResultExtractors
 
-class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
+class EditEntryControllerISpec extends BaseISpec {
   "EditEntryController" should {
     "return OK when edit is successful" in
-      forAll(nonEmptyStringGen, validEditEntryGen, protectedUserRecords, nonEmptyStringGen) { (entryId, entry, record, pid) =>
-        expectUserToBeStrideAuthenticated(pid)
-        val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
-
-        expectEditEntryToBeSuccessful(entryId, record, expectedEntry.toProtectedUserImpl(isUpdate = true, pid))
+      forAll(protectedUserRecords) { record =>
+        expectUserToBeStrideAuthenticated(record.body.updatedByUser.value)
+        expectEditEntryToBeSuccessful(record)
 
         val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/edit/$entryId"))
+          .url(resource(s"$frontEndBaseUrl/edit/${record.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
           .withFollowRedirects(false)
-          .post(toEditRequestFields(expectedEntry).toMap)
+          .post(toEditRequestFields(record))
           .futureValue
 
         response.status shouldBe OK
       }
 
     "Return NOT_FOUND when upstream api return not found" in
-      forAll(nonEmptyStringGen, validEditEntryGen, nonEmptyStringGen) { (entryId, entry, pid) =>
-        expectUserToBeStrideAuthenticated(pid)
-        val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
+      forAll(protectedUserRecords) { record =>
+        expectUserToBeStrideAuthenticated(record.body.updatedByUser.value)
+        expectEditEntryToFailWithStatus(record, NOT_FOUND)
 
-        expectEditEntryToFailWithStatus(entryId, expectedEntry.toProtectedUserImpl(isUpdate = true, pid), NOT_FOUND)
         val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/edit/$entryId"))
+          .url(resource(s"$frontEndBaseUrl/edit/${record.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
-          .post(toEditRequestFields(expectedEntry).toMap)
+          .post(toEditRequestFields(record))
           .futureValue
 
         response.status shouldBe NOT_FOUND
       }
 
     "Return CONFLICT when upstream api indicates a conflict" in
-      forAll(nonEmptyStringGen, validEditEntryGen, nonEmptyStringGen) { (entryId, entry, pid) =>
-        expectUserToBeStrideAuthenticated(pid)
-        val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
+      forAll(protectedUserRecords) { record =>
+        expectUserToBeStrideAuthenticated(record.body.updatedByUser.value)
+        expectEditEntryToFailWithStatus(record, CONFLICT)
 
-        expectEditEntryToFailWithStatus(entryId, expectedEntry.toProtectedUserImpl(isUpdate = true, pid), CONFLICT)
         val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/edit/$entryId"))
+          .url(resource(s"$frontEndBaseUrl/edit/${record.entryId}"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
-          .post(toEditRequestFields(expectedEntry).toMap)
+          .post(toEditRequestFields(record))
           .futureValue
 
         response.status shouldBe CONFLICT
       }
   }
 
-  private def expectUserToBeStrideAuthenticated(pid: String) = {
-    stubFor(post("/auth/authorise").willReturn(okJson(Json.obj("clientId" -> pid).toString())))
+  private def expectUserToBeStrideAuthenticated(pid: String) = stubFor(
+    post("/auth/authorise").willReturn(okJson(Json.obj("clientId" -> pid).toString))
+  )
+
+  private def expectEditEntryToBeSuccessful(record: ProtectedUserRecord) = stubFor {
+    val updatedBody = record.body.copy(addedByUser = None, updatedByTeam = record.body.addedByTeam)
+    val expectedPayload = Json.toJsObject(updatedBody).toString
+
+    patch(urlEqualTo(s"$backendBaseUrl/update/${record.entryId}"))
+      .withRequestBody(equalToJson(expectedPayload))
+      .willReturn(ok(Json.toJsObject(record).toString))
   }
 
-  private def expectEditEntryToBeSuccessful(entryId: String, protectedUserRecord: ProtectedUserRecord, protectedUser: ProtectedUser) = {
-    stubFor(
-      patch(urlEqualTo(s"$backendBaseUrl/update/$entryId"))
-        .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString()))
-        .willReturn(ok(Json.toJsObject(protectedUserRecord).toString()))
-    )
+  private def expectEditEntryToFailWithStatus(record: ProtectedUserRecord, status: Int) = stubFor {
+    val updatedBody = record.body.copy(addedByUser = None, updatedByTeam = record.body.addedByTeam)
+    val expectedPayload = Json.toJsObject(updatedBody).toString
+
+    patch(urlEqualTo(s"$backendBaseUrl/update/${record.entryId}"))
+      .withRequestBody(equalToJson(expectedPayload))
+      .willReturn(aResponse().withStatus(status))
   }
 
-  private def expectEditEntryToFailWithStatus(entryId: String, protectedUser: ProtectedUser, status: Int) = {
-    stubFor(
-      patch(urlEqualTo(s"$backendBaseUrl/update/$entryId"))
-        .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString()))
-        .willReturn(aResponse().withStatus(status))
-    )
-  }
-
-  private def toEditRequestFields(entry: Entry): Seq[(String, String)] = {
-    Seq(
-      Some("action" -> entry.action),
-      entry.nino.map(n => "nino" -> n),
-      entry.sautr.map(s => "sautr" -> s),
-      entry.identityProvider.map(s => "identityProvider" -> s),
-      entry.identityProviderId.map(s => "identityProviderId" -> s),
-      entry.group.map(s => "group" -> s),
-      Some("addedByTeam" -> entry.addedByTeam),
-      entry.updatedByTeam.map(s => "updatedByTeam" -> s)
-    ).flatten
-  }
+  private def toEditRequestFields(record: ProtectedUserRecord) = Map(
+    "action"             -> Some(if (record.body.identityProviderId.isDefined) "LOCK" else "BLOCK"),
+    "nino"               -> record.nino,
+    "sautr"              -> record.sautr,
+    "identityProvider"   -> record.body.identityProviderId.map(_.name),
+    "identityProviderId" -> record.body.identityProviderId.map(_.value),
+    "group"              -> Some(record.body.group),
+    "addedByTeam"        -> record.body.addedByTeam,
+    "updatedByTeam"      -> record.body.updatedByTeam
+  ).collect { case (k, Some(v)) => k -> v }
 }
