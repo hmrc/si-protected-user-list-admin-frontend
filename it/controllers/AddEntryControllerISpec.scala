@@ -18,10 +18,33 @@ package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.{ProtectedUser, ProtectedUserRecord}
+import org.jsoup.Jsoup
 import play.api.libs.json.Json
 
 class AddEntryControllerISpec extends BaseISpec {
-  "AddEntryController" should {
+
+  /** Handled by [[AddEntryController.showAddEntryPage()]]. */
+  "GET /add" should {
+    s"respond $OK and show correct heading" when {
+      s"Auth responds $OK with a clientId" in
+        forAll(alphaNumStringsOfLength(1, 255)) { clientId =>
+          expectUserToBeStrideAuthenticated(clientId)
+
+          val response = wsClient
+            .url(resource(s"$frontEndBaseUrl/add"))
+            .withCookies(mockSessionCookie)
+            .get()
+            .futureValue
+
+          response.status shouldBe OK
+          val h1 = Jsoup.parse(response.body).select("h1")
+          h1.text shouldBe "Add Entry"
+        }
+    }
+  }
+
+  /** Handled by [[AddEntryController.submit()]]. */
+  "POST /add" should {
     val newlyAddedRecords = protectedUserRecords.map { record =>
       val newlyAddedBody = record.body.copy(updatedByUser = None, updatedByTeam = None)
       record.copy(lastUpdated = None, body = newlyAddedBody)
