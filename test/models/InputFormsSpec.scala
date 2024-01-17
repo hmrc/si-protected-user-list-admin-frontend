@@ -22,21 +22,11 @@ import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.data.FormError
-import util.Generators
+import util.{Generators, ScenarioTables}
 
-class InputFormsSpec extends AnyWordSpec with Matchers with Generators with TableDrivenPropertyChecks with GuiceOneAppPerSuite {
+class InputFormsSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with ScenarioTables {
 
   val inputForm = app.injector.instanceOf[InputForms]
-
-  val allRequestFieldsPresentEntryForm = Map(
-    "action"             -> addEntryActionBlock,
-    "nino"               -> ninoGen.sample.get.nino,
-    "sautr"              -> sautrGen.sample.get.utr,
-    "identityProvider"   -> nonEmptyStringGen.sample.get,
-    "identityProviderId" -> nonEmptyStringGen.sample.get,
-    "group"              -> nonEmptyStringOfGen(groupMaxLength).sample.get,
-    "addedByTeam"        -> nonEmptyStringGen.sample.get
-  )
 
   val allRequestFieldsPresentSearchQuery = Map(
     "filterByTeam" -> "All",
@@ -45,23 +35,6 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
 
   val onlyFilterByTeamFieldPresentInSearchQuery = Map(
     "filterByTeam" -> "All"
-  )
-
-  val missingNinoAndSautr = allRequestFieldsPresentEntryForm.updated("sautr", "").updated("nino", "")
-  val actionLockNoCredId = allRequestFieldsPresentEntryForm.updated("action", addEntryActionLock).updated("identityProviderId", "")
-  val groupIsLongerThanAllowed = allRequestFieldsPresentEntryForm.updated("group", nonEmptyStringOfGen(groupMaxLength + 1).sample.get)
-  val missingAddedByTeam = allRequestFieldsPresentEntryForm.updated("addedByTeam", "")
-
-  val tableEntryForm = Table(
-    ("Scenario", "Request fields", "Expected errors"),
-    ("Nino regex fail when present and incorrect", allRequestFieldsPresentEntryForm.updated("nino", "bad_nino"), Seq(FormError("nino", "form.nino.regex"))),
-    ("No Nino regex failure when not entered", allRequestFieldsPresentEntryForm.updated("nino", ""), Seq()),
-    ("sautr regex fails when present and incorrect", allRequestFieldsPresentEntryForm.updated("sautr", "bad_sautr"), Seq(FormError("sautr", "form.sautr.regex"))),
-    ("No sautr regex failure when not entered", allRequestFieldsPresentEntryForm.updated("sautr", ""), Seq()),
-    ("Group is longer than allowed", groupIsLongerThanAllowed, Seq(FormError("group", "error.maxLength", Seq(groupMaxLength)))),
-    ("Nino or sautr is required when neither are present", missingNinoAndSautr, Seq(FormError("", "form.nino.sautr.required"))),
-    ("AddedByTeam is missing", missingAddedByTeam, Seq(FormError("addedByTeam", "form.addedByTeam.required"))),
-    ("identityProviderId must be present when action is LOCK", actionLockNoCredId, Seq(FormError("identityProviderId", "form.identityProviderId.required")))
   )
 
   val tableSearchQueryForm = Table(
@@ -84,7 +57,7 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
 
   "EntryForm" should {
     "handle validation scenarios for table" in {
-      forAll(tableEntryForm) { (_, request, expectedErrors) =>
+      forAll(invalidFormScenarios) { (_, request, expectedErrors) =>
         val form = inputForm.entryForm
         val result = form.bind(request)
         result.errors should contain theSameElementsAs expectedErrors

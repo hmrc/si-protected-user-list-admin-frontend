@@ -20,8 +20,9 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import models.ProtectedUserRecord
 import org.jsoup.Jsoup
 import play.api.libs.json.Json
+import util.ScenarioTables
 
-class EditEntryControllerISpec extends BaseISpec {
+class EditEntryControllerISpec extends BaseISpec with ScenarioTables {
 
   /** Covers [[EditEntryController.showEditEntryPage()]]. */
   "GET /edit/:entryId" should {
@@ -77,6 +78,24 @@ class EditEntryControllerISpec extends BaseISpec {
           .futureValue
 
         response.status shouldBe OK
+      }
+
+    s"respond $BAD_REQUEST" when
+      forAll(invalidFormScenarios) { (describeScenario, badPayload, _) =>
+        describeScenario in
+          forAll(protectedUserRecords) { record =>
+            expectUserToBeStrideAuthenticated(record.body.updatedByUser.value)
+
+            val response = wsClient
+              .url(resource(s"$frontEndBaseUrl/edit/${record.entryId}"))
+              .withHttpHeaders("Csrf-Token" -> "nocheck")
+              .withCookies(mockSessionCookie)
+              .withFollowRedirects(false)
+              .post(badPayload)
+              .futureValue
+
+            response.status shouldBe BAD_REQUEST
+          }
       }
 
     "Return NOT_FOUND when upstream api return not found" in

@@ -21,8 +21,9 @@ import models.InputForms.{addEntryActionBlock, addEntryActionLock, groupMaxLengt
 import models.{ProtectedUser, ProtectedUserRecord}
 import org.jsoup.Jsoup
 import play.api.libs.json.Json
+import util.ScenarioTables
 
-class AddEntryControllerISpec extends BaseISpec {
+class AddEntryControllerISpec extends BaseISpec with ScenarioTables {
   private val randomClientIds = alphaNumStringsOfLength(1, 255)
 
   /** Covers [[AddEntryController.showAddEntryPage()]]. */
@@ -67,33 +68,8 @@ class AddEntryControllerISpec extends BaseISpec {
         response.status shouldBe SEE_OTHER
       }
 
-    val allRequestFieldsPresentEntryForm = Map(
-      "action"             -> addEntryActionBlock,
-      "nino"               -> ninoGen.sample.get.nino,
-      "sautr"              -> sautrGen.sample.get.utr,
-      "identityProvider"   -> nonEmptyStringGen.sample.get,
-      "identityProviderId" -> nonEmptyStringGen.sample.get,
-      "group"              -> nonEmptyStringOfGen(groupMaxLength).sample.get,
-      "addedByTeam"        -> nonEmptyStringGen.sample.get
-    )
-
-    val missingNinoAndSautr = allRequestFieldsPresentEntryForm.updated("sautr", "").updated("nino", "")
-    val actionLockNoCredId = allRequestFieldsPresentEntryForm.updated("action", addEntryActionLock).updated("identityProviderId", "")
-    val groupIsLongerThanAllowed = allRequestFieldsPresentEntryForm.updated("group", nonEmptyStringOfGen(groupMaxLength + 1).sample.get)
-    val missingAddedByTeam = allRequestFieldsPresentEntryForm.updated("addedByTeam", "")
-
-    val badRequestScenarios = Table(
-      ("Description", "Request fields"),
-      ("NINO is submitted in wrong format", allRequestFieldsPresentEntryForm.updated("nino", "bad_nino")),
-      ("SAUTR is submitted in wrong format", allRequestFieldsPresentEntryForm.updated("sautr", "bad_sautr")),
-      (s"a group longer than $groupMaxLength is submitted", groupIsLongerThanAllowed),
-      ("neither a NINO or SAUTR is submitted", missingNinoAndSautr),
-      ("AddedByTeam is missing", missingAddedByTeam),
-      ("identityProviderId must be present when action is LOCK", actionLockNoCredId)
-    )
-
     s"respond $BAD_REQUEST" when
-      forAll(badRequestScenarios) { (describeScenario, badPayload) =>
+      forAll(invalidFormScenarios) { (describeScenario, badPayload, _) =>
         describeScenario in {
           expectUserToBeStrideAuthenticated(randomClientIds.sample.get)
 
