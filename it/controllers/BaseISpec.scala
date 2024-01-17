@@ -17,6 +17,7 @@
 package controllers
 
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -30,7 +31,14 @@ import uk.gov.hmrc.http.SessionKeys
 import uk.gov.hmrc.play.bootstrap.frontend.filters.crypto.SessionCookieCrypto
 import util.Generators
 
-trait BaseISpec extends WireMockSpec with GuiceOneServerPerSuite with Injecting with ScalaFutures with Generators with ScalaCheckDrivenPropertyChecks {
+trait BaseISpec
+    extends WireMockSpec
+    with GuiceOneServerPerSuite
+    with Injecting
+    with ScalaFutures
+    with Generators
+    with ScalaCheckDrivenPropertyChecks
+    with TableDrivenPropertyChecks {
   protected implicit val pc: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   val backendBaseUrl = "/si-protected-user-list-admin"
