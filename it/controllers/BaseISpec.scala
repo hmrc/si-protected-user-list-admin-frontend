@@ -17,11 +17,12 @@
 package controllers
 
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.i18n.{Lang, MessagesApi, MessagesImpl, MessagesProvider}
-import play.api.libs.ws.WSCookie
+import play.api.libs.ws.{DefaultWSCookie, WSCookie}
 import play.api.mvc.{Cookie, Session, SessionCookieBaker}
 import play.api.test.Injecting
 import uk.gov.hmrc.crypto.PlainText
@@ -30,15 +31,20 @@ import uk.gov.hmrc.http.SessionKeys
 import uk.gov.hmrc.play.bootstrap.frontend.filters.crypto.SessionCookieCrypto
 import util.Generators
 
-trait BaseISpec extends WireMockSpec with GuiceOneServerPerSuite with Injecting with ScalaFutures with Generators with ScalaCheckDrivenPropertyChecks {
+abstract class BaseISpec
+    extends WireMockSpec
+    with GuiceOneServerPerSuite
+    with Injecting
+    with ScalaFutures
+    with Generators
+    with ScalaCheckDrivenPropertyChecks
+    with TableDrivenPropertyChecks {
   protected implicit val pc: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
-  val backendBaseUrl = "/si-protected-user-list-admin"
   val frontEndBaseUrl = "/account-protection-tools/protected-user-list"
   implicit val mp: MessagesProvider = MessagesImpl(Lang("en"), inject[MessagesApi])
 
-  def mockSessionCookie = {
-
+  protected def mockSessionCookie: WSCookie = {
     def makeSessionCookie(session: Session): Cookie = {
       val cookieCrypto = inject[SessionCookieCrypto]
       val cookieBaker = inject[SessionCookieBaker]
@@ -57,14 +63,30 @@ trait BaseISpec extends WireMockSpec with GuiceOneServerPerSuite with Injecting 
 
     val cookie = makeSessionCookie(mockSession)
 
-    new WSCookie() {
-      override def name: String = cookie.name
-      override def value: String = cookie.value
-      override def domain: Option[String] = cookie.domain
-      override def path: Option[String] = Some(cookie.path)
-      override def maxAge: Option[Long] = cookie.maxAge.map(_.toLong)
-      override def secure: Boolean = cookie.secure
-      override def httpOnly: Boolean = cookie.httpOnly
-    }
+    DefaultWSCookie(
+      cookie.name,
+      cookie.value,
+      cookie.domain,
+      Some(cookie.path),
+      cookie.maxAge.map(_.toLong),
+      cookie.secure,
+      cookie.httpOnly
+    )
+  }
+
+  import com.github.tomakehurst.wiremock.client.WireMock._
+  import models.ProtectedUserRecord
+  import play.api.libs.json.Json
+
+  protected val backendBaseUrl = "/si-protected-user-list-admin"
+
+  protected def expectUserToBeStrideAuthenticated(clientId: String): Unit = stubFor {
+    post("/auth/authorise") willReturn okJson(Json.obj("clientId" -> clientId).toString)
+  }
+  protected def expectFindEntryToBeSuccessful(protectedUser: ProtectedUserRecord): Unit = stubFor {
+    get(s"$backendBaseUrl/entry-id/${protectedUser.entryId}") willReturn okJson(Json.toJsObject(protectedUser).toString)
+  }
+  protected def expectFindEntryToFailWithNotFound(entryId: String): Unit = stubFor {
+    get(s"$backendBaseUrl/entry-id/$entryId") willReturn notFound()
   }
 }

@@ -15,6 +15,7 @@
  *@
 
 @import config.SiProtectedUserConfig
+@import models.request.Update
 @import play.api.data.Form
 @import play.api.i18n.Messages
 @import play.api.mvc.Request
@@ -22,17 +23,22 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components.implicits._
 @import uk.gov.hmrc.hmrcfrontend.views.Implicits.RichErrorSummary
 @import views.html.Layout
-@import views.html.fragments.Heading1
+@import views.html.fragments.{Heading1, IdentityProviderIdField}
 
-@import views.html.fragments.EntryForm
 @this(
-h1: Heading1,
-mainLayout: Layout,
-entryForm: EntryForm,
-siProtectedUserConfig: SiProtectedUserConfig
+  formWithCSRF           : FormWithCSRF,
+  govukButton            : GovukButton,
+  govukErrorSummary      : GovukErrorSummary,
+  govukInput             : GovukInput,
+  govukSelect            : GovukSelect,
+  h1                     : Heading1,
+  identityProviderIdField: IdentityProviderIdField,
+  mainLayout             : Layout,
+  siProtectedUserConfig  : SiProtectedUserConfig
 )
 
-@(entryId: String, form: Form[Entry])(implicit request: Request[_], messages: Messages)
+@(entryId: String, form: Form[Update])(implicit request: Request[_], messages: Messages)
+
 @additionalScripts = {
     <script src='@controllers.routes.Assets.at("javascripts/entry-form.js")'></script>
 }
@@ -40,7 +46,21 @@ siProtectedUserConfig: SiProtectedUserConfig
     pageTitle = Messages("edit.entry.title"),
     scripts = Some(additionalScripts)
 ) {
-    @h1("edit.entry.header")
-    @entryForm(form,controllers.routes.EditEntryController.submit(entryId),"edit.submit.button")
+  @h1("edit.entry.header")
 
+  @formWithCSRF(action = controllers.routes.EditEntryController.submit(entryId), args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
+    @if(form.errors.nonEmpty) {
+        @govukErrorSummary(ErrorSummary().withFormErrorsAsText(form))
+    }
+    @identityProviderIdField(form)
+    @govukInput(Input(label = Label(content = Text(Messages("entry.form.group")), classes = "govuk-!-font-weight-bold"), hint = Some(Hint(content = Text(Messages("entry.form.group.hint"))))).withFormFieldWithErrorAsHtml(form("group")))
+    @govukSelect(Select(
+        id = "team",
+        name = "team",
+        items = siProtectedUserConfig.addedByTeams.map(team => SelectItem(Some(team), team)),
+        label = Label(content = Text(messages("entry.form.addedByTeam")), classes = "govuk-!-font-weight-bold")
+    ).withFormField(form("team")))
+    @govukButton(Button(content = Text(Messages("edit.submit.button"))))
+    @govukButton(Button(href = Some(controllers.routes.SiProtectedUserController.homepage().url), content = Text(Messages("cancel.button")), classes = "govuk-button govuk-button--secondary"))
+  }
 }

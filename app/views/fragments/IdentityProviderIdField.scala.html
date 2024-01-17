@@ -1,0 +1,58 @@
+@*
+ * Copyright 2024 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import play.api.data.Form
+@import play.api.i18n.Messages
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.govukfrontend.views.html.components.implicits._
+
+@import controllers.base.StrideRequest
+
+@this(
+  appConfig  : config.SiProtectedUserConfig,
+  govukInput : GovukInput,
+  govukSelect: GovukSelect
+)
+
+@(form: Form[_])(implicit messages: Messages)
+
+govukSelect(
+  Select(
+    id    = "action",
+    name  = "action",
+    items = Seq("LOCK", "BLOCK").map(action => SelectItem(value = Some(action), text = Messages(s"entry.form.action.select.$action"))),
+    label = Label(content = Text(messages("entry.form.action")), classes = "govuk-!-font-weight-bold")
+  ) withFormField form("action")
+)
+<div id="identityProviderContainer">
+  @govukSelect(
+    Select(
+      id    = "identityProvider",
+      name  = "identityProvider",
+      items = appConfig.identityProviders.map(identityProvider => SelectItem(Some(identityProvider), identityProvider)),
+      label = Label(content = Text(messages("entry.form.identityProvider")), classes = "govuk-!-font-weight-bold")
+    ) withFormField form("identityProvider")
+  )
+  @govukInput(
+    Input(
+      id    = "identityProviderId",
+      name  = "identityProviderId",
+      label   = Label(content = Text(Messages("entry.form.identityProviderId")),
+      classes = "govuk-!-font-weight-bold")
+    ) withFormFieldWithErrorAsHtml form("identityProviderId")
+  )
+</div>
+      

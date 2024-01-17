@@ -17,82 +17,111 @@
 package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import models.{Entry, ProtectedUser, ProtectedUserRecord}
+import models.{ProtectedUser, ProtectedUserRecord}
+import org.jsoup.Jsoup
 import play.api.libs.json.Json
-import play.api.test.ResultExtractors
-import util.Generators
+import util.ScenarioTables
 
-class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Generators {
-  "AddEntryController" should {
-    "return CREATED when add is successful" in new Setup {
-      forAll(validRequestEntryGen, protectedUserRecords, nonEmptyStringGen) { (entry, record, pid) =>
-        expectUserToBeStrideAuthenticated(pid)
-        val expectedEntry = entry.copy(addedByUser = Some(pid))
+class AddEntryControllerISpec extends BaseISpec with ScenarioTables {
+  private val randomClientIds = alphaNumStringsOfLength(1, 255)
 
-        expectAddEntryToBeSuccessful(record, expectedEntry.toProtectedUserImpl(isUpdate = false, pid))
+  /** Covers [[AddEntryController.showAddEntryPage()]]. */
+  "GET /add" should {
+    s"respond $OK and show correct heading" when {
+      s"Auth responds $OK with a clientId" in {
+        expectUserToBeStrideAuthenticated(randomClientIds.sample.get)
 
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/add"))
-          .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
-          .withFollowRedirects(false)
-          .post(toRequestFields(expectedEntry).toMap)
+          .get()
           .futureValue
 
-        response.status shouldBe SEE_OTHER
+        response.status shouldBe OK
+        val h1 = Jsoup.parse(response.body).select("h1")
+        h1.text shouldBe "Add Entry"
       }
     }
+  }
 
-    "Return CONFLICT when upstream api indicates a conflict" in new Setup {
-      forAll(validRequestEntryGen, nonEmptyStringGen) { (entry, pid) =>
-        expectUserToBeStrideAuthenticated(pid)
-        val expectedEntry = entry.copy(addedByUser = Some(pid))
+  /** Covers [[AddEntryController.submit()]]. */
+  "POST /add" should {
+    val newlyAddedRecords = protectedUserRecords.map { record =>
+      val newlyAddedBody = record.body.copy(updatedByUser = None, updatedByTeam = None)
+      record.copy(lastUpdated = None, body = newlyAddedBody)
+    }
 
-        expectAddEntryToFailWithConflictStatus(expectedEntry.toProtectedUserImpl(isUpdate = false, pid))
+    "redirect to /view/:entryId" when {
+      s"Auth responds $OK with a clientId and a valid form is submitted" in
+        forAll(newlyAddedRecords) { record =>
+          expectUserToBeStrideAuthenticated(record.body.addedByUser.value)
+          expectAddEntryToBeSuccessful(record)
+
+          val response = wsClient
+            .url(resource(s"$frontEndBaseUrl/add"))
+            .withHttpHeaders("Csrf-Token" -> "nocheck")
+            .withCookies(mockSessionCookie)
+            .withFollowRedirects(false)
+            .post(toRequestFields(record))
+            .futureValue
+
+          response.status                 shouldBe SEE_OTHER
+          response.header(LOCATION).value shouldBe s"$frontEndBaseUrl/view-entry/${record.entryId}"
+        }
+    }
+
+    s"respond $BAD_REQUEST" when
+      forAll(invalidAddEntryScenarios) { (describeScenario, badPayload, _) =>
+        describeScenario in {
+          expectUserToBeStrideAuthenticated(randomClientIds.sample.get)
+
+          val response = wsClient
+            .url(resource(s"$frontEndBaseUrl/add"))
+            .withHttpHeaders("Csrf-Token" -> "nocheck")
+            .withCookies(mockSessionCookie)
+            .withFollowRedirects(false)
+            .post(badPayload)
+            .futureValue
+
+          response.status shouldBe BAD_REQUEST
+        }
+      }
+
+    "Return CONFLICT when upstream api indicates a conflict" in
+      forAll(newlyAddedRecords) { record =>
+        expectUserToBeStrideAuthenticated(record.body.addedByUser.value)
+        expectAddEntryToFailWithConflictStatus(record.body)
+
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/add"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
           .withCookies(mockSessionCookie)
-          .post(toRequestFields(expectedEntry).toMap)
+          .post(toRequestFields(record))
           .futureValue
 
         response.status shouldBe CONFLICT
       }
-    }
   }
 
-  trait Setup {
-
-    def expectUserToBeStrideAuthenticated(pid: String): Unit = {
-      stubFor(post("/auth/authorise").willReturn(okJson(Json.obj("clientId" -> pid).toString())))
-    }
-
-    def expectAddEntryToBeSuccessful(protectedUserRecord: ProtectedUserRecord, protectedUser: ProtectedUser): Unit = {
-      stubFor(
-        post(urlEqualTo(s"$backendBaseUrl/add"))
-          .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString()))
-          .willReturn(ok(Json.toJsObject(protectedUserRecord).toString()))
-      )
-    }
-    def expectAddEntryToFailWithConflictStatus(protectedUser: ProtectedUser): Unit = {
-      stubFor(
-        post(urlEqualTo(s"$backendBaseUrl/add"))
-          .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString()))
-          .willReturn(aResponse().withStatus(CONFLICT))
-      )
-    }
-
-    def toRequestFields(entry: Entry): Seq[(String, String)] = {
-      Seq(
-        Some("action" -> entry.action),
-        entry.nino.map(n => "nino" -> n),
-        entry.sautr.map(s => "sautr" -> s),
-        entry.identityProvider.map(s => "identityProvider" -> s),
-        entry.identityProviderId.map(s => "identityProviderId" -> s),
-        entry.group.map(s => "group" -> s),
-        Some("addedByTeam" -> entry.addedByTeam),
-        entry.updatedByTeam.map(s => "updatedByTeam" -> s)
-      ).flatten
-    }
+  private def expectAddEntryToBeSuccessful(protectedUserRecord: ProtectedUserRecord) = stubFor {
+    post(urlEqualTo(s"$backendBaseUrl/add"))
+      .withRequestBody(equalToJson(Json.toJsObject(protectedUserRecord.body).toString))
+      .willReturn(ok(Json.toJsObject(protectedUserRecord).toString))
   }
+
+  private def expectAddEntryToFailWithConflictStatus(protectedUser: ProtectedUser) = stubFor {
+    post(urlEqualTo(s"$backendBaseUrl/add"))
+      .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString))
+      .willReturn(aResponse().withStatus(CONFLICT))
+  }
+
+  private def toRequestFields(record: ProtectedUserRecord) = Map(
+    "action"             -> Some(if (record.body.identityProviderId.isDefined) "LOCK" else "BLOCK"),
+    "nino"               -> record.nino,
+    "sautr"              -> record.sautr,
+    "identityProvider"   -> record.body.identityProviderId.map(_.name),
+    "identityProviderId" -> record.body.identityProviderId.map(_.value),
+    "group"              -> Some(record.body.group),
+    "team"               -> record.body.addedByTeam
+  ).collect { case (k, Some(v)) => k -> v }
 }

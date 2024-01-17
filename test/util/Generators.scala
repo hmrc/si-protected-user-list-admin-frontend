@@ -17,17 +17,20 @@
 package util
 
 import config.{SiProtectedUserConfig, StrideConfig}
-import models.InputForms.groupMaxLength
+import models.request.groupMaxLength
+import models.TaxIdentifierType.{NINO, SAUTR}
 import models._
 import org.scalacheck.Gen
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.domain.{Generator, Nino, SaUtr, SaUtrGenerator}
 
 trait Generators {
-  val nonEmptyStringGen: Gen[String] = for {
-    length <- Gen.chooseNum(1, 50)
-    str    <- Gen.listOfN(length, Gen.alphaChar).map(_.mkString)
-  } yield str
+  def alphaNumStringsOfLength(from: Int, to: Int): Gen[String] = for {
+    length <- Gen.chooseNum(from, to)
+    chars  <- Gen.listOfN(length, Gen.alphaNumChar)
+  } yield chars.mkString
+
+  val nonEmptyStringGen: Gen[String] = alphaNumStringsOfLength(1, 50)
 
   val nonEmptyPrintableStringGen: Gen[String] = for {
     length <- Gen.chooseNum(1, 64)
@@ -52,33 +55,6 @@ trait Generators {
 
   val sautrGen: Gen[SaUtr] = Gen.const(new SaUtrGenerator().nextSaUtr)
 
-  val entryGen: Gen[Entry] = for {
-    action             <- Gen.oneOf(InputForms.addEntryActionBlock, InputForms.addEntryActionLock)
-    nino               <- Gen.some(ninoGen.map(_.nino))
-    sautr              <- Gen.some(sautrGen.map(_.utr))
-    identityProvider   <- Gen.some(nonEmptyStringGen)
-    identityProviderId <- Gen.some(nonEmptyStringGen)
-    group              <- Gen.some(nonEmptyStringOfGen(groupMaxLength))
-    addedByTeam        <- nonEmptyStringGen
-    updatedByTeam      <- Gen.some(nonEmptyStringGen)
-    updatedByUser      <- Gen.some(nonEmptyStringGen)
-    addedByUser        <- Gen.some(nonEmptyStringGen)
-  } yield Entry(
-    action = action,
-    nino = nino,
-    sautr = sautr,
-    identityProvider = identityProvider,
-    identityProviderId = identityProviderId,
-    group = group,
-    addedByTeam = addedByTeam,
-    updatedByTeam = updatedByTeam,
-    updatedByUser = updatedByUser,
-    addedByUser = addedByUser
-  )
-
-  val validRequestEntryGen: Gen[Entry] = entryGen.map(_.copy(addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
-  val validEditEntryGen = entryGen.map(_.copy(addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
-
   val siProtectedUserConfigGen: Gen[SiProtectedUserConfig] = for {
     num               <- Gen.chooseNum(1, 10)
     addedByTeams      <- Gen.listOfN(num, nonEmptyStringGen)
@@ -96,27 +72,26 @@ trait Generators {
 
   val taxIdTypeGen: Gen[TaxIdentifierType] = Gen.oneOf(TaxIdentifierType.values)
 
-  val taxIdProviderIdGen: Gen[IdentityProviderId] = for {
-    authProviderIdType  <- Gen oneOf Seq("GovernmentGateway", "OLfG")
-    authProviderIdValue <- Gen.alphaNumStr
-  } yield IdentityProviderId(authProviderIdType, authProviderIdValue)
+  val identityProviderIds: Gen[IdentityProviderId] = for {
+    name  <- Gen.alphaNumStr if name.nonEmpty
+    value <- Gen.alphaNumStr if value.nonEmpty
+  } yield IdentityProviderId(name, value)
 
-  val taxIdGen: Gen[TaxIdentifier] = for {
-    typeName <- Gen oneOf TaxIdentifierType.values
-    value    <- nonEmptyStringGen
-  } yield TaxIdentifier(typeName, value)
+  val taxIdentifiers: Gen[TaxIdentifier] = Gen.oneOf(
+    ninoGen.map(nino => TaxIdentifier(NINO, nino.nino)),
+    sautrGen.map(sautr => TaxIdentifier(SAUTR, sautr.utr))
+  )
 
   val protectedUserGen: Gen[ProtectedUser] = for {
-    taxIdType          <- taxIdTypeGen
-    taxIdValue         <- nonEmptyStringGen
-    identityProviderId <- Gen.some(taxIdProviderIdGen)
-    group              <- nonEmptyStringGen
+    taxId              <- taxIdentifiers
+    identityProviderId <- Gen option identityProviderIds
+    group              <- alphaNumStringsOfLength(1, groupMaxLength)
     addedByUser        <- Gen.some(nonEmptyStringGen)
     addedByTeam        <- Gen.some(nonEmptyStringGen)
     updatedByUser      <- Gen.some(nonEmptyStringGen)
     updatedByTeam      <- Gen.some(nonEmptyStringGen)
   } yield ProtectedUser(
-    taxId = TaxIdentifier(taxIdType, taxIdValue),
+    taxId = taxId,
     identityProviderId = identityProviderId,
     group = group,
     addedByUser = addedByUser,
