@@ -17,7 +17,6 @@
 package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import models.InputForms.{addEntryActionBlock, addEntryActionLock, groupMaxLength}
 import models.{ProtectedUser, ProtectedUserRecord}
 import org.jsoup.Jsoup
 import play.api.libs.json.Json
@@ -52,21 +51,24 @@ class AddEntryControllerISpec extends BaseISpec with ScenarioTables {
       record.copy(lastUpdated = None, body = newlyAddedBody)
     }
 
-    "return CREATED when add is successful" in
-      forAll(newlyAddedRecords) { record =>
-        expectUserToBeStrideAuthenticated(record.body.addedByUser.value)
-        expectAddEntryToBeSuccessful(record)
+    "redirect to /view/:entryId" when {
+      s"Auth responds $OK with a clientId and a valid form is submitted" in
+        forAll(newlyAddedRecords) { record =>
+          expectUserToBeStrideAuthenticated(record.body.addedByUser.value)
+          expectAddEntryToBeSuccessful(record)
 
-        val response = wsClient
-          .url(resource(s"$frontEndBaseUrl/add"))
-          .withHttpHeaders("Csrf-Token" -> "nocheck")
-          .withCookies(mockSessionCookie)
-          .withFollowRedirects(false)
-          .post(toRequestFields(record))
-          .futureValue
+          val response = wsClient
+            .url(resource(s"$frontEndBaseUrl/add"))
+            .withHttpHeaders("Csrf-Token" -> "nocheck")
+            .withCookies(mockSessionCookie)
+            .withFollowRedirects(false)
+            .post(toRequestFields(record))
+            .futureValue
 
-        response.status shouldBe SEE_OTHER
-      }
+          response.status                 shouldBe SEE_OTHER
+          response.header(LOCATION).value shouldBe s"$frontEndBaseUrl/view-entry/${record.entryId}"
+        }
+    }
 
     s"respond $BAD_REQUEST" when
       forAll(invalidFormScenarios) { (describeScenario, badPayload, _) =>
@@ -120,6 +122,6 @@ class AddEntryControllerISpec extends BaseISpec with ScenarioTables {
     "identityProvider"   -> record.body.identityProviderId.map(_.name),
     "identityProviderId" -> record.body.identityProviderId.map(_.value),
     "group"              -> Some(record.body.group),
-    "addedByTeam"        -> record.body.addedByTeam
+    "team"               -> record.body.addedByTeam
   ).collect { case (k, Some(v)) => k -> v }
 }

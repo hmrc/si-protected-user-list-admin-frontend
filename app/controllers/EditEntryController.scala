@@ -16,11 +16,11 @@
 
 package controllers
 
+import connectors.SiProtectedUserAdminBackendConnector
 import controllers.base.{StrideAction, StrideController}
-import models.{Entry, InputForms}
+import models.request.Update
 import play.api.i18n.Messages
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import services.SiProtectedUserListService
 import uk.gov.hmrc.http.{ConflictException, NotFoundException}
 import views.Views
 
@@ -29,39 +29,35 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class EditEntryController @Inject() (
-  siProtectedUserListService: SiProtectedUserListService,
+  backendConnector: SiProtectedUserAdminBackendConnector,
   views: Views,
   mcc: MessagesControllerComponents,
-  val strideAction: StrideAction,
-  inputForms: InputForms
+  val strideAction: StrideAction
 )(implicit ec: ExecutionContext)
     extends StrideController(mcc) {
 
   def showEditEntryPage(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
-    siProtectedUserListService
+    backendConnector
       .findEntry(entryId)
       .map {
-        case Some(protectedUserRecord) => Ok(views.edit(entryId, inputForms.entryForm.fill(Entry.from(protectedUserRecord))))
-        case None                      => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
+        case Some(record) => Ok(views.edit(entryId, Update.form.fill(Update from record.body)))
+        case None         => NotFound(views.errorTemplate("error.not.found", "error.not.found", "protectedUser.details.not.found"))
       }
   }
 
   def submit(entryId: String): Action[AnyContent] = StrideAction.async { implicit request =>
-    inputForms.entryForm
+    Update.form
       .bindFromRequest()
       .fold(
-        errorForm => {
-          Future.successful(BadRequest(views.edit(entryId, errorForm)))
-        },
-        entry => {
-          siProtectedUserListService
-            .updateEntry(entryId, entry.copy(updatedByUser = Some(request.getUserPid), updatedByTeam = Option(entry.addedByTeam)))
+        errorForm => Future.successful(BadRequest(views.edit(entryId, errorForm))),
+        update =>
+          backendConnector
+            .updateEntry(entryId, update.toProtectedUser)
             .map(_ => Ok(views.editSuccess()))
             .recover {
               case _: NotFoundException => NotFound(views.errorTemplate("edit.error.not.found", "edit.error.not.found", "edit.error.already.deleted"))
-              case _: ConflictException => Conflict(views.edit(entryId, inputForms.entryForm.fill(entry).withGlobalError(Messages("edit.error.conflict"))))
+              case _: ConflictException => Conflict(views.edit(entryId, Update.form.fill(update).withGlobalError(Messages("edit.error.conflict"))))
             }
-        }
       )
   }
 }

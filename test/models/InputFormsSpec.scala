@@ -16,13 +16,12 @@
 
 package models
 
-import models.InputForms.{addEntryActionBlock, addEntryActionLock, groupMaxLength, searchQueryMaxLength}
+import models.InputForms.searchQueryMaxLength
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.data.FormError
-import util.{Generators, ScenarioTables}
+import util.ScenarioTables
 
 class InputFormsSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with ScenarioTables {
 

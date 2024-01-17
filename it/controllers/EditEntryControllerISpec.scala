@@ -17,7 +17,8 @@
 package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import models.ProtectedUserRecord
+import models.TaxIdentifierType.NINO
+import models.{ProtectedUserRecord, TaxIdentifier}
 import org.jsoup.Jsoup
 import play.api.libs.json.Json
 import util.ScenarioTables
@@ -130,31 +131,31 @@ class EditEntryControllerISpec extends BaseISpec with ScenarioTables {
   }
 
   private def expectEditEntryToBeSuccessful(record: ProtectedUserRecord) = stubFor {
-    val updatedBody = record.body.copy(addedByUser = None, updatedByTeam = record.body.addedByTeam)
-    val expectedPayload = Json.toJsObject(updatedBody).toString
-
     patch(urlEqualTo(s"$backendBaseUrl/update/${record.entryId}"))
-      .withRequestBody(equalToJson(expectedPayload))
+      .withRequestBody(expectedPayloadFrom(record))
       .willReturn(ok(Json.toJsObject(record).toString))
   }
 
   private def expectEditEntryToFailWithStatus(record: ProtectedUserRecord, status: Int) = stubFor {
-    val updatedBody = record.body.copy(addedByUser = None, updatedByTeam = record.body.addedByTeam)
-    val expectedPayload = Json.toJsObject(updatedBody).toString
-
     patch(urlEqualTo(s"$backendBaseUrl/update/${record.entryId}"))
-      .withRequestBody(equalToJson(expectedPayload))
+      .withRequestBody(expectedPayloadFrom(record))
       .willReturn(aResponse().withStatus(status))
+  }
+
+  private def expectedPayloadFrom(record: ProtectedUserRecord) = {
+    val updatedBody = record.body.copy(
+      taxId = TaxIdentifier(NINO, ""),
+      addedByUser = None,
+      addedByTeam = None
+    )
+    equalToJson(Json.toJsObject(updatedBody).toString)
   }
 
   private def toEditRequestFields(record: ProtectedUserRecord) = Map(
     "action"             -> Some(if (record.body.identityProviderId.isDefined) "LOCK" else "BLOCK"),
-    "nino"               -> record.nino,
-    "sautr"              -> record.sautr,
     "identityProvider"   -> record.body.identityProviderId.map(_.name),
     "identityProviderId" -> record.body.identityProviderId.map(_.value),
     "group"              -> Some(record.body.group),
-    "addedByTeam"        -> record.body.addedByTeam,
-    "updatedByTeam"      -> record.body.updatedByTeam
+    "team"               -> record.body.updatedByTeam
   ).collect { case (k, Some(v)) => k -> v }
 }
