@@ -28,21 +28,33 @@ trait ScenarioTables extends TableDrivenPropertyChecks with Generators {
     "identityProvider"   -> nonEmptyStringGen.sample.get,
     "identityProviderId" -> nonEmptyStringGen.sample.get,
     "group"              -> nonEmptyStringOfGen(groupMaxLength).sample.get,
-    "addedByTeam"        -> nonEmptyStringGen.sample.get
+    "team"               -> nonEmptyStringGen.sample.get
   )
 
   private val missingNinoAndSautr = allRequestFieldsPresentEntryForm.updated("sautr", "").updated("nino", "")
   private val actionLockNoCredId = allRequestFieldsPresentEntryForm.updated("action", addEntryActionLock).updated("identityProviderId", "")
   private val groupIsLongerThanAllowed = allRequestFieldsPresentEntryForm.updated("group", nonEmptyStringOfGen(groupMaxLength + 1).sample.get)
-  private val missingAddedByTeam = allRequestFieldsPresentEntryForm.updated("addedByTeam", "")
+  private val missingTeam = allRequestFieldsPresentEntryForm.updated("team", "")
 
-  val invalidFormScenarios: TableFor3[String, Map[String, String], Seq[FormError]] = Table(
-    ("Scenario", "Request fields", "Expected errors"),
-    ("Nino regex fail when present and incorrect", allRequestFieldsPresentEntryForm.updated("nino", "bad_nino"), Seq(FormError("nino", "form.nino.regex"))),
-    ("sautr regex fails when present and incorrect", allRequestFieldsPresentEntryForm.updated("sautr", "bad_sautr"), Seq(FormError("sautr", "form.sautr.regex"))),
-    ("Group is longer than allowed", groupIsLongerThanAllowed, Seq(FormError("group", "error.maxLength", Seq(groupMaxLength)))),
-    ("Nino or sautr is required when neither are present", missingNinoAndSautr, Seq(FormError("", "form.nino.sautr.required"))),
-    ("AddedByTeam is missing", missingAddedByTeam, Seq(FormError("addedByTeam", "form.addedByTeam.required"))),
-    ("identityProviderId must be present when action is LOCK", actionLockNoCredId, Seq(FormError("identityProviderId", "form.identityProviderId.required")))
+  private val invalidTaxIdScenarios = Array(
+    ("Nino regex fail when present and incorrect", allRequestFieldsPresentEntryForm.updated("nino", "bad_nino"), FormError("nino", "form.nino.regex")),
+    ("sautr regex fails when present and incorrect", allRequestFieldsPresentEntryForm.updated("sautr", "bad_sautr"), FormError("sautr", "form.sautr.regex")),
+    ("Nino or sautr is required when neither are present", missingNinoAndSautr, FormError("", "form.nino.sautr.required"))
+  )
+
+  private val invalidOtherScenarios = Array(
+    ("Group is longer than allowed", groupIsLongerThanAllowed, FormError("group", "error.maxLength", Seq(groupMaxLength))),
+    ("Team is missing", missingTeam, FormError("team", "form.team.required")),
+    ("identityProviderId must be present when action is LOCK", actionLockNoCredId, FormError("identityProviderId", "form.identityProviderId.required"))
+  )
+
+  protected val invalidAddEntryScenarios: TableFor3[String, Map[String, String], FormError] = Table(
+    ("Scenario", "Request fields", "Expected error"),
+    invalidTaxIdScenarios ++ invalidOtherScenarios: _*
+  )
+
+  protected val invalidEditEntryScenarios: TableFor3[String, Map[String, String], FormError] = Table(
+    ("Scenario", "Request fields", "Expected error"),
+    invalidOtherScenarios: _*
   )
 }

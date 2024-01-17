@@ -82,7 +82,7 @@ class EditEntryControllerISpec extends BaseISpec with ScenarioTables {
       }
 
     s"respond $BAD_REQUEST" when
-      forAll(invalidFormScenarios) { (describeScenario, badPayload, _) =>
+      forAll(invalidEditEntryScenarios) { (describeScenario, badPayload, _) =>
         describeScenario in
           forAll(protectedUserRecords) { record =>
             expectUserToBeStrideAuthenticated(record.body.updatedByUser.value)

@@ -17,44 +17,69 @@
 package models
 
 import models.InputForms.searchQueryMaxLength
+import models.request.{Insert, Update}
+import org.scalatest.LoneElement
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.data.FormError
 import util.ScenarioTables
 
-class InputFormsSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with ScenarioTables {
+class InputFormsSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with ScenarioTables with LoneElement {
+  "Insert.form" should {
+    "return the correct FormError" when
+      forAll(invalidAddEntryScenarios) { (describeScenario, invalidPayload, expectedFormError) =>
+        describeScenario in {
+          val invalidForm = Insert.form.bind(invalidPayload)
+          val actualFormError = invalidForm.errors.loneElement
 
-  val inputForm = app.injector.instanceOf[InputForms]
+          actualFormError shouldBe expectedFormError
+        }
+      }
+  }
 
-  val allRequestFieldsPresentSearchQuery = Map(
-    "filterByTeam" -> "All",
-    "searchQuery"  -> nonEmptyPrintableStringGen.sample.get
-  )
+  "Update.form" should {
+    "return the correct FormError" when
+      forAll(invalidEditEntryScenarios) { (describeScenario, invalidPayload, expectedFormError) =>
+        describeScenario in {
+          val invalidForm = Update.form.bind(invalidPayload)
+          val actualFormError = invalidForm.errors.loneElement
 
-  val onlyFilterByTeamFieldPresentInSearchQuery = Map(
-    "filterByTeam" -> "All"
-  )
-
-  val tableSearchQueryForm = Table(
-    ("Scenario", "Request fields", "Expected errors"),
-    ("SearchQuery is valid no errors", allRequestFieldsPresentSearchQuery, Seq()),
-    ("SearchQuery isn't specified", onlyFilterByTeamFieldPresentInSearchQuery, Seq(FormError("searchQuery", "form.searchQuery.minLength"))),
-    ("Length is past 64",
-     allRequestFieldsPresentSearchQuery.updated("searchQuery", nonEmptyStringOfGen(searchQueryMaxLength + 1).sample.get),
-     Seq(FormError("searchQuery", "form.searchQuery.maxLength"))
-    ),
-    ("Character is not in the ascii range of 32 to 126",
-     allRequestFieldsPresentSearchQuery.updated("searchQuery", nonEmptyNonPrintableStringGen.sample.get),
-     Seq(FormError("searchQuery", "form.searchQuery.regex"))
-    ),
-    ("Character is in the list of disallowed characters",
-     allRequestFieldsPresentSearchQuery.updated("searchQuery", disallowedCharStringGen.sample.get),
-     Seq(FormError("searchQuery", "form.searchQuery.regex"))
-    )
-  )
+          actualFormError shouldBe expectedFormError
+        }
+      }
+  }
 
   "searchForm" should {
+    val inputForm = app.injector.instanceOf[InputForms]
+
+    val allRequestFieldsPresentSearchQuery = Map(
+      "filterByTeam" -> "All",
+      "searchQuery"  -> nonEmptyPrintableStringGen.sample.get
+    )
+
+    val onlyFilterByTeamFieldPresentInSearchQuery = Map(
+      "filterByTeam" -> "All"
+    )
+
+    val tableSearchQueryForm = Table(
+      ("Scenario", "Request fields", "Expected errors"),
+      ("SearchQuery is valid no errors", allRequestFieldsPresentSearchQuery, Seq()),
+      ("SearchQuery isn't specified", onlyFilterByTeamFieldPresentInSearchQuery, Seq(FormError("searchQuery", "form.searchQuery.minLength"))),
+      ("Length is past 64",
+       allRequestFieldsPresentSearchQuery.updated("searchQuery", nonEmptyStringOfGen(searchQueryMaxLength + 1).sample.get),
+       Seq(FormError("searchQuery", "form.searchQuery.maxLength"))
+      ),
+      ("Character is not in the ascii range of 32 to 126",
+       allRequestFieldsPresentSearchQuery.updated("searchQuery", nonEmptyNonPrintableStringGen.sample.get),
+       Seq(FormError("searchQuery", "form.searchQuery.regex"))
+      ),
+      ("Character is in the list of disallowed characters",
+       allRequestFieldsPresentSearchQuery.updated("searchQuery", disallowedCharStringGen.sample.get),
+       Seq(FormError("searchQuery", "form.searchQuery.regex"))
+      )
+    )
+
     "handle validation scenarios for table" in {
       forAll(tableSearchQueryForm) { (_, request, expectedErrors) =>
         val form = inputForm.searchForm

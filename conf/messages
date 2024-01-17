@@ -73,7 +73,7 @@ form.nino.regex = Invalid Nino
 form.sautr.regex = Invalid SA UTR
 form.nino.sautr.required = At least one of Nino or Sautr is required
 form.identityProviderId.required = Identity Provider Id is required when action is Lock a NINO or SaUtr to a credential
-form.addedByTeam.required = Added by team is required
+form.team.required = Team is required
 error.maxLength = Maximum allowed characters is {0}
 
 form.filterByTeam.invalid = Select a valid option

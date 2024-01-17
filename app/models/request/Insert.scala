@@ -30,7 +30,7 @@ case class Insert(
   team: String
 ) {
   def toProtectedUser(implicit req: StrideRequest[_]): ProtectedUser = ProtectedUser(
-    taxId = optTaxId.getOrElse(throw new IllegalArgumentException("Insert.form should validate that the tax ID is non-empty.")),
+    taxId = optTaxId.get,
     identityProviderId = optIdpId,
     addedByUser = req.userPidOpt,
     addedByTeam = Some(team),

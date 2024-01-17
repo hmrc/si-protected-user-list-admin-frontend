@@ -71,7 +71,7 @@ class AddEntryControllerISpec extends BaseISpec with ScenarioTables {
     }
 
     s"respond $BAD_REQUEST" when
-      forAll(invalidFormScenarios) { (describeScenario, badPayload, _) =>
+      forAll(invalidAddEntryScenarios) { (describeScenario, badPayload, _) =>
         describeScenario in {
           expectUserToBeStrideAuthenticated(randomClientIds.sample.get)
 
