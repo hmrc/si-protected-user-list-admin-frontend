@@ -18,30 +18,13 @@ package models
 
 import com.google.inject.Inject
 import config.SiProtectedUserConfig
-import models.InputForms.{addEntryActionLock, disallowedCharacters, groupMaxLength, ninoRegex, saUtrRegex, searchQueryMaxLength, searchRegex}
-import models.utils.StopOnFirstFail.constraint
+import models.InputForms.{disallowedCharacters, searchQueryMaxLength, searchRegex}
 import models.utils.StopOnFirstFail
-import play.api.data.Forms._
+import models.utils.StopOnFirstFail.constraint
 import play.api.data.Form
-import uk.gov.voa.play.form.ConditionalMappings.mandatoryIfEqual
+import play.api.data.Forms._
 
 class InputForms @Inject() (config: SiProtectedUserConfig) {
-  def entryForm: Form[Entry] = Form(
-    mapping(
-      "addedByUser"        -> ignored(Option.empty[String]),
-      "updatedByUser"      -> ignored(Option.empty[String]),
-      "action"             -> nonEmptyText,
-      "nino"               -> optional(nonEmptyText.verifying("form.nino.regex", _.matches(ninoRegex))),
-      "sautr"              -> optional(nonEmptyText.verifying("form.sautr.regex", _.matches(saUtrRegex))),
-      "identityProvider"   -> mandatoryIfEqual("action", addEntryActionLock, nonEmptyText),
-      "identityProviderId" -> mandatoryIfEqual("action", addEntryActionLock, text.verifying("form.identityProviderId.required", !_.trim.isEmpty)),
-      "group"              -> optional(nonEmptyText(maxLength = groupMaxLength)),
-      "addedByTeam"        -> text.verifying("form.addedByTeam.required", !_.isBlank),
-      "updatedByTeam"      -> optional(nonEmptyText)
-    )(Entry.apply)(Entry.unapply)
-      .verifying("form.nino.sautr.required", entry => entry.sautr.isDefined || entry.nino.isDefined)
-  )
-
   def searchForm: Form[Search] = Form(
     mapping(
       "filterByTeam" -> optional(text.verifying("form.filterByTeam.invalid", ("All" +: config.addedByTeams).contains(_))),
@@ -60,12 +43,6 @@ class InputForms @Inject() (config: SiProtectedUserConfig) {
 }
 
 object InputForms {
-  val ninoRegex = "((?!(BG|GB|KN|NK|NT|TN|ZZ)|(D|F|I|Q|U|V)[A-Z]|[A-Z](D|F|I|O|Q|U|V))[A-Z]{2})[0-9]{6}[A-D]"
-  val saUtrRegex = "[0-9]{10}"
-  val addEntryActionBlock = "BLOCK"
-  val addEntryActionLock = "LOCK"
-  val addEntryActions = Seq(addEntryActionBlock, addEntryActionLock)
-  val groupMaxLength = 12
   val searchQueryMaxLength = 64
   val searchRegex = """^[\x20-\x7E]*$"""
   val disallowedCharacters = Seq('.', '+', '*', '?', '^', '$', '(', ')', '[', ']', '{', '}', '|', '\\')

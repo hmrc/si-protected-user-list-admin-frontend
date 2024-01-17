@@ -16,7 +16,7 @@
 
 package util
 
-import models.InputForms.{addEntryActionBlock, addEntryActionLock, groupMaxLength}
+import models.request.{addEntryActionBlock, addEntryActionLock, groupMaxLength}
 import org.scalatest.prop.{TableDrivenPropertyChecks, TableFor3}
 import play.api.data.FormError
 

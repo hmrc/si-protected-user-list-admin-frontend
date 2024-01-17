@@ -17,7 +17,7 @@
 package util
 
 import config.{SiProtectedUserConfig, StrideConfig}
-import models.InputForms.groupMaxLength
+import models.request.groupMaxLength
 import models.TaxIdentifierType.{NINO, SAUTR}
 import models._
 import org.scalacheck.Gen

@@ -18,7 +18,7 @@ package services
 
 import connectors.SiProtectedUserAdminBackendConnector
 import controllers.base.StrideRequest
-import models.{Entry, ProtectedUserRecord}
+import models.ProtectedUserRecord
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
@@ -28,12 +28,6 @@ import scala.concurrent.Future
 class SiProtectedUserListService @Inject() (
   backendConnector: SiProtectedUserAdminBackendConnector
 ) {
-  def addEntry(entry: Entry)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
-    backendConnector.addEntry(entry.toProtectedUser(isUpdate = false))
-
-  def updateEntry(entryId: String, entry: Entry)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
-    backendConnector.updateEntry(entryId, entry.toProtectedUser(isUpdate = true))
-
   def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
     backendConnector.findEntry(entryId)
   }

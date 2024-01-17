@@ -54,22 +54,6 @@ class InputFormsSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite 
     )
   )
 
-  "EntryForm" should {
-    "handle validation scenarios for table" in {
-      forAll(invalidFormScenarios) { (_, request, expectedErrors) =>
-        val form = inputForm.entryForm
-        val result = form.bind(request)
-        result.errors should contain theSameElementsAs expectedErrors
-      }
-    }
-
-    "Identity provider should be None when request field is empty string" in {
-      val noIdpFields = allRequestFieldsPresentEntryForm.updated("identityProvider", "").updated("identityProviderId", "")
-      val result = inputForm.entryForm.bind(noIdpFields).get
-      result.identityProvider   shouldBe None
-      result.identityProviderId shouldBe None
-    }
-  }
   "searchForm" should {
     "handle validation scenarios for table" in {
       forAll(tableSearchQueryForm) { (_, request, expectedErrors) =>
