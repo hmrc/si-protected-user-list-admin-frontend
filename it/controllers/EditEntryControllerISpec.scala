@@ -18,10 +18,51 @@ package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.ProtectedUserRecord
+import org.jsoup.Jsoup
 import play.api.libs.json.Json
 
 class EditEntryControllerISpec extends BaseISpec {
-  "EditEntryController" should {
+
+  /** Covers [[EditEntryController.showEditEntryPage()]]. */
+  "GET /edit/:entryId" should {
+    s"respond $OK and show correct heading" when {
+      s"Auth responds $OK with a clientId and backend responds $OK with a ProtectedUserRecord" in
+        forAll(protectedUserRecords) { record =>
+          expectUserToBeStrideAuthenticated(record.body.updatedByUser.value)
+          expectFindEntryToBeSuccessful(record)
+
+          val response = wsClient
+            .url(resource(s"$frontEndBaseUrl/edit/${record.entryId}"))
+            .withCookies(mockSessionCookie)
+            .get()
+            .futureValue
+
+          response.status shouldBe OK
+          val h1 = Jsoup.parse(response.body).select("h1")
+          h1.text shouldBe "Edit Entry"
+        }
+    }
+    s"respond $NOT_FOUND and show correct heading" when {
+      s"Auth responds $OK with a clientId but backend responds $NOT_FOUND" in
+        forAll(protectedUserRecords) { record =>
+          expectUserToBeStrideAuthenticated(record.body.updatedByUser.value)
+          expectFindEntryToFailWithNotFound(record.entryId)
+
+          val response = wsClient
+            .url(resource(s"$frontEndBaseUrl/edit/${record.entryId}"))
+            .withCookies(mockSessionCookie)
+            .get()
+            .futureValue
+
+          response.status shouldBe NOT_FOUND
+          val h1 = Jsoup.parse(response.body).select("h1")
+          h1.text shouldBe "Not Found"
+        }
+    }
+  }
+
+  /** Covers [[EditEntryController.submit()]]. */
+  "POST /edit/:entry:Id" should {
     "return OK when edit is successful" in
       forAll(protectedUserRecords) { record =>
         expectUserToBeStrideAuthenticated(record.body.updatedByUser.value)
@@ -68,10 +109,6 @@ class EditEntryControllerISpec extends BaseISpec {
         response.status shouldBe CONFLICT
       }
   }
-
-  private def expectUserToBeStrideAuthenticated(pid: String) = stubFor(
-    post("/auth/authorise").willReturn(okJson(Json.obj("clientId" -> pid).toString))
-  )
 
   private def expectEditEntryToBeSuccessful(record: ProtectedUserRecord) = stubFor {
     val updatedBody = record.body.copy(addedByUser = None, updatedByTeam = record.body.addedByTeam)

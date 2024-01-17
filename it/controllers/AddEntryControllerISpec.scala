@@ -20,8 +20,6 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import models.InputForms.{addEntryActionBlock, addEntryActionLock, groupMaxLength}
 import models.{ProtectedUser, ProtectedUserRecord}
 import org.jsoup.Jsoup
-import play.api.data.FormError
-import play.api.i18n.Messages
 import play.api.libs.json.Json
 
 class AddEntryControllerISpec extends BaseISpec {
@@ -125,10 +123,6 @@ class AddEntryControllerISpec extends BaseISpec {
 
         response.status shouldBe CONFLICT
       }
-  }
-
-  private def expectUserToBeStrideAuthenticated(pid: String) = stubFor {
-    post("/auth/authorise") willReturn okJson(Json.obj("clientId" -> pid).toString)
   }
 
   private def expectAddEntryToBeSuccessful(protectedUserRecord: ProtectedUserRecord) = stubFor {

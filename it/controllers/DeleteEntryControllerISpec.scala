@@ -18,7 +18,6 @@ package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.ProtectedUserRecord
-import play.api.libs.json.Json
 import play.api.test.ResultExtractors
 
 class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
@@ -59,11 +58,7 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
     "return NOT_FOUND when no entry is found to delete" in new Setup {
       forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
-        stubFor(
-          get {
-            urlEqualTo(s"$backendBaseUrl/entry-id/${record.entryId}")
-          } willReturn notFound()
-        )
+        expectFindEntryToFailWithNotFound(record.entryId)
 
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/delete-entry/${record.entryId}"))
@@ -75,22 +70,9 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
         response.status shouldBe NOT_FOUND
       }
     }
-
   }
 
   trait Setup {
-
-    def expectUserToBeStrideAuthenticated(pid: String): Unit = {
-      stubFor(post("/auth/authorise").willReturn(okJson(Json.obj("clientId" -> pid).toString())))
-    }
-
-    def expectFindEntryToBeSuccessful(protectedUser: ProtectedUserRecord): Unit = {
-      stubFor(
-        get(urlEqualTo(s"$backendBaseUrl/entry-id/${protectedUser.entryId}"))
-          .willReturn(ok(Json.toJsObject(protectedUser).toString()))
-      )
-    }
-
     def expectDeleteEntryToBeSuccessful(protectedUser: ProtectedUserRecord): Unit = {
       stubFor(
         delete(urlEqualTo(s"$backendBaseUrl/entry-id/${protectedUser.entryId}"))

@@ -151,7 +151,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors {
     "return NOT_FOUND when entry doesnt exist" in new Setup {
       forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
-        expectFindEntryToFailWithNotFound(record)
+        expectFindEntryToFailWithNotFound(record.entryId)
 
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/view-entry/${record.entryId}"))
@@ -163,34 +163,12 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors {
         response.status shouldBe NOT_FOUND
       }
     }
-
   }
 
   trait Setup {
-
-    def expectUserToBeStrideAuthenticated(pid: String): Unit = {
-      stubFor(post("/auth/authorise").willReturn(okJson(Json.obj("clientId" -> pid).toString())))
-    }
-
-    def expectFindEntryToBeSuccessful(protectedUser: ProtectedUserRecord): Unit = {
-      stubFor(
-        get(urlEqualTo(s"$backendBaseUrl/entry-id/${protectedUser.entryId}"))
-          .willReturn(ok(Json.toJsObject(protectedUser).toString()))
-      )
-    }
-
-    def expectFindEntryToFailWithNotFound(protectedUser: ProtectedUserRecord): Unit = {
-      stubFor(
-        get(urlEqualTo(s"$backendBaseUrl/entry-id/${protectedUser.entryId}"))
-          .willReturn(aResponse().withStatus(NOT_FOUND))
-      )
-    }
-
-    def expectFindEntriesToBeSuccessful(entry: ProtectedUserRecord, searchQuery: String) = {
-      stubFor(
-        get(urlEqualTo(s"$backendBaseUrl/record/?searchQuery=$searchQuery"))
-          .willReturn(ok(Json.toJson(List(entry)).toString()))
-      )
-    }
+    def expectFindEntriesToBeSuccessful(entry: ProtectedUserRecord, searchQuery: String): Unit = stubFor(
+      get(urlEqualTo(s"$backendBaseUrl/record/?searchQuery=$searchQuery"))
+        .willReturn(ok(Json.toJson(List(entry)).toString()))
+    )
   }
 }

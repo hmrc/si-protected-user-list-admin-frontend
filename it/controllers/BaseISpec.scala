@@ -31,8 +31,9 @@ import uk.gov.hmrc.http.SessionKeys
 import uk.gov.hmrc.play.bootstrap.frontend.filters.crypto.SessionCookieCrypto
 import util.Generators
 
-trait BaseISpec
+abstract class BaseISpec
     extends WireMockSpec
+    with BaseWireMockStubs
     with GuiceOneServerPerSuite
     with Injecting
     with ScalaFutures
@@ -41,7 +42,6 @@ trait BaseISpec
     with TableDrivenPropertyChecks {
   protected implicit val pc: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
-  val backendBaseUrl = "/si-protected-user-list-admin"
   val frontEndBaseUrl = "/account-protection-tools/protected-user-list"
   implicit val mp: MessagesProvider = MessagesImpl(Lang("en"), inject[MessagesApi])
 
