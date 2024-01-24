@@ -38,8 +38,5 @@ class AppConfigModule(environment: Environment, configuration: Configuration) ex
   def siProtectedUserConfig(appConfig: AppConfig): SiProtectedUserConfig = appConfig.siProtectedUserConfig
 
   @Provides @Singleton
-  def sessionCacheConfig(appConfig: AppConfig): SessionCacheConfig = appConfig.sessionCacheConfig
-
-  @Provides @Singleton
   def backendConfig(appConfig: AppConfig): BackendConfig = appConfig.backendConfig
 }
