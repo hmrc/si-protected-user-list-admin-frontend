@@ -36,7 +36,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
 
   "EditEntryController" should {
     "forward to the edit entry view when GET /add is called" in
-      forAll(nonEmptyStringGen, validEditEntryGen, protectedUserRecords) { (entryId, entry, record) =>
+      forAll(nonEmptyStringGen, validEditEntryGen, protectedUserRecords) { (entryId, _, record) =>
         expectStrideAuthenticated {
           when(mockBackendService.findEntry(eqTo(entryId))(*)).thenReturn(Future.successful(Some(record)))
           val result = editEntryController.showEditEntryPage(entryId)(FakeRequest().withMethod("GET"))

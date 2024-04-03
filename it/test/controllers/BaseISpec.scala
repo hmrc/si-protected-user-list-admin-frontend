@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package controllers
+package test.controllers
 
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
@@ -37,7 +37,7 @@ trait BaseISpec extends WireMockSpec with GuiceOneServerPerSuite with Injecting 
   val frontEndBaseUrl = "/account-protection-tools/protected-user-list"
   implicit val mp: MessagesProvider = MessagesImpl(Lang("en"), inject[MessagesApi])
 
-  def mockSessionCookie = {
+  def mockSessionCookie: WSCookie = {
 
     def makeSessionCookie(session: Session): Cookie = {
       val cookieCrypto = inject[SessionCookieCrypto]
