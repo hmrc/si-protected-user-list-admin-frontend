@@ -1,19 +1,21 @@
-import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
+import uk.gov.hmrc.DefaultBuildSettings
+
+ThisBuild / majorVersion := 0
+ThisBuild / scalaVersion := "2.13.12"
 
 lazy val microservice = Project("si-protected-user-list-admin-frontend", file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
-  .settings(integrationTestSettings() *)
   .settings(CodeCoverageSettings.settings *)
   .settings(
-    majorVersion := 0,
-    scalaVersion := "2.13.8",
     libraryDependencies ++= AppDependencies(),
+    retrieveManaged := true,
     // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
     // suppress warnings in generated routes files
     scalacOptions += "-Wconf:src=routes/.*:s",
     scalacOptions += "-Wconf:cat=unused-imports&src=html/.*:s",
+    scalacOptions += "-Wconf:cat=unused-imports&src=routes/.*:s",
+
     pipelineStages := Seq(gzip),
-    IntegrationTest / dependencyClasspath ++= (Test / exportedProducts).value,
     resolvers += Resolver.jcenterRepo,
     scalafmtOnCompile := true,
     PlayKeys.playDefaultPort := 8508,
@@ -23,5 +25,13 @@ lazy val microservice = Project("si-protected-user-list-admin-frontend", file(".
       "uk.gov.hmrc.hmrcfrontend.views.html.helpers._"
     )
   )
-  .configs(IntegrationTest)
   .disablePlugins(JUnitXmlReportPlugin)
+
+lazy val it = project
+  .enablePlugins(PlayScala)
+  .dependsOn(microservice % "test->test") // the "test->test" allows reusing test code and test dependencies
+  .settings(DefaultBuildSettings.itSettings())
+  .settings(
+    Test / parallelExecution := false,
+    Test / fork := false
+  )

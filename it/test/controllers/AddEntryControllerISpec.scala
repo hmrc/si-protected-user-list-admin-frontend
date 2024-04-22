@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package controllers
+package test.controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.{Entry, ProtectedUser, ProtectedUserRecord}

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package controllers
+package test.controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import models.ProtectedUserRecord
 import org.jsoup.Jsoup
 import play.api.http.HeaderNames
@@ -186,7 +187,7 @@ class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors {
       )
     }
 
-    def expectFindEntriesToBeSuccessful(entry: ProtectedUserRecord, searchQuery: String) = {
+    def expectFindEntriesToBeSuccessful(entry: ProtectedUserRecord, searchQuery: String): StubMapping = {
       stubFor(
         get(urlEqualTo(s"$backendBaseUrl/record/?searchQuery=$searchQuery"))
           .willReturn(ok(Json.toJson(List(entry)).toString()))

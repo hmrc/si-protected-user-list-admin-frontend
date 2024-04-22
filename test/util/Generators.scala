@@ -77,7 +77,7 @@ trait Generators {
   )
 
   val validRequestEntryGen: Gen[Entry] = entryGen.map(_.copy(addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
-  val validEditEntryGen = entryGen.map(_.copy(addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
+  val validEditEntryGen: Gen[Entry] = entryGen.map(_.copy(addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
 
   val siProtectedUserConfigGen: Gen[SiProtectedUserConfig] = for {
     num               <- Gen.chooseNum(1, 10)
