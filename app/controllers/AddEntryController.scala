@@ -21,7 +21,7 @@ import models.InputForms
 import play.api.i18n.Messages
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.SiProtectedUserListService
-import uk.gov.hmrc.http.ConflictException
+import uk.gov.hmrc.http.{ConflictException, NotFoundException}
 import views.Views
 
 import javax.inject.{Inject, Singleton}
@@ -50,8 +50,9 @@ class AddEntryController @Inject() (
           siProtectedUserListService
             .addEntry(entryWithUserId)
             .map(protectedUserRecord => Redirect(controllers.routes.SiProtectedUserController.view(protectedUserRecord.entryId)))
-            .recover { case _: ConflictException =>
-              Conflict(views.add(inputForms.entryForm.fill(entry).withGlobalError(Messages("add.error.conflict"))))
+            .recover {
+              case _: ConflictException => Conflict(views.add(inputForms.entryForm.fill(entry).withGlobalError(Messages("add.error.conflict"))))
+              case _: NotFoundException => NotFound(views.add(inputForms.entryForm.fill(entry).withError("identityProviderId", "form.identityProviderId.doesNotExist")))
             }
         }
       )

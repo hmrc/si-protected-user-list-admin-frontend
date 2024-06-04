@@ -48,7 +48,7 @@ class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Gener
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(addedByUser = Some(pid))
 
-        expectAddEntryToFailWithConflictStatus(expectedEntry.toProtectedUserImpl(isUpdate = false, pid))
+        expectAddEntryToFailWithStatus(CONFLICT, expectedEntry.toProtectedUserImpl(isUpdate = false, pid))
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/add"))
           .withHttpHeaders("Csrf-Token" -> "nocheck")
@@ -59,6 +59,24 @@ class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Gener
         response.status shouldBe CONFLICT
       }
     }
+
+    "Return NOT_FOUND when upstream api indicates that credId supplied does not exist" in new Setup {
+      forAll(validRequestEntryGen, nonEmptyStringGen) { (entry, pid) =>
+        expectUserToBeStrideAuthenticated(pid)
+        val expectedEntry = entry.copy(addedByUser = Some(pid))
+
+        expectAddEntryToFailWithStatus(NOT_FOUND, expectedEntry.toProtectedUserImpl(isUpdate = false, pid))
+        val response = wsClient
+          .url(resource(s"$frontEndBaseUrl/add"))
+          .withHttpHeaders("Csrf-Token" -> "nocheck")
+          .withCookies(mockSessionCookie)
+          .post(toRequestFields(expectedEntry).toMap)
+          .futureValue
+
+        response.status shouldBe NOT_FOUND
+      }
+    }
+
   }
 
   trait Setup {
@@ -74,15 +92,15 @@ class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Gener
           .willReturn(ok(Json.toJsObject(protectedUserRecord).toString()))
       )
     }
-    def expectAddEntryToFailWithConflictStatus(protectedUser: ProtectedUser): Unit = {
+    def expectAddEntryToFailWithStatus(status: Int, protectedUser: ProtectedUser): Unit = {
       stubFor(
         post(urlEqualTo(s"$backendBaseUrl/add"))
           .withRequestBody(equalToJson(Json.toJsObject(protectedUser).toString()))
-          .willReturn(aResponse().withStatus(CONFLICT))
+          .willReturn(aResponse().withStatus(status))
       )
     }
 
-    def toRequestFields(entry: Entry): Seq[(String, String)] = {
+   def toRequestFields(entry: Entry): Seq[(String, String)] = {
       Seq(
         Some("action" -> entry.action),
         entry.nino.map(n => "nino" -> n),
