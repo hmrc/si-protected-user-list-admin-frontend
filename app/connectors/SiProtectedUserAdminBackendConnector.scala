@@ -53,6 +53,7 @@ class SiProtectedUserAdminBackendConnector @Inject() (
           identity,
           {
             case UpstreamErrorResponse(_, 409, _, _) => new ConflictException("Conflict")
+            case UpstreamErrorResponse(_, 404, _, _) => new NotFoundException("Not Found")
             case err                                 => err
           }
         )

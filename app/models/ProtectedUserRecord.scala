@@ -28,11 +28,11 @@ case class ProtectedUserRecord(
   body: ProtectedUser
 ) {
   def formattedFirstCreated(): String = {
-    LocalDateTime.ofInstant(Instant.ofEpochMilli(firstCreated), ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+    LocalDateTime.ofInstant(Instant.ofEpochMilli(firstCreated), ZoneId.of("Europe/London")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
   }
 
   def formattedLastUpdated(): Option[String] = {
-    lastUpdated.map(lu => LocalDateTime.ofInstant(Instant.ofEpochMilli(lu), ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+    lastUpdated.map(lu => LocalDateTime.ofInstant(Instant.ofEpochMilli(lu), ZoneId.of("Europe/London")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")))
   }
   val action: String = body.identityProviderId.map(_ => "LOCK").getOrElse("BLOCK")
   val nino: Option[String] = body.taxId.name match {

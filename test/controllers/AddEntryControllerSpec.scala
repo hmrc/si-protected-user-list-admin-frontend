@@ -19,7 +19,7 @@ package controllers
 import models.Entry
 import org.jsoup.Jsoup
 import play.api.test.FakeRequest
-import uk.gov.hmrc.http.ConflictException
+import uk.gov.hmrc.http.{ConflictException, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -80,6 +80,25 @@ class AddEntryControllerSpec extends BaseControllerSpec {
           val html = Jsoup.parse(body)
           val errors = html.select(".govuk-error-summary__list").html()
           errors should include("error.conflict")
+        }
+      }
+    }
+
+    "Return NOT_FOUND when upstream api indicates that credId does not exist" in {
+      forAll(validRequestEntryGen) { entry =>
+        expectStrideAuthenticated { pid =>
+          val requestFields = toRequestFields(entry)
+          val expectedEntry = entry.copy(addedByUser = Some(pid))
+
+          when(mockBackendService.addEntry(eqTo(expectedEntry))(*, *)) thenReturn Future.failed(new NotFoundException("credId does not exist"))
+
+          val result = controller.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+          val body = contentAsString(result)
+
+          status(result) shouldBe NOT_FOUND
+          val html = Jsoup.parse(body)
+          val errors = html.select(".govuk-error-summary__list").html()
+          errors should include("form.identityProviderId.doesNotExist")
         }
       }
     }
