@@ -19,11 +19,12 @@ package connectors
 import config.BackendConfig
 import controllers.base.StrideRequest
 import models.TaxIdentifierType.{NINO, SAUTR}
-import models.{ProtectedUser, ProtectedUserRecord}
+import models.{CredIdNotFoundException, ProtectedUser, ProtectedUserRecord}
 import play.api.Logging
+import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, NotFoundException, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, HttpResponse, NotFoundException, UpstreamErrorResponse}
 import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
@@ -65,15 +66,16 @@ class SiProtectedUserAdminBackendConnector @Inject() (
       "edit user's tax ID in the protected access list"
     ) {
       httpClient
-        .PATCH[ProtectedUser, ProtectedUserRecord](s"$backendUrl/update/$entryId", protectedUser)
-        .transform(
-          identity,
-          {
-            case UpstreamErrorResponse(_, 409, _, _) => new ConflictException("Conflict")
-            case UpstreamErrorResponse(_, 404, _, _) => new NotFoundException("Entry to update was already deleted")
-            case err                                 => err
+        .PATCH[ProtectedUser, HttpResponse](s"$backendUrl/update/$entryId", protectedUser)
+        .map { httpResponse =>
+          httpResponse.status match {
+            case OK                                                               => httpResponse.json.as[ProtectedUserRecord]
+            case CONFLICT                                                         => throw new ConflictException("Conflict")
+            case NOT_FOUND if httpResponse.body.contains("CREDID_DOES_NOT_EXIST") => throw CredIdNotFoundException // GG-7967
+            case NOT_FOUND                                                        => throw new NotFoundException("Entry to update was already deleted")
+            case status                                                           => throw UpstreamErrorResponse(httpResponse.body, status)
           }
-        )
+        }
     }
 
   private def findBy(id: String)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =

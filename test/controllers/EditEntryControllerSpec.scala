@@ -16,7 +16,7 @@
 
 package controllers
 
-import models.Entry
+import models.{CredIdNotFoundException, Entry}
 import org.jsoup.Jsoup
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{ConflictException, NotFoundException}
@@ -61,6 +61,22 @@ class EditEntryControllerSpec extends BaseControllerSpec {
           val body = contentAsString(result)
           body should include("edit.success.title")
           body should include("edit.success.body")
+        }
+      }
+
+    "Return not found with 'credId does not exist' form error when the supplied credId is not found in the backend" in
+      forAll(nonEmptyStringGen, validEditEntryGen) { (entryId, entry) =>
+        expectStrideAuthenticated { pid =>
+          val requestFields = toEditRequestFields(entry)
+          val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
+
+          when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(*, *)).thenReturn(Future.failed(CredIdNotFoundException))
+
+          val result = editEntryController.submit(entryId)(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+
+          status(result) shouldBe NOT_FOUND
+          val body = contentAsString(result)
+          body should include("form.identityProviderId.doesNotExist")
         }
       }
 
