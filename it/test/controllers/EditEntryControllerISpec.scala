@@ -41,7 +41,28 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
         response.status shouldBe OK
       }
 
-    "Return NOT_FOUND when upstream api return not found" in
+    "Return NOT_FOUND when upstream api returns 'credId not found' response and populate the error" in
+      forAll(nonEmptyStringGen, validEditEntryGen, nonEmptyStringGen) { (entryId, entry, pid) =>
+        expectUserToBeStrideAuthenticated(pid)
+        val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
+
+        stubFor(
+          patch(urlEqualTo(s"$backendBaseUrl/update/$entryId"))
+            .willReturn(aResponse().withStatus(NOT_FOUND).withBody(Json.obj("error" -> "CREDID_DOES_NOT_EXIST").toString))
+        )
+
+        val response = wsClient
+          .url(resource(s"$frontEndBaseUrl/edit/$entryId"))
+          .withHttpHeaders("Csrf-Token" -> "nocheck")
+          .withCookies(mockSessionCookie)
+          .post(toEditRequestFields(expectedEntry).toMap)
+          .futureValue
+
+        response.status shouldBe NOT_FOUND
+        response.body should include ("The credId does not exist")
+      }
+
+    "Return NOT_FOUND when upstream api returns generic Not Found response" in
       forAll(nonEmptyStringGen, validEditEntryGen, nonEmptyStringGen) { (entryId, entry, pid) =>
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
