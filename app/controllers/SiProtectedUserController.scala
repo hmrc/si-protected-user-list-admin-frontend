@@ -18,7 +18,7 @@ package controllers
 
 import controllers.base.{StrideAction, StrideController, StrideRequest}
 import models.{InputForms, Search}
-import play.api.mvc._
+import play.api.mvc.*
 import services.SiProtectedUserListService
 import views.Views
 
@@ -38,7 +38,7 @@ class SiProtectedUserController @Inject() (
   def homepage(): Action[AnyContent] = StrideAction.async(implicit request => retrieveEntries(None, None))
 
   private def retrieveEntries(filterByTeam: Option[String], searchValue: Option[String])(implicit request: StrideRequest[AnyContent]) = {
-    val teamOpt = filterByTeam filterNot "all".equalsIgnoreCase
+    val teamOpt = filterByTeam.filterNot(_.equalsIgnoreCase("all"))
     backendService
       .findEntries(teamOpt, searchValue)
       .map(entries => Ok(views.home(entries, inputForms.searchForm.fill(Search(filterByTeam, searchValue)))))

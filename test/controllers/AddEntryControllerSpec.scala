@@ -18,6 +18,8 @@ package controllers
 
 import models.Entry
 import org.jsoup.Jsoup
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.{verify, when}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{ConflictException, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
@@ -52,15 +54,15 @@ class AddEntryControllerSpec extends BaseControllerSpec {
           val requestFields = toRequestFields(entry)
           val expectedEntry = entry.copy(addedByUser = Some(pid))
 
-          when(mockBackendService.addEntry(eqTo(expectedEntry))(*, *)) thenReturn Future.successful(record)
+          when(mockBackendService.addEntry(eqTo(expectedEntry))(any, any)).thenReturn(Future.successful(record))
 
-          val result = controller.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+          val result = controller.submit()(FakeRequest().withFormUrlEncodedBody(requestFields*).withMethod("POST"))
 
           status(result) shouldBe SEE_OTHER
           redirectLocation(result) shouldBe Some(
             controllers.routes.SiProtectedUserController.view(record.entryId).url
           )
-          verify(mockBackendService).addEntry(eqTo(expectedEntry))(*, *)
+          verify(mockBackendService).addEntry(eqTo(expectedEntry))(any, any)
         }
       }
     }
@@ -71,9 +73,9 @@ class AddEntryControllerSpec extends BaseControllerSpec {
           val requestFields = toRequestFields(entry)
           val expectedEntry = entry.copy(addedByUser = Some(pid))
 
-          when(mockBackendService.addEntry(eqTo(expectedEntry))(*, *)) thenReturn Future.failed(new ConflictException("test conflict"))
+          when(mockBackendService.addEntry(eqTo(expectedEntry))(any, any)).thenReturn(Future.failed(new ConflictException("test conflict")))
 
-          val result = controller.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+          val result = controller.submit()(FakeRequest().withFormUrlEncodedBody(requestFields*).withMethod("POST"))
           val body = contentAsString(result)
 
           status(result) shouldBe CONFLICT
@@ -90,9 +92,9 @@ class AddEntryControllerSpec extends BaseControllerSpec {
           val requestFields = toRequestFields(entry)
           val expectedEntry = entry.copy(addedByUser = Some(pid))
 
-          when(mockBackendService.addEntry(eqTo(expectedEntry))(*, *)) thenReturn Future.failed(new NotFoundException("credId does not exist"))
+          when(mockBackendService.addEntry(eqTo(expectedEntry))(any, any)).thenReturn(Future.failed(new NotFoundException("credId does not exist")))
 
-          val result = controller.submit()(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+          val result = controller.submit()(FakeRequest().withFormUrlEncodedBody(requestFields*).withMethod("POST"))
           val body = contentAsString(result)
 
           status(result) shouldBe NOT_FOUND

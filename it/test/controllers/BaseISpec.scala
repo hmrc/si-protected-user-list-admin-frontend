@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package test.controllers
+package controllers
 
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}

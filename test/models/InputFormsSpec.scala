@@ -48,20 +48,31 @@ class InputFormsSpec extends AnyWordSpec with Matchers with Generators with Tabl
   )
 
   val missingNinoAndSautr: Map[String, String] = allRequestFieldsPresentEntryForm.updated("sautr", "").updated("nino", "")
-  val actionLockNoCredId: Map[String, String] = allRequestFieldsPresentEntryForm.updated("action", addEntryActionLock).updated("identityProviderId", "")
-  val groupIsLongerThanAllowed: Map[String, String] = allRequestFieldsPresentEntryForm.updated("group", nonEmptyStringOfGen(groupMaxLength + 1).sample.get)
+  val actionLockNoCredId: Map[String, String] =
+    allRequestFieldsPresentEntryForm.updated("action", addEntryActionLock).updated("identityProviderId", "")
+  val groupIsLongerThanAllowed: Map[String, String] =
+    allRequestFieldsPresentEntryForm.updated("group", nonEmptyStringOfGen(groupMaxLength + 1).sample.get)
   val missingAddedByTeam: Map[String, String] = allRequestFieldsPresentEntryForm.updated("addedByTeam", "")
 
   val tableEntryForm: TableFor3[String, Map[String, String], Seq[FormError]] = Table(
     ("Scenario", "Request fields", "Expected errors"),
-    ("Nino regex fail when present and incorrect", allRequestFieldsPresentEntryForm.updated("nino", "bad_nino"), Seq(FormError("nino", "form.nino.regex"))),
+    ("Nino regex fail when present and incorrect",
+     allRequestFieldsPresentEntryForm.updated("nino", "bad_nino"),
+     Seq(FormError("nino", "form.nino.regex"))
+    ),
     ("No Nino regex failure when not entered", allRequestFieldsPresentEntryForm.updated("nino", ""), Seq()),
-    ("sautr regex fails when present and incorrect", allRequestFieldsPresentEntryForm.updated("sautr", "bad_sautr"), Seq(FormError("sautr", "form.sautr.regex"))),
+    ("sautr regex fails when present and incorrect",
+     allRequestFieldsPresentEntryForm.updated("sautr", "bad_sautr"),
+     Seq(FormError("sautr", "form.sautr.regex"))
+    ),
     ("No sautr regex failure when not entered", allRequestFieldsPresentEntryForm.updated("sautr", ""), Seq()),
     ("Group is longer than allowed", groupIsLongerThanAllowed, Seq(FormError("group", "error.maxLength", Seq(groupMaxLength)))),
     ("Nino or sautr is required when neither are present", missingNinoAndSautr, Seq(FormError("", "form.nino.sautr.required"))),
     ("AddedByTeam is missing", missingAddedByTeam, Seq(FormError("addedByTeam", "form.addedByTeam.required"))),
-    ("identityProviderId must be present when action is LOCK", actionLockNoCredId, Seq(FormError("identityProviderId", "form.identityProviderId.required")))
+    ("identityProviderId must be present when action is LOCK",
+     actionLockNoCredId,
+     Seq(FormError("identityProviderId", "form.identityProviderId.required"))
+    )
   )
 
   val tableSearchQueryForm: TableFor3[String, Map[String, String], Seq[FormError]] = Table(

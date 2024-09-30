@@ -16,7 +16,7 @@
 
 package models
 
-import play.api.libs.functional.syntax.{toFunctionalBuilderOps, unlift}
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.{OFormat, __}
 
 case class ProtectedUser(
@@ -38,5 +38,5 @@ object ProtectedUser {
       (__ \ "updatedByUser").formatNullable[String] and
       (__ \ "updatedByTeam").formatNullable[String] and
       (__ \ "group").formatWithDefault("")
-  )(apply, unlift(unapply))
+  )(apply, o => Tuple.fromProductTyped(o))
 }

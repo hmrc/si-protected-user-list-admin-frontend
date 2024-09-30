@@ -28,17 +28,17 @@ import scala.concurrent.Future
 class SiProtectedUserListService @Inject() (
   backendConnector: SiProtectedUserAdminBackendConnector
 ) {
-  def addEntry(entry: Entry)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
+  def addEntry(entry: Entry)(implicit hc: HeaderCarrier, request: StrideRequest[?]): Future[ProtectedUserRecord] =
     backendConnector.addEntry(entry.toProtectedUser(isUpdate = false))
 
-  def updateEntry(entryId: String, entry: Entry)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
+  def updateEntry(entryId: String, entry: Entry)(implicit hc: HeaderCarrier, request: StrideRequest[?]): Future[ProtectedUserRecord] =
     backendConnector.updateEntry(entryId, entry.toProtectedUser(isUpdate = true))
 
   def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
     backendConnector.findEntry(entryId)
   }
 
-  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
+  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier, request: StrideRequest[?]): Future[ProtectedUserRecord] =
     backendConnector.deleteEntry(entryId)
 
   def findEntries(teamOpt: Option[String], queryOpt: Option[String])(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] =

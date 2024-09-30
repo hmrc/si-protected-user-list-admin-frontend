@@ -29,7 +29,7 @@
         button: GovukButton
 )
 
-@(form: Form[Search])(implicit request: Request[_], messages: Messages)
+@(form: Form[Search])(implicit request: RequestHeader, messages: Messages)
 @formTemplate(action = controllers.routes.SiProtectedUserController.search(), args = Symbol("autocomplete") -> "off", Symbol("novalidate") -> "") {
     @select(Select(
         id = "filterByTeam",

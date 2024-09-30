@@ -52,7 +52,8 @@ class AddEntryController @Inject() (
             .map(protectedUserRecord => Redirect(controllers.routes.SiProtectedUserController.view(protectedUserRecord.entryId)))
             .recover {
               case _: ConflictException => Conflict(views.add(inputForms.entryForm.fill(entry).withGlobalError(Messages("add.error.conflict"))))
-              case _: NotFoundException => NotFound(views.add(inputForms.entryForm.fill(entry).withError("identityProviderId", "form.identityProviderId.doesNotExist")))
+              case _: NotFoundException =>
+                NotFound(views.add(inputForms.entryForm.fill(entry).withError("identityProviderId", "form.identityProviderId.doesNotExist")))
             }
         }
       )

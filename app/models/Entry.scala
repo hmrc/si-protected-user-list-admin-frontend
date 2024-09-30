@@ -30,7 +30,7 @@ case class Entry(addedByUser: Option[String],
                  addedByTeam: String,
                  updatedByTeam: Option[String]
                 ) {
-  def toProtectedUser(isUpdate: Boolean)(implicit request: StrideRequest[_]): ProtectedUser =
+  def toProtectedUser(isUpdate: Boolean)(implicit request: StrideRequest[?]): ProtectedUser =
     toProtectedUserImpl(isUpdate, request.getUserPid)
 
   def toProtectedUserImpl(isUpdate: Boolean, stridePID: String): ProtectedUser =
@@ -44,11 +44,11 @@ case class Entry(addedByUser: Option[String],
         provider <- identityProvider
         creds    <- identityProviderId
       } yield IdentityProviderId(provider, creds),
-      addedByUser = if (isUpdate) None else Some(stridePID),
-      addedByTeam = Option(addedByTeam),
+      addedByUser   = if (isUpdate) None else Some(stridePID),
+      addedByTeam   = Option(addedByTeam),
       updatedByUser = if (isUpdate) Some(stridePID) else None,
       updatedByTeam = updatedByTeam,
-      group = group.getOrElse("")
+      group         = group.getOrElse("")
     )
 }
 object Entry {
@@ -56,16 +56,16 @@ object Entry {
 
   def from(protectedUserRecord: ProtectedUserRecord): Entry = {
     Entry(
-      addedByUser = protectedUserRecord.body.addedByUser,
-      updatedByUser = protectedUserRecord.body.updatedByUser,
-      action = protectedUserRecord.action,
-      nino = protectedUserRecord.nino,
-      sautr = protectedUserRecord.sautr,
-      identityProvider = protectedUserRecord.body.identityProviderId.map(_.name),
+      addedByUser        = protectedUserRecord.body.addedByUser,
+      updatedByUser      = protectedUserRecord.body.updatedByUser,
+      action             = protectedUserRecord.action,
+      nino               = protectedUserRecord.nino,
+      sautr              = protectedUserRecord.sautr,
+      identityProvider   = protectedUserRecord.body.identityProviderId.map(_.name),
       identityProviderId = protectedUserRecord.body.identityProviderId.map(_.value),
-      group = Some(protectedUserRecord.body.group),
-      addedByTeam = protectedUserRecord.body.addedByTeam.getOrElse(""),
-      updatedByTeam = protectedUserRecord.body.updatedByTeam
+      group              = Some(protectedUserRecord.body.group),
+      addedByTeam        = protectedUserRecord.body.addedByTeam.getOrElse(""),
+      updatedByTeam      = protectedUserRecord.body.updatedByTeam
     )
   }
 }

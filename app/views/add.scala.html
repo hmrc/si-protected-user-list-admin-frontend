@@ -32,7 +32,7 @@ entryForm: EntryForm,
 siProtectedUserConfig: SiProtectedUserConfig
 )
 
-@(form: Form[Entry])(implicit request: Request[_], messages: Messages)
+@(form: Form[Entry])(implicit request: RequestHeader, messages: Messages)
 @additionalScripts = {
     <script src='@controllers.routes.Assets.at("javascripts/entry-form.js")'></script>
 }

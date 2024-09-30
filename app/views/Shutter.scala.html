@@ -23,7 +23,7 @@
   h1: Heading1
 )
 
-@()(implicit req: StrideRequest[_], messages: Messages)
+@()(implicit req: StrideRequest[?], messages: Messages)
 
 @mainLayout(pageTitle = messages("service.unavailable.title")) {
   @h1("service.unavailable.header")

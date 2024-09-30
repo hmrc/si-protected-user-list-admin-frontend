@@ -22,7 +22,7 @@ import play.api.Logging
 import play.api.mvc.Results.{Redirect, Unauthorized}
 import play.api.mvc.{ActionRefiner, MessagesRequest, Result, Results}
 import uk.gov.hmrc.auth.core.AuthProvider.PrivilegedApplication
-import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.authorise.{EmptyPredicate, Predicate}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.clientId
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendHeaderCarrierProvider

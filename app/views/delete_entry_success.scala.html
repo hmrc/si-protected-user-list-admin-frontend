@@ -27,7 +27,7 @@
 
 )
 
-@()(implicit request: Request[_], messages: Messages)
+@()(implicit request: RequestHeader, messages: Messages)
 
 @mainLayout(
     pageTitle = messages("delete.entry.success.title"),

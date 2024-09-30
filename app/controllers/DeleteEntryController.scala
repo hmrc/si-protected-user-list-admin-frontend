@@ -48,8 +48,9 @@ class DeleteEntryController @Inject() (
       .deleteEntry(entryId)
       .map(_ => Ok(views.deleteSuccess()))
       .recover {
-        case UpstreamErrorResponse(_, 404, _, _) => NotFound(views.errorTemplate("delete.entry.not.found", "delete.entry.not.found", "delete.entry.already.deleted"))
-        case _                                   => InternalServerError(views.somethingWentWrong())
+        case UpstreamErrorResponse(_, 404, _, _) =>
+          NotFound(views.errorTemplate("delete.entry.not.found", "delete.entry.not.found", "delete.entry.already.deleted"))
+        case _ => InternalServerError(views.somethingWentWrong())
       }
   }
 }
