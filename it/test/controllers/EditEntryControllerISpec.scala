@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package test.controllers
+package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.{Entry, ProtectedUser, ProtectedUserRecord}
 import play.api.libs.json.Json
+import play.api.libs.ws.writeableOf_urlEncodedSimpleForm
 import play.api.test.ResultExtractors
 
 class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
@@ -43,6 +44,8 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
 
     "Return NOT_FOUND when upstream api returns 'credId not found' response and populate the error" in
       forAll(nonEmptyStringGen, validEditEntryGen, nonEmptyStringGen) { (entryId, entry, pid) =>
+        import play.api.libs.ws.readableAsString
+
         expectUserToBeStrideAuthenticated(pid)
         val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
@@ -59,7 +62,7 @@ class EditEntryControllerISpec extends BaseISpec with ResultExtractors {
           .futureValue
 
         response.status shouldBe NOT_FOUND
-        response.body should include ("The credId does not exist")
+        response.body[String] should include ("The credId does not exist")
       }
 
     "Return NOT_FOUND when upstream api returns generic Not Found response" in

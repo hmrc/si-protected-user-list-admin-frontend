@@ -18,7 +18,7 @@ package util
 
 import config.{SiProtectedUserConfig, StrideConfig}
 import models.InputForms.groupMaxLength
-import models._
+import models.*
 import org.scalacheck.Gen
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.domain.{Generator, Nino, SaUtr, SaUtrGenerator}
@@ -64,16 +64,16 @@ trait Generators {
     updatedByUser      <- Gen.some(nonEmptyStringGen)
     addedByUser        <- Gen.some(nonEmptyStringGen)
   } yield Entry(
-    action = action,
-    nino = nino,
-    sautr = sautr,
-    identityProvider = identityProvider,
+    action             = action,
+    nino               = nino,
+    sautr              = sautr,
+    identityProvider   = identityProvider,
     identityProviderId = identityProviderId,
-    group = group,
-    addedByTeam = addedByTeam,
-    updatedByTeam = updatedByTeam,
-    updatedByUser = updatedByUser,
-    addedByUser = addedByUser
+    group              = group,
+    addedByTeam        = addedByTeam,
+    updatedByTeam      = updatedByTeam,
+    updatedByUser      = updatedByUser,
+    addedByUser        = addedByUser
   )
 
   val validRequestEntryGen: Gen[Entry] = entryGen.map(_.copy(addedByUser = None, updatedByUser = None, action = InputForms.addEntryActionLock))
@@ -84,9 +84,9 @@ trait Generators {
     addedByTeams      <- Gen.listOfN(num, nonEmptyStringGen)
     identityProviders <- Gen.listOfN(num, nonEmptyStringGen)
   } yield SiProtectedUserConfig(
-    dashboardUrl = "http://gov.uk",
+    dashboardUrl      = "http://gov.uk",
     identityProviders = identityProviders,
-    addedByTeams = addedByTeams
+    addedByTeams      = addedByTeams
   )
 
   val authStrideEnrolmentsConfigGen: Gen[StrideConfig] = for {
@@ -116,13 +116,13 @@ trait Generators {
     updatedByUser      <- Gen.some(nonEmptyStringGen)
     updatedByTeam      <- Gen.some(nonEmptyStringGen)
   } yield ProtectedUser(
-    taxId = TaxIdentifier(taxIdType, taxIdValue),
+    taxId              = TaxIdentifier(taxIdType, taxIdValue),
     identityProviderId = identityProviderId,
-    group = group,
-    addedByUser = addedByUser,
-    addedByTeam = addedByTeam,
-    updatedByUser = updatedByUser,
-    updatedByTeam = updatedByTeam
+    group              = group,
+    addedByUser        = addedByUser,
+    addedByTeam        = addedByTeam,
+    updatedByUser      = updatedByUser,
+    updatedByTeam      = updatedByTeam
   )
 
   val protectedUserRecords: Gen[ProtectedUserRecord] =
@@ -132,9 +132,9 @@ trait Generators {
       lastUpdated  <- Gen.option(Gen.posNum[Long])
       body         <- protectedUserGen
     } yield ProtectedUserRecord(
-      entryId = entryId,
+      entryId      = entryId,
       firstCreated = firstCreated,
-      lastUpdated = lastUpdated,
-      body = body
+      lastUpdated  = lastUpdated,
+      body         = body
     )
 }

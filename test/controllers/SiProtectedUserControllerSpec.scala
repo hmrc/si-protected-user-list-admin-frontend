@@ -16,6 +16,8 @@
 
 package controllers
 
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.when
 import org.scalacheck.Gen
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.{InsufficientEnrolments, MissingBearerToken}
@@ -40,9 +42,7 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
     "display the correct html page" in {
       forAll(Gen listOf protectedUserRecords) { listOfRecords =>
         expectStrideAuthenticated {
-          when {
-            mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])
-          } thenReturn Future(listOfRecords)
+          when(mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])).thenReturn(Future(listOfRecords))
 
           val result = await(siProtectedUserController.homepage()(FakeRequest()))
           status(result) shouldBe OK
@@ -77,9 +77,7 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
     "Retrieve user and forward to details template" in {
       forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated {
-          when {
-            mockBackendService.findEntry(eqTo(record.entryId))(*)
-          } thenReturn Future.successful(Some(record))
+          when(mockBackendService.findEntry(eqTo(record.entryId))(any)).thenReturn(Future.successful(Some(record)))
 
           val result = await(siProtectedUserController.view(entryId = record.entryId)(FakeRequest()))
           status(result) shouldBe OK
@@ -103,9 +101,7 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
     "Forward to error page with NOT_FOUND when entry doesnt exist" in {
       forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated {
-          when {
-            mockBackendService.findEntry(eqTo(record.entryId))(*)
-          } thenReturn Future.successful(None)
+          when(mockBackendService.findEntry(eqTo(record.entryId))(any)).thenReturn(Future.successful(None))
 
           val result = siProtectedUserController.view(record.entryId)(FakeRequest())
           status(result) shouldBe NOT_FOUND
@@ -119,9 +115,7 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
     "Forward to error page with INTERNAL_SERVER_ERROR when there is an exception" in {
       forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated {
-          when {
-            mockBackendService.findEntry(eqTo(record.entryId))(*)
-          } thenReturn Future.failed(new Exception("some exception"))
+          when(mockBackendService.findEntry(eqTo(record.entryId))(any)).thenReturn(Future.failed(new Exception("some exception")))
 
           val result = siProtectedUserController.view(record.entryId)(FakeRequest())
 

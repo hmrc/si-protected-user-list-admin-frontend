@@ -18,6 +18,8 @@ package controllers
 
 import models.{CredIdNotFoundException, Entry}
 import org.jsoup.Jsoup
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.when
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{ConflictException, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
@@ -38,7 +40,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
     "forward to the edit entry view when GET /add is called" in
       forAll(nonEmptyStringGen, validEditEntryGen, protectedUserRecords) { (entryId, _, record) =>
         expectStrideAuthenticated {
-          when(mockBackendService.findEntry(eqTo(entryId))(*)).thenReturn(Future.successful(Some(record)))
+          when(mockBackendService.findEntry(eqTo(entryId))(any)).thenReturn(Future.successful(Some(record)))
           val result = editEntryController.showEditEntryPage(entryId)(FakeRequest().withMethod("GET"))
           status(result) shouldBe OK
 
@@ -53,9 +55,9 @@ class EditEntryControllerSpec extends BaseControllerSpec {
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
-          when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(*, *)).thenReturn(Future.successful(record))
+          when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(any, any)).thenReturn(Future.successful(record))
 
-          val result = editEntryController.submit(entryId)(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+          val result = editEntryController.submit(entryId)(FakeRequest().withFormUrlEncodedBody(requestFields*).withMethod("POST"))
 
           status(result) shouldBe OK
           val body = contentAsString(result)
@@ -70,9 +72,9 @@ class EditEntryControllerSpec extends BaseControllerSpec {
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
-          when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(*, *)).thenReturn(Future.failed(CredIdNotFoundException))
+          when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(any, any)).thenReturn(Future.failed(CredIdNotFoundException))
 
-          val result = editEntryController.submit(entryId)(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+          val result = editEntryController.submit(entryId)(FakeRequest().withFormUrlEncodedBody(requestFields*).withMethod("POST"))
 
           status(result) shouldBe NOT_FOUND
           val body = contentAsString(result)
@@ -86,9 +88,10 @@ class EditEntryControllerSpec extends BaseControllerSpec {
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
-          when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(*, *)).thenReturn(Future.failed(new NotFoundException("not found")))
+          when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(any, any))
+            .thenReturn(Future.failed(new NotFoundException("not found")))
 
-          val result = editEntryController.submit(entryId)(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+          val result = editEntryController.submit(entryId)(FakeRequest().withFormUrlEncodedBody(requestFields*).withMethod("POST"))
 
           status(result) shouldBe NOT_FOUND
           val body = contentAsString(result)
@@ -103,9 +106,10 @@ class EditEntryControllerSpec extends BaseControllerSpec {
           val requestFields = toEditRequestFields(entry)
           val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
 
-          when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(*, *)).thenReturn(Future.failed(new ConflictException("conflict")))
+          when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(any, any))
+            .thenReturn(Future.failed(new ConflictException("conflict")))
 
-          val result = editEntryController.submit(entryId)(FakeRequest().withFormUrlEncodedBody(requestFields: _*).withMethod("POST"))
+          val result = editEntryController.submit(entryId)(FakeRequest().withFormUrlEncodedBody(requestFields*).withMethod("POST"))
 
           status(result) shouldBe CONFLICT
           val body = contentAsString(result)

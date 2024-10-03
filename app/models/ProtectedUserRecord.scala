@@ -16,7 +16,7 @@
 
 package models
 
-import play.api.libs.json._
+import play.api.libs.json.*
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, LocalDateTime, ZoneId}
@@ -32,7 +32,9 @@ case class ProtectedUserRecord(
   }
 
   def formattedLastUpdated(): Option[String] = {
-    lastUpdated.map(lu => LocalDateTime.ofInstant(Instant.ofEpochMilli(lu), ZoneId.of("Europe/London")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")))
+    lastUpdated.map(lu =>
+      LocalDateTime.ofInstant(Instant.ofEpochMilli(lu), ZoneId.of("Europe/London")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
+    )
   }
   val action: String = body.identityProviderId.map(_ => "LOCK").getOrElse("BLOCK")
   val nino: Option[String] = body.taxId.name match {

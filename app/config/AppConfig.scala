@@ -24,11 +24,12 @@ import javax.inject.{Inject, Singleton}
 
 @Singleton
 class AppConfig @Inject() (val configuration: Configuration, servicesConfig: ServicesConfig) {
-  import configuration.underlying._
+  import configuration.underlying.*
 
   lazy val appName: String = getString("appName")
 
-  lazy val analyticsConfig: AnalyticsConfig = AnalyticsConfig(analyticsToken = getString(s"google-analytics.token"), analyticsHost = getString(s"google-analytics.host"))
+  lazy val analyticsConfig: AnalyticsConfig =
+    AnalyticsConfig(analyticsToken = getString(s"google-analytics.token"), analyticsHost = getString(s"google-analytics.host"))
 
   lazy val searchQueryMaxValue: String = getString("search.query.max.length")
 
@@ -46,9 +47,9 @@ class AppConfig @Inject() (val configuration: Configuration, servicesConfig: Ser
   }
 
   lazy val siProtectedUserConfig: SiProtectedUserConfig = SiProtectedUserConfig(
-    dashboardUrl = configuration.get[String]("account-protection-tools-dashboard-linkUrl"),
+    dashboardUrl      = configuration.get[String]("account-protection-tools-dashboard-linkUrl"),
     identityProviders = configuration.get[Seq[String]]("si-protected-user.identity-providers"),
-    addedByTeams = configuration.get[Seq[String]]("si-protected-user.added-by-teams")
+    addedByTeams      = configuration.get[Seq[String]]("si-protected-user.added-by-teams")
   )
 
   lazy val backendConfig: BackendConfig = BackendConfig(

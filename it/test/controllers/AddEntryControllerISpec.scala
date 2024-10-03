@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package test.controllers
+package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.{Entry, ProtectedUser, ProtectedUserRecord}
 import play.api.libs.json.Json
+import play.api.libs.ws.writeableOf_urlEncodedSimpleForm
 import play.api.test.ResultExtractors
 import util.Generators
 
@@ -100,7 +101,7 @@ class AddEntryControllerISpec extends BaseISpec with ResultExtractors with Gener
       )
     }
 
-   def toRequestFields(entry: Entry): Seq[(String, String)] = {
+    def toRequestFields(entry: Entry): Seq[(String, String)] = {
       Seq(
         Some("action" -> entry.action),
         entry.nino.map(n => "nino" -> n),

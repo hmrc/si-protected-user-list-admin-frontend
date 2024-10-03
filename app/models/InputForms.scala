@@ -21,7 +21,7 @@ import config.SiProtectedUserConfig
 import models.InputForms.{addEntryActionLock, disallowedCharacters, groupMaxLength, ninoRegex, saUtrRegex, searchQueryMaxLength, searchRegex}
 import models.utils.StopOnFirstFail.constraint
 import models.utils.StopOnFirstFail
-import play.api.data.Forms._
+import play.api.data.Forms.*
 import play.api.data.Form
 import uk.gov.voa.play.form.ConditionalMappings.mandatoryIfEqual
 
@@ -38,7 +38,7 @@ class InputForms @Inject() (config: SiProtectedUserConfig) {
       "group"              -> optional(nonEmptyText(maxLength = groupMaxLength)),
       "addedByTeam"        -> text.verifying("form.addedByTeam.required", !_.isBlank),
       "updatedByTeam"      -> optional(nonEmptyText)
-    )(Entry.apply)(Entry.unapply)
+    )(Entry.apply)(o => Some(Tuple.fromProductTyped(o)))
       .verifying("form.nino.sautr.required", entry => entry.sautr.isDefined || entry.nino.isDefined)
   )
 
@@ -50,11 +50,13 @@ class InputForms @Inject() (config: SiProtectedUserConfig) {
           .verifying(
             StopOnFirstFail(
               constraint[String]("form.searchQuery.maxLength", _.sizeIs <= searchQueryMaxLength),
-              constraint[String]("form.searchQuery.regex", entryText => entryText.matches(searchRegex) && !entryText.exists(disallowedCharacters.contains(_)))
+              constraint[String]("form.searchQuery.regex",
+                                 entryText => entryText.matches(searchRegex) && !entryText.exists(disallowedCharacters.contains(_))
+                                )
             )
           )
       ).verifying("form.searchQuery.minLength", value => value.isDefined && !value.get.isBlank)
-    )(Search.apply)(Search.unapply)
+    )(Search.apply)(o => Some(Tuple.fromProductTyped(o)))
   )
 
 }
@@ -64,9 +66,9 @@ object InputForms {
   val saUtrRegex = "[0-9]{10}"
   val addEntryActionBlock = "BLOCK"
   val addEntryActionLock = "LOCK"
-  val addEntryActions = Seq(addEntryActionBlock, addEntryActionLock)
+  val addEntryActions: Seq[String] = Seq(addEntryActionBlock, addEntryActionLock)
   val groupMaxLength = 12
   val searchQueryMaxLength = 64
   val searchRegex = """^[\x20-\x7E]*$"""
-  val disallowedCharacters = Seq('.', '+', '*', '?', '^', '$', '(', ')', '[', ']', '{', '}', '|', '\\')
+  val disallowedCharacters: Seq[Char] = Seq('.', '+', '*', '?', '^', '$', '(', ')', '[', ']', '{', '}', '|', '\\')
 }

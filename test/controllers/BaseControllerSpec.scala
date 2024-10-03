@@ -18,6 +18,8 @@ package controllers
 
 import controllers.base.StrideAction
 import models.InputForms
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
 import org.scalacheck.Gen
 import org.scalatest.Assertion
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -47,9 +49,7 @@ abstract class BaseControllerSpec extends UnitSpec with GuiceOneAppPerSuite with
   protected def expectStrideAuthenticated(assertionFrom: String => Unit): Unit = {
     val stridePid = nonEmptyStringGen.sample.get
 
-    when {
-      mockAuthConnector.authorise[Option[String]](any, any)(any, any)
-    } thenReturn Future.successful(Some(stridePid))
+    when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some(stridePid)))
 
     assertionFrom(stridePid)
   }

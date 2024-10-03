@@ -36,7 +36,7 @@
         govukErrorSummary: GovukErrorSummary
 )
 
-@(records: Seq[ProtectedUserRecord], form: Form[Search])(implicit req: StrideRequest[_], messages: Messages)
+@(records: Seq[ProtectedUserRecord], form: Form[Search])(implicit req: StrideRequest[?], messages: Messages)
 
 @beforeContent = {
     <link rel='stylesheet' href='@routes.Assets.at("application.css")'>

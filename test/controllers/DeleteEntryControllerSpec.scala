@@ -16,6 +16,8 @@
 
 package controllers
 
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito.when
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
@@ -37,7 +39,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
     "forward to the delete confirmation page view when GET /add is called" in {
       forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated {
-          when(mockBackendService.findEntry(eqTo(record.entryId))(*)) thenReturn Future.successful(Some(record))
+          when(mockBackendService.findEntry(eqTo(record.entryId))(any)).thenReturn(Future.successful(Some(record)))
 
           val result = deleteEntryController.showConfirmDeletePage(record.entryId)(FakeRequest().withMethod("GET"))
           status(result) shouldBe OK
@@ -62,9 +64,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
     "Forward to delete success page when delete is successful" in {
       forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated { _ =>
-          when {
-            mockBackendService.deleteEntry(eqTo(record.entryId))(*, *)
-          } thenReturn Future.successful(record)
+          when(mockBackendService.deleteEntry(eqTo(record.entryId))(any, any)).thenReturn(Future.successful(record))
 
           val result = deleteEntryController.delete(record.entryId)(FakeRequest().withMethod("DELETE"))
 
@@ -80,9 +80,8 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
     "Forward to error page when delete is unsuccessful with NOT_FOUND" in {
       forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated {
-          when {
-            mockBackendService.deleteEntry(eqTo(record.entryId))(*, *)
-          } thenReturn Future.failed(UpstreamErrorResponse("not found", NOT_FOUND))
+          when(mockBackendService.deleteEntry(eqTo(record.entryId))(any, any))
+            .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
           val result = deleteEntryController.delete(record.entryId)(FakeRequest().withMethod("DELETE"))
 
@@ -97,9 +96,8 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
     "Forward to error page when delete is unsuccessful" in {
       forAll(protectedUserRecords) { record =>
         expectStrideAuthenticated {
-          when {
-            mockBackendService.deleteEntry(eqTo(record.entryId))(*, *)
-          } thenReturn Future.failed(UpstreamErrorResponse("internal server error", INTERNAL_SERVER_ERROR))
+          when(mockBackendService.deleteEntry(eqTo(record.entryId))(any, any))
+            .thenReturn(Future.failed(UpstreamErrorResponse("internal server error", INTERNAL_SERVER_ERROR)))
 
           val result = deleteEntryController.delete(record.entryId)(FakeRequest().withMethod("DELETE"))
 

@@ -21,10 +21,12 @@ import controllers.base.StrideRequest
 import models.TaxIdentifierType.{NINO, SAUTR}
 import models.{CredIdNotFoundException, ProtectedUser, ProtectedUserRecord}
 import play.api.Logging
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpClient, HttpResponse, NotFoundException, UpstreamErrorResponse}
+import play.api.libs.ws.writeableOf_JsValue
+import uk.gov.hmrc.http.HttpReads.Implicits.*
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{ConflictException, HeaderCarrier, HttpResponse, NotFoundException, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
@@ -38,18 +40,20 @@ class SiProtectedUserAdminBackendConnector @Inject() (
   @Named("appName") appName: String,
   auditConnector: AuditConnector,
   backendConfig: BackendConfig,
-  httpClient: HttpClient
+  httpClient: HttpClientV2
 )(implicit ec: ExecutionContext)
     extends Logging {
   private val backendUrl = backendConfig.endpoint + "/" + backendConfig.contextRoot
 
-  def addEntry(protectedUser: ProtectedUser)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
+  def addEntry(protectedUser: ProtectedUser)(implicit hc: HeaderCarrier, req: StrideRequest[?]): Future[ProtectedUserRecord] =
     withAuditEvent(
       "AddUserToProtectedUserList",
       "add user's tax ID to the protected access list"
     ) {
       httpClient
-        .POST[ProtectedUser, ProtectedUserRecord](s"$backendUrl/add", protectedUser)
+        .post(url"$backendUrl/add")
+        .withBody(Json.toJson(protectedUser))
+        .execute[ProtectedUserRecord]
         .transform(
           identity,
           {
@@ -60,26 +64,28 @@ class SiProtectedUserAdminBackendConnector @Inject() (
         )
     }
 
-  def updateEntry(entryId: String, protectedUser: ProtectedUser)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
+  def updateEntry(entryId: String, protectedUser: ProtectedUser)(implicit hc: HeaderCarrier, req: StrideRequest[?]): Future[ProtectedUserRecord] =
     withAuditEvent(
       "EditUserInProtectedUserList",
       "edit user's tax ID in the protected access list"
     ) {
       httpClient
-        .PATCH[ProtectedUser, HttpResponse](s"$backendUrl/update/$entryId", protectedUser)
+        .patch(url"$backendUrl/update/$entryId")
+        .withBody(Json.toJson(protectedUser))
+        .execute[HttpResponse]
         .map { httpResponse =>
           httpResponse.status match {
             case OK                                                               => httpResponse.json.as[ProtectedUserRecord]
             case CONFLICT                                                         => throw new ConflictException("Conflict")
             case NOT_FOUND if httpResponse.body.contains("CREDID_DOES_NOT_EXIST") => throw CredIdNotFoundException // GG-7967
-            case NOT_FOUND                                                        => throw new NotFoundException("Entry to update was already deleted")
-            case status                                                           => throw UpstreamErrorResponse(httpResponse.body, status)
+            case NOT_FOUND => throw new NotFoundException("Entry to update was already deleted")
+            case status    => throw UpstreamErrorResponse(httpResponse.body, status)
           }
         }
     }
 
   private def findBy(id: String)(implicit hc: HeaderCarrier): Future[ProtectedUserRecord] =
-    httpClient.GET[ProtectedUserRecord](s"$backendUrl/entry-id/$id")
+    httpClient.get(url"$backendUrl/entry-id/$id").execute[ProtectedUserRecord]
 
   def findEntry(entryId: String)(implicit hc: HeaderCarrier): Future[Option[ProtectedUserRecord]] = {
     findBy(entryId).transform {
@@ -89,33 +95,33 @@ class SiProtectedUserAdminBackendConnector @Inject() (
     }
   }
 
-  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier, req: StrideRequest[_]): Future[ProtectedUserRecord] =
+  def deleteEntry(entryId: String)(implicit hc: HeaderCarrier, req: StrideRequest[?]): Future[ProtectedUserRecord] =
     withAuditEvent(
       "DeleteUserFromProtectedUserList",
       "delete record from the protected access list"
     ) {
       for {
         record <- findBy(entryId)
-        _      <- httpClient.DELETE[Unit](url = s"$backendUrl/entry-id/$entryId")
+        _      <- httpClient.delete(url"$backendUrl/entry-id/$entryId").execute[Unit]
       } yield record
     }
 
   def findEntries(teamOpt: Option[String], queryOpt: Option[String])(implicit hc: HeaderCarrier): Future[Seq[ProtectedUserRecord]] = {
-    var queryString = Map(
+    val queryString = Map(
       "filterByTeam" -> teamOpt,
       "searchQuery"  -> queryOpt
     )
       .collect { case (key, Some(value)) => s"$key=$value" }
       .mkString("&")
 
-    if (queryString.nonEmpty) queryString = s"?$queryString"
+    val url = if (queryString.isEmpty) url"$backendUrl/record/" else url"$backendUrl/record/?$queryString"
 
-    httpClient.GET[Seq[ProtectedUserRecord]](s"$backendUrl/record/$queryString")
+    httpClient.get(url).execute[Seq[ProtectedUserRecord]]
   }
 
   private def withAuditEvent(auditType: String, transactionType: String)(
     block: => Future[ProtectedUserRecord]
-  )(implicit hc: HeaderCarrier, request: StrideRequest[_]): Future[ProtectedUserRecord] =
+  )(implicit hc: HeaderCarrier, request: StrideRequest[?]): Future[ProtectedUserRecord] =
     block.transform(
       { record =>
         val team = record.body.addedByTeam.getOrElse("-")
@@ -123,8 +129,8 @@ class SiProtectedUserAdminBackendConnector @Inject() (
         auditConnector.sendExtendedEvent(
           ExtendedDataEvent(
             auditSource = appName,
-            auditType = auditType,
-            tags = hc.toAuditTags(s"HMRC Session Creation - SI Protected User List - $transactionType", request.path),
+            auditType   = auditType,
+            tags        = hc.toAuditTags(s"HMRC Session Creation - SI Protected User List - $transactionType", request.path),
             detail = Json.obj(
               "pid"   -> request.getUserPid,
               "group" -> (if (record.body.group.isBlank) "-" else record.body.group),

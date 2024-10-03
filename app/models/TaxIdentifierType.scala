@@ -16,12 +16,12 @@
 
 package models
 
-import play.api.libs.json._
+import play.api.libs.json.*
 
 sealed trait TaxIdentifierType
 
 object TaxIdentifierType {
-  case object NINO extends TaxIdentifierType
+  case object NINO  extends TaxIdentifierType
   case object SAUTR extends TaxIdentifierType
 
   val values: Seq[TaxIdentifierType] = Seq(NINO, SAUTR)
@@ -35,7 +35,7 @@ object TaxIdentifierType {
 
   private val reads: Reads[TaxIdentifierType] =
     _.validate[String].flatMap { str =>
-      values.find(_.toString equalsIgnoreCase str) match {
+      values.find(_.toString.equalsIgnoreCase(str)) match {
         case Some(taxIdType) => JsSuccess(taxIdType)
         case None            => JsError(parseErr(str))
       }
@@ -43,5 +43,5 @@ object TaxIdentifierType {
 
   private def writes(taxIdType: TaxIdentifierType) = JsString(taxIdType.toString)
 
-  implicit val format: Format[TaxIdentifierType] = Format(reads, writes _)
+  implicit val format: Format[TaxIdentifierType] = Format(reads, writes(_))
 }

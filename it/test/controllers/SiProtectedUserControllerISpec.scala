@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package test.controllers
+package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
@@ -22,6 +22,7 @@ import models.ProtectedUserRecord
 import org.jsoup.Jsoup
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
+import play.api.libs.ws.writeableOf_urlEncodedForm
 import play.api.test.ResultExtractors
 
 class SiProtectedUserControllerISpec extends BaseISpec with ResultExtractors {

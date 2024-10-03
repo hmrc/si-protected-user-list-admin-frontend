@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package test.controllers
+package controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.ProtectedUserRecord
 import play.api.libs.json.Json
+import play.api.libs.ws.writeableOf_urlEncodedSimpleForm
 import play.api.test.ResultExtractors
 
 class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
@@ -59,11 +60,7 @@ class DeleteEntryControllerISpec extends BaseISpec with ResultExtractors {
     "return NOT_FOUND when no entry is found to delete" in new Setup {
       forAll(protectedUserRecords, nonEmptyStringGen) { (record, pid) =>
         expectUserToBeStrideAuthenticated(pid)
-        stubFor(
-          get {
-            urlEqualTo(s"$backendBaseUrl/entry-id/${record.entryId}")
-          } willReturn notFound()
-        )
+        stubFor(get(urlEqualTo(s"$backendBaseUrl/entry-id/${record.entryId}")).willReturn(notFound()))
 
         val response = wsClient
           .url(resource(s"$frontEndBaseUrl/delete-entry/${record.entryId}"))
