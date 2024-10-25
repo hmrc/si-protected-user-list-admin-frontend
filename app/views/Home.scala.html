@@ -90,7 +90,7 @@
                         val metaData = Seq(record.body.group, record.body.addedByTeam getOrElse "")
 
                         viewLink( record.entryId).body +: (taxId ++ status ++ metaData) map { data =>
-                            TableRow(HtmlContent(data))
+                            TableRow(content = Text(data))
                         }
                     }
                 ))
