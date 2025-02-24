@@ -25,13 +25,11 @@
 
 @this(
         formTemplate: FormWithCSRF,
-        h1: Heading1,
         input: GovukInput,
         govukErrorSummary: GovukErrorSummary,
         govukSelect: GovukSelect,
         govukButton: GovukButton,
-        siProtectedUserConfig: SiProtectedUserConfig,
-        inputForms: InputForms
+        siProtectedUserConfig: SiProtectedUserConfig
 )
 
 @(form: Form[Entry], call: Call, submitButtonMessageKey: String)(implicit request: RequestHeader, messages: Messages)

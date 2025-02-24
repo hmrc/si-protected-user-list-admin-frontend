@@ -26,7 +26,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import services.SiProtectedUserListService
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.gg.test.UnitSpec
+import support.UnitSpec
 import util.Generators
 import views.Views
 
