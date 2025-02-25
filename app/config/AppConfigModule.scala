@@ -20,6 +20,9 @@ import com.google.inject.{AbstractModule, Provides, Singleton}
 import controllers.base.StrideAction
 import play.api.{Configuration, Environment}
 
+import scala.annotation.nowarn
+
+@nowarn("msg=unused explicit parameter")
 class AppConfigModule(environment: Environment, configuration: Configuration) extends AbstractModule {
   override def configure(): Unit = {
     bind(classOf[AppConfig]).asEagerSingleton()

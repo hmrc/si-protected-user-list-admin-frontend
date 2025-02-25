@@ -25,7 +25,7 @@ import play.api.libs.ws.WSCookie
 import play.api.mvc.{Cookie, Session, SessionCookieBaker}
 import play.api.test.Injecting
 import uk.gov.hmrc.crypto.PlainText
-import uk.gov.hmrc.gg.test.WireMockSpec
+import support.WireMockSpec
 import uk.gov.hmrc.http.SessionKeys
 import uk.gov.hmrc.play.bootstrap.frontend.filters.crypto.SessionCookieCrypto
 import util.Generators

@@ -17,12 +17,13 @@ sm2 --start SI_PROTECTED_USER_LIST_ADMIN_UI
 ```
 ### Unit & Integration Tests with coverage report
 ```bash
-sbt clean compile coverage test it:test coverageReport
+sm2 --start SI_PROTECTED_USER_LIST_ADMIN
+sbt clean coverage test it/test coverageReport
 ```
 
 ### Integration Tests Only
 ```bash
-sbt it:test
+sbt it/test
 ```
 
 Please see backend [si-protected-user-list-admin](https://github.com/hmrc/si-protected-user-list-admin#readme) for usage instructions
