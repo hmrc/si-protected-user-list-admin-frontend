@@ -21,6 +21,7 @@ import models.InputForms.groupMaxLength
 import models.*
 import org.scalacheck.Gen
 import uk.gov.hmrc.auth.core.Enrolment
+import uk.gov.hmrc.auth.core.retrieve.{Name, ~}
 import uk.gov.hmrc.domain.{Generator, Nino, SaUtr, SaUtrGenerator}
 
 trait Generators {
@@ -137,4 +138,28 @@ trait Generators {
       lastUpdated  = lastUpdated,
       body         = body
     )
+
+  val optionalNonEmptyStringGen: Gen[Option[String]] = Gen.option(nonEmptyStringGen)
+
+  def stridePidGen(forceStridePid: Boolean): Gen[Option[String]] = {
+    if (forceStridePid) nonEmptyStringGen.map(Some(_))
+    else optionalNonEmptyStringGen
+  }
+
+  val nameGen: Gen[Option[Name]] = {
+    Gen.option(
+      for {
+        firstName <- optionalNonEmptyStringGen
+        lastName  <- optionalNonEmptyStringGen
+      } yield Name(firstName, lastName)
+    )
+  }
+
+  def retrievalResultGen(forceStridePid: Boolean): Gen[Option[String] ~ Option[Name]] = {
+    for {
+      stridePidOpt <- stridePidGen(forceStridePid)
+      nameOpt      <- nameGen
+    } yield new ~(stridePidOpt, nameOpt)
+  }
+
 }

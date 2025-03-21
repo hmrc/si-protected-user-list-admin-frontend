@@ -39,7 +39,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
   "EditEntryController" should {
     "forward to the edit entry view when GET /add is called" in
       forAll(nonEmptyStringGen, validEditEntryGen, protectedUserRecords) { (entryId, _, record) =>
-        expectStrideAuthenticated {
+        expectStrideAuthenticated() { (_, _) =>
           when(mockBackendService.findEntry(eqTo(entryId))(any)).thenReturn(Future.successful(Some(record)))
           val result = editEntryController.showEditEntryPage(entryId)(FakeRequest().withMethod("GET"))
           status(result) shouldBe OK
@@ -51,9 +51,9 @@ class EditEntryControllerSpec extends BaseControllerSpec {
 
     "Forward to confirmation page when edit is successful" in
       forAll(nonEmptyStringGen, validEditEntryGen, protectedUserRecords) { (entryId, entry, record) =>
-        expectStrideAuthenticated { pid =>
+        expectStrideAuthenticated() { (pid, _) =>
           val requestFields = toEditRequestFields(entry)
-          val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
+          val expectedEntry = entry.copy(updatedByUser = pid, updatedByTeam = Option(entry.addedByTeam))
 
           when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(any, any)).thenReturn(Future.successful(record))
 
@@ -68,9 +68,9 @@ class EditEntryControllerSpec extends BaseControllerSpec {
 
     "Return not found with 'credId does not exist' form error when the supplied credId is not found in the backend" in
       forAll(nonEmptyStringGen, validEditEntryGen) { (entryId, entry) =>
-        expectStrideAuthenticated { pid =>
+        expectStrideAuthenticated() { (pid, _) =>
           val requestFields = toEditRequestFields(entry)
-          val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
+          val expectedEntry = entry.copy(updatedByUser = pid, updatedByTeam = Option(entry.addedByTeam))
 
           when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(any, any)).thenReturn(Future.failed(CredIdNotFoundException))
 
@@ -84,9 +84,9 @@ class EditEntryControllerSpec extends BaseControllerSpec {
 
     "Return not found when entry to update is not found" in
       forAll(nonEmptyStringGen, validEditEntryGen) { (entryId, entry) =>
-        expectStrideAuthenticated { pid =>
+        expectStrideAuthenticated() { (pid, _) =>
           val requestFields = toEditRequestFields(entry)
-          val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
+          val expectedEntry = entry.copy(updatedByUser = pid, updatedByTeam = Option(entry.addedByTeam))
 
           when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(any, any))
             .thenReturn(Future.failed(new NotFoundException("not found")))
@@ -102,9 +102,9 @@ class EditEntryControllerSpec extends BaseControllerSpec {
 
     "Return CONFLICT when /edit results in a conflict exception" in
       forAll(nonEmptyStringGen, validEditEntryGen) { (entryId, entry) =>
-        expectStrideAuthenticated { pid =>
+        expectStrideAuthenticated() { (pid, _) =>
           val requestFields = toEditRequestFields(entry)
-          val expectedEntry = entry.copy(updatedByUser = Some(pid), updatedByTeam = Option(entry.addedByTeam))
+          val expectedEntry = entry.copy(updatedByUser = pid, updatedByTeam = Option(entry.addedByTeam))
 
           when(mockBackendService.updateEntry(eqTo(entryId), eqTo(expectedEntry))(any, any))
             .thenReturn(Future.failed(new ConflictException("conflict")))
@@ -118,7 +118,7 @@ class EditEntryControllerSpec extends BaseControllerSpec {
       }
 
     "Return BAD_REQUEST when POST /edit is called with invalid fields" in
-      expectStrideAuthenticated {
+      expectStrideAuthenticated() { (_, _) =>
         val result = editEntryController.submit("123")(FakeRequest().withFormUrlEncodedBody())
         status(result) shouldBe BAD_REQUEST
 

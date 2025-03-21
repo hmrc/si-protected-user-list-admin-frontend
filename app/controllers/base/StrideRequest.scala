@@ -17,10 +17,12 @@
 package controllers.base
 
 import play.api.mvc.{MessagesRequest, WrappedRequest}
+import uk.gov.hmrc.auth.core.retrieve.Name
 
 final case class StrideRequest[A](
   underlying: MessagesRequest[A],
-  userPidOpt: Option[String]
+  userPidOpt: Option[String],
+  nameOpt: Option[Name]
 ) extends WrappedRequest[A](underlying) {
   def getUserPid: String = userPidOpt getOrElse "Unknown_User_Pid"
 }

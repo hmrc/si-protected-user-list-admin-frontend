@@ -30,7 +30,7 @@ import play.api.test.{DefaultAwaitTimeout, FutureAwaits, ResultExtractors, Write
 import scala.concurrent.Future
 
 trait UnitSpec
-  extends AnyWordSpec
+    extends AnyWordSpec
     with Matchers
     with OptionValues
     with HeaderNames
