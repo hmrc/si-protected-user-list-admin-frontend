@@ -48,7 +48,8 @@ class SiProtectedUserAdminBackendConnector @Inject() (
   def addEntry(protectedUser: ProtectedUser)(implicit hc: HeaderCarrier, req: StrideRequest[?]): Future[ProtectedUserRecord] =
     withAuditEvent(
       "AddUserToProtectedUserList",
-      "add user's tax ID to the protected access list"
+      "Add User",
+      "add user to the list"
     ) {
       httpClient
         .post(url"$backendUrl/add")
@@ -67,7 +68,8 @@ class SiProtectedUserAdminBackendConnector @Inject() (
   def updateEntry(entryId: String, protectedUser: ProtectedUser)(implicit hc: HeaderCarrier, req: StrideRequest[?]): Future[ProtectedUserRecord] =
     withAuditEvent(
       "EditUserInProtectedUserList",
-      "edit user's tax ID in the protected access list"
+      "Edit User",
+      "edit user in the list"
     ) {
       httpClient
         .patch(url"$backendUrl/update/$entryId")
@@ -98,7 +100,8 @@ class SiProtectedUserAdminBackendConnector @Inject() (
   def deleteEntry(entryId: String)(implicit hc: HeaderCarrier, req: StrideRequest[?]): Future[ProtectedUserRecord] =
     withAuditEvent(
       "DeleteUserFromProtectedUserList",
-      "delete record from the protected access list"
+      "Delete User",
+      "delete user from the list"
     ) {
       for {
         record <- findBy(entryId)
@@ -119,7 +122,7 @@ class SiProtectedUserAdminBackendConnector @Inject() (
     httpClient.get(url).execute[Seq[ProtectedUserRecord]]
   }
 
-  private def withAuditEvent(auditType: String, transactionType: String)(
+  private def withAuditEvent(auditType: String, action: String, transactionType: String)(
     block: => Future[ProtectedUserRecord]
   )(implicit hc: HeaderCarrier, request: StrideRequest[?]): Future[ProtectedUserRecord] =
     block.transform(
@@ -130,7 +133,7 @@ class SiProtectedUserAdminBackendConnector @Inject() (
           ExtendedDataEvent(
             auditSource = appName,
             auditType   = auditType,
-            tags        = hc.toAuditTags(s"HMRC Session Creation - SI Protected User List - $transactionType", request.path),
+            tags        = hc.toAuditTags(s"HMRC - SI Protected User List Admin - $action - $transactionType", request.path),
             detail = Json.obj(
               "pid"   -> request.getUserPid,
               "group" -> (if (record.body.group.isBlank) "-" else record.body.group),

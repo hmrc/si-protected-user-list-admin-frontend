@@ -16,24 +16,33 @@
 
 package controllers
 
+import config.AppConfig
 import controllers.base.StrideAction
 import models.InputForms
 import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.scalacheck.Gen
-import org.scalatest.Assertion
+import org.scalatest.{Assertion, BeforeAndAfterEach}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import services.SiProtectedUserListService
 import uk.gov.hmrc.auth.core.AuthConnector
 import support.UnitSpec
+import uk.gov.hmrc.auth.core.retrieve.{Name, ~}
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import util.Generators
 import views.Views
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-abstract class BaseControllerSpec extends UnitSpec with GuiceOneAppPerSuite with ScalaCheckDrivenPropertyChecks with Generators {
+abstract class BaseControllerSpec
+    extends UnitSpec
+    with GuiceOneAppPerSuite
+    with ScalaCheckDrivenPropertyChecks
+    with Generators
+    with BeforeAndAfterEach {
 
   protected val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
@@ -42,16 +51,22 @@ abstract class BaseControllerSpec extends UnitSpec with GuiceOneAppPerSuite with
     strideConfig <- authStrideEnrolmentsConfigGen
   } yield new StrideAction(appName, strideConfig, mockAuthConnector)
 
+  protected val mockAuditConnector: AuditConnector = mock[AuditConnector]
   protected val mockBackendService: SiProtectedUserListService = mock[SiProtectedUserListService]
   protected val injectViews: Views = app.injector.instanceOf[Views]
   protected val inputForms: InputForms = app.injector.instanceOf[InputForms]
+  protected val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
-  protected def expectStrideAuthenticated(assertionFrom: String => Unit): Unit = {
-    val stridePid = nonEmptyStringGen.sample.get
+  protected def expectStrideAuthenticated(forceStridePid: Boolean = true)(assertionFrom: (Option[String], Option[Name]) => Unit): Unit = {
+    val retrievalResult = retrievalResultGen(forceStridePid).sample.get
 
-    when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.successful(Some(stridePid)))
+    when(mockAuthConnector.authorise[Option[String] ~ Option[Name]](any, any)(any, any)).thenReturn(Future.successful(retrievalResult))
 
-    assertionFrom(stridePid)
+    assertionFrom(retrievalResult.a, retrievalResult.b)
   }
-  protected def expectStrideAuthenticated(assertion: => Assertion): Unit = expectStrideAuthenticated(_ => assertion)
+  protected def expectStrideAuthenticated(assertion: => Assertion): Unit = expectStrideAuthenticated()((_, _) => assertion)
+
+  override def beforeEach(): Unit = {
+    Mockito.reset(mockAuditConnector)
+  }
 }

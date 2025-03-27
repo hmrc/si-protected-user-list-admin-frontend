@@ -16,12 +16,17 @@
 
 package controllers
 
+import org.jsoup.Jsoup
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{verify, when}
 import org.scalacheck.Gen
 import play.api.test.FakeRequest
+import uk.gov.hmrc.auth.core.retrieve.{Name, ~}
 import uk.gov.hmrc.auth.core.{InsufficientEnrolments, MissingBearerToken}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames}
+import uk.gov.hmrc.play.audit.http.connector.AuditResult
+import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.bootstrap.tools.Stubs
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,13 +40,16 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
       mockBackendService,
       injectViews,
       Stubs.stubMessagesControllerComponents(),
-      inputForms
+      inputForms,
+      mockAuditConnector,
+      "si-protected-user-list-admin-frontend"
     )
 
   "homepage" should {
     "display the correct html page" in {
       forAll(Gen listOf protectedUserRecords) { listOfRecords =>
-        expectStrideAuthenticated {
+        expectStrideAuthenticated() { (_, _) =>
+          when(mockAuditConnector.sendEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
           when(mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])).thenReturn(Future(listOfRecords))
 
           val result = await(siProtectedUserController.homepage()(FakeRequest()))
@@ -52,10 +60,44 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
       }
     }
 
+    "send correct audit event" in {
+      expectStrideAuthenticated(forceStridePid = false) { (stridePidOpt, nameOpt) =>
+        when(mockAuditConnector.sendEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
+        when(mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])).thenReturn(Future(Seq.empty))
+
+        val result = await(siProtectedUserController.homepage()(FakeRequest()))
+
+        val dataEventCaptor = ArgumentCaptor.forClass(classOf[DataEvent])
+        verify(mockAuditConnector).sendEvent(dataEventCaptor.capture())(any, any)
+        val dataEvent = dataEventCaptor.getValue
+
+        dataEvent.auditSource shouldBe "si-protected-user-list-admin-frontend"
+        dataEvent.auditType   shouldBe "ViewProtectedUserList"
+        dataEvent.tags shouldBe Map(
+          "clientIP"                   -> "-",
+          "path"                       -> "/",
+          HeaderNames.xSessionId       -> "-",
+          HeaderNames.akamaiReputation -> "-",
+          HeaderNames.xRequestId       -> "-",
+          HeaderNames.deviceID         -> "-",
+          "clientPort"                 -> "-",
+          "transactionName"            -> "HMRC - SI Protected User List Admin - Home Page - view all users in the list"
+        )
+        dataEvent.detail shouldBe Map(
+          "pid"  -> stridePidOpt.getOrElse("Unknown_User_Pid"),
+          "name" -> nameOpt.map(name => s"${name.name.getOrElse("")} ${name.lastName.getOrElse("")}".trim).getOrElse("-")
+        )
+
+        status(result) shouldBe OK
+        val body = contentAsString(result)
+        body should include("home.page.title")
+      }
+    }
+
     "redirect to sign in when no active session" in {
       forAll(Gen listOf protectedUserRecords) { listOfRecords =>
         when(mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])).thenReturn(Future(listOfRecords))
-        when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.failed(MissingBearerToken()))
+        when(mockAuthConnector.authorise[Option[String] ~ Option[Name]](any, any)(any, any)).thenReturn(Future.failed(MissingBearerToken()))
 
         val result = await(siProtectedUserController.homepage()(FakeRequest()))
         status(result) shouldBe SEE_OTHER
@@ -65,7 +107,7 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
     "return unauthorized when insufficient privs" in {
       forAll(Gen listOf protectedUserRecords) { listOfRecords =>
         when(mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])).thenReturn(Future(listOfRecords))
-        when(mockAuthConnector.authorise[Option[String]](any, any)(any, any)).thenReturn(Future.failed(InsufficientEnrolments()))
+        when(mockAuthConnector.authorise[Option[String] ~ Option[Name]](any, any)(any, any)).thenReturn(Future.failed(InsufficientEnrolments()))
 
         val result = await(siProtectedUserController.homepage()(FakeRequest()))
         status(result) shouldBe UNAUTHORIZED
@@ -73,10 +115,81 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
     }
   }
 
+  "search" should {
+    "display results from backend" in {
+      forAll(Gen listOf protectedUserRecords) { listOfRecords =>
+        expectStrideAuthenticated() { (_, _) =>
+          when(mockAuditConnector.sendEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
+          when(mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])).thenReturn(Future(listOfRecords))
+
+          val teams = "All" +: appConfig.siProtectedUserConfig.addedByTeams
+
+          val filterByTeam = Gen.option(Gen.oneOf(teams)).sample.get.map("filterByTeam" -> _)
+          val searchQuery = nonEmptyStringGen.sample.map("searchQuery" -> _)
+
+          val formData: Seq[(String, String)] = filterByTeam.toSeq ++ searchQuery.toSeq
+
+          val result = await(siProtectedUserController.search()(FakeRequest().withFormUrlEncodedBody(formData*).withMethod("POST")))
+          status(result) shouldBe OK
+          val body = contentAsString(result)
+
+          val html = Jsoup.parse(body)
+          val entryCount = html.select("table tbody tr").size()
+
+          body         should include("home.page.title")
+          entryCount shouldBe listOfRecords.size
+        }
+      }
+    }
+
+    "send correct audit event" in {
+      expectStrideAuthenticated(forceStridePid = false) { (stridePidOpt, nameOpt) =>
+        when(mockAuditConnector.sendEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
+        when(mockBackendService.findEntries(any[Option[String]], any[Option[String]])(any[HeaderCarrier])).thenReturn(Future(Seq.empty))
+
+        val teams = "All" +: appConfig.siProtectedUserConfig.addedByTeams
+
+        val filterByTeam = Gen.option(Gen.oneOf(teams)).sample.get.map("filterByTeam" -> _)
+        val searchQuery = nonEmptyStringGen.sample.map("searchQuery" -> _)
+
+        val formData: Seq[(String, String)] = filterByTeam.toSeq ++ searchQuery.toSeq
+
+        val result = await(siProtectedUserController.search()(FakeRequest().withFormUrlEncodedBody(formData*).withMethod("POST")))
+
+        val dataEventCaptor = ArgumentCaptor.forClass(classOf[DataEvent])
+        verify(mockAuditConnector).sendEvent(dataEventCaptor.capture())(any, any)
+        val dataEvent = dataEventCaptor.getValue
+
+        dataEvent.auditSource shouldBe "si-protected-user-list-admin-frontend"
+        dataEvent.auditType   shouldBe "SearchProtectedUserList"
+        dataEvent.tags shouldBe Map(
+          "clientIP"                   -> "-",
+          "path"                       -> "/",
+          HeaderNames.xSessionId       -> "-",
+          HeaderNames.akamaiReputation -> "-",
+          HeaderNames.xRequestId       -> "-",
+          HeaderNames.deviceID         -> "-",
+          "clientPort"                 -> "-",
+          "transactionName"            -> "HMRC - SI Protected User List Admin - Search - filter users in the list"
+        )
+        dataEvent.detail shouldBe Map(
+          "pid"  -> stridePidOpt.getOrElse("Unknown_User_Pid"),
+          "name" -> nameOpt.map(name => s"${name.name.getOrElse("")} ${name.lastName.getOrElse("")}".trim).getOrElse("-"),
+          filterByTeam.getOrElse("filterByTeam" -> "-"),
+          searchQuery.getOrElse("searchQuery"   -> "-")
+        )
+
+        status(result) shouldBe OK
+        val body = contentAsString(result)
+        body should include("home.page.title")
+      }
+    }
+  }
+
   "view" should {
     "Retrieve user and forward to details template" in {
       forAll(protectedUserRecords) { record =>
-        expectStrideAuthenticated {
+        expectStrideAuthenticated() { (_, _) =>
           when(mockBackendService.findEntry(eqTo(record.entryId))(any)).thenReturn(Future.successful(Some(record)))
 
           val result = await(siProtectedUserController.view(entryId = record.entryId)(FakeRequest()))
@@ -100,7 +213,7 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
 
     "Forward to error page with NOT_FOUND when entry doesnt exist" in {
       forAll(protectedUserRecords) { record =>
-        expectStrideAuthenticated {
+        expectStrideAuthenticated() { (_, _) =>
           when(mockBackendService.findEntry(eqTo(record.entryId))(any)).thenReturn(Future.successful(None))
 
           val result = siProtectedUserController.view(record.entryId)(FakeRequest())
@@ -114,7 +227,7 @@ class SiProtectedUserControllerSpec extends BaseControllerSpec {
 
     "Forward to error page with INTERNAL_SERVER_ERROR when there is an exception" in {
       forAll(protectedUserRecords) { record =>
-        expectStrideAuthenticated {
+        expectStrideAuthenticated() { (_, _) =>
           when(mockBackendService.findEntry(eqTo(record.entryId))(any)).thenReturn(Future.failed(new Exception("some exception")))
 
           val result = siProtectedUserController.view(record.entryId)(FakeRequest())

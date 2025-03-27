@@ -39,7 +39,7 @@ class AddEntryControllerSpec extends BaseControllerSpec {
 
   "AddEntryController" should {
     "forward to the add entry view when GET /add is called" in {
-      expectStrideAuthenticated {
+      expectStrideAuthenticated() { (_, _) =>
         val result = controller.showAddEntryPage()(FakeRequest().withMethod("GET"))
         status(result) shouldBe OK
 
@@ -50,9 +50,9 @@ class AddEntryControllerSpec extends BaseControllerSpec {
 
     "Forward to confirmation page when add is successful" in {
       forAll(validRequestEntryGen, protectedUserRecords) { (entry, record) =>
-        expectStrideAuthenticated { pid =>
+        expectStrideAuthenticated() { (pid, _) =>
           val requestFields = toRequestFields(entry)
-          val expectedEntry = entry.copy(addedByUser = Some(pid))
+          val expectedEntry = entry.copy(addedByUser = pid)
 
           when(mockBackendService.addEntry(eqTo(expectedEntry))(any, any)).thenReturn(Future.successful(record))
 
@@ -69,9 +69,9 @@ class AddEntryControllerSpec extends BaseControllerSpec {
 
     "Return CONFLICT when upstream api indicates a conflict" in {
       forAll(validRequestEntryGen) { entry =>
-        expectStrideAuthenticated { pid =>
+        expectStrideAuthenticated() { (pid, _) =>
           val requestFields = toRequestFields(entry)
-          val expectedEntry = entry.copy(addedByUser = Some(pid))
+          val expectedEntry = entry.copy(addedByUser = pid)
 
           when(mockBackendService.addEntry(eqTo(expectedEntry))(any, any)).thenReturn(Future.failed(new ConflictException("test conflict")))
 
@@ -88,9 +88,9 @@ class AddEntryControllerSpec extends BaseControllerSpec {
 
     "Return NOT_FOUND when upstream api indicates that credId does not exist" in {
       forAll(validRequestEntryGen) { entry =>
-        expectStrideAuthenticated { pid =>
+        expectStrideAuthenticated() { (pid, _) =>
           val requestFields = toRequestFields(entry)
-          val expectedEntry = entry.copy(addedByUser = Some(pid))
+          val expectedEntry = entry.copy(addedByUser = pid)
 
           when(mockBackendService.addEntry(eqTo(expectedEntry))(any, any)).thenReturn(Future.failed(new NotFoundException("credId does not exist")))
 
@@ -106,7 +106,7 @@ class AddEntryControllerSpec extends BaseControllerSpec {
     }
 
     "Return BAD_REQUEST when POST /add is called with invalid fields" in {
-      expectStrideAuthenticated {
+      expectStrideAuthenticated() { (_, _) =>
         val result = controller.submit()(FakeRequest().withFormUrlEncodedBody())
         status(result) shouldBe BAD_REQUEST
 

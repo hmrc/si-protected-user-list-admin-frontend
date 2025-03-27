@@ -25,6 +25,8 @@ import uk.gov.hmrc.auth.core.AuthProvider.PrivilegedApplication
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.authorise.{EmptyPredicate, Predicate}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.clientId
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.name
+import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendHeaderCarrierProvider
 
 import javax.inject.Inject
@@ -46,9 +48,11 @@ class StrideAction @Inject() (
     val hasAnyOfRequiredRoles = strideConfig.strideEnrolments.reduceOption[Predicate](_ or _) getOrElse EmptyPredicate
 
     authorised(hasPrivilegedApp and hasAnyOfRequiredRoles)
-      .retrieve(clientId) { userPidOpt =>
+      // The Retrievals.name is not deprecated for us, as we are using PrivilegedApplication.
+      // See https://confluence.tools.tax.service.gov.uk/pages/viewpage.action?pageId=827326667 for more details.
+      .retrieve(clientId and name) { case userPidOpt ~ nameOpt =>
         logger.debug("User Authenticated with Stride auth")
-        Future.successful(Right(StrideRequest(request, userPidOpt)))
+        Future.successful(Right(StrideRequest(request, userPidOpt, nameOpt)))
       }
       .recover {
         case _: InsufficientEnrolments =>

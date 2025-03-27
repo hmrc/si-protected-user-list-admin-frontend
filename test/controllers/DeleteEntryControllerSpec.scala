@@ -38,7 +38,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
   "DeleteEntryController" should {
     "forward to the delete confirmation page view when GET /add is called" in {
       forAll(protectedUserRecords) { record =>
-        expectStrideAuthenticated {
+        expectStrideAuthenticated() { (_, _) =>
           when(mockBackendService.findEntry(eqTo(record.entryId))(any)).thenReturn(Future.successful(Some(record)))
 
           val result = deleteEntryController.showConfirmDeletePage(record.entryId)(FakeRequest().withMethod("GET"))
@@ -63,7 +63,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
 
     "Forward to delete success page when delete is successful" in {
       forAll(protectedUserRecords) { record =>
-        expectStrideAuthenticated { _ =>
+        expectStrideAuthenticated() { (_, _) =>
           when(mockBackendService.deleteEntry(eqTo(record.entryId))(any, any)).thenReturn(Future.successful(record))
 
           val result = deleteEntryController.delete(record.entryId)(FakeRequest().withMethod("DELETE"))
@@ -79,7 +79,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
 
     "Forward to error page when delete is unsuccessful with NOT_FOUND" in {
       forAll(protectedUserRecords) { record =>
-        expectStrideAuthenticated {
+        expectStrideAuthenticated() { (_, _) =>
           when(mockBackendService.deleteEntry(eqTo(record.entryId))(any, any))
             .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
@@ -95,7 +95,7 @@ class DeleteEntryControllerSpec extends BaseControllerSpec {
 
     "Forward to error page when delete is unsuccessful" in {
       forAll(protectedUserRecords) { record =>
-        expectStrideAuthenticated {
+        expectStrideAuthenticated() { (_, _) =>
           when(mockBackendService.deleteEntry(eqTo(record.entryId))(any, any))
             .thenReturn(Future.failed(UpstreamErrorResponse("internal server error", INTERNAL_SERVER_ERROR)))
 
