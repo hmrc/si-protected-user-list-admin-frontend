@@ -20,6 +20,7 @@
 @import play.api.mvc.Request
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 @import uk.gov.hmrc.govukfrontend.views.html.components.implicits._
+@import uk.gov.hmrc.govukfrontend.views.viewmodels.FormGroup
 
 @this(
         config: SiProtectedUserConfig,
@@ -38,10 +39,11 @@
         },
         label = Label(content = Text(messages("home.page.filterBy"))),
         classes = "govuk-!-display-inline-block",
-        attributes = Map("oninput" -> "this.form.submit()"),
-        value = form("filerByTeam").value
+        attributes = Map("oninput" -> "this.form.submit()", "style" -> "width: 100%;"),
+        value = form("filerByTeam").value,
+        formGroup = FormGroup(attributes = Map("style" -> "width: 100%;"))
     ))
-    <div class="govuk-input__wrapper">
+    <div class="govuk-input__wrapper" style="width: 100%;">
     @input(Input(
             id = "searchQuery",
             name = "searchQuery",
@@ -50,11 +52,13 @@
                 classes = "govuk-visually-hidden",
             ),
             classes = "govuk-input govuk-input--width-8 govuk-!-display-inline",
-            value = form("searchQuery").value
+            value = form("searchQuery").value,
+            attributes = Map("style" -> "border-right-width: 0px;  width: 100%;"),
+            formGroup = FormGroup(attributes = Map("style" -> "width: 100%;"))
     ))
-        <div class="govuk-input__suffix pul-btn-search">
-            <button class="govuk-button" data-module="govuk-button" aria-label="Search Button">
-                <svg class="gem-c-search__icon" width="27" height="27" viewBox="0 0 27 27" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+        <div class="govuk-input__suffix pul-btn-search" style="padding: 0px; border: none;">
+            <button class="govuk-button" style="display: block; margin: 0; padding: 0; width: 100%; height: 100%; box-shadow: none !important; -webkit-box-shadow: none !important; background-color: #1d70b8;" data-module="govuk-button" aria-label="Search Button">
+                <svg class="gem-c-search__icon" width="60%" height="60%" viewBox="0 0 27 27" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="12.0161" cy="11.0161" r="8.51613" stroke="currentColor" stroke-width="3"></circle>
                     <line x1="17.8668" y1="17.3587" x2="26.4475" y2="25.9393" stroke="currentColor" stroke-width="3"></line>
                 </svg>
