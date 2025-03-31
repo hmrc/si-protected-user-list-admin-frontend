@@ -61,12 +61,12 @@
                 @searchForm(form)
             </div>
         </div>
-        @if(records.isEmpty && form.errors.isEmpty) {
+        @if(records.isEmpty && form.errors.isEmpty && form("searchQuery").value.isDefined) {
             <p class="govuk-body">
                 No results found for <b>@form("searchQuery").value.getOrElse("")</b>
             </p>
         } else {
-            @if(form.errors.isEmpty) {
+            @if(form.errors.isEmpty && records.nonEmpty) {
                 @table(Table(
                     head = Some(
                         "entryId,saUtr,nino,idp,idpId,status,group,addedBy"
