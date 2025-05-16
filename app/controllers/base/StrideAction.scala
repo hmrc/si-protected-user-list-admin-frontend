@@ -62,8 +62,7 @@ class StrideAction @Inject() (
         case _: NoActiveSession =>
           logger.info("Failed Stride Auth - NoActiveSession")
 
-          val protocol = if (request.secure) "https" else "http"
-          val strideSuccessUrl = s"$protocol://${request.host}${request.path}"
+          val strideSuccessUrl = s"${request.path}"
 
           Left(
             Redirect(
