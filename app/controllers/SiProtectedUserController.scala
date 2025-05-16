@@ -16,17 +16,16 @@
 
 package controllers
 
+import audit.Auditor
 import controllers.base.{StrideAction, StrideController, StrideRequest}
 import models.{InputForms, Search}
 import play.api.mvc.*
 import services.SiProtectedUserListService
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.audit.model.DataEvent
 import views.Views
 
 import javax.inject.{Inject, Named, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
 
 @Singleton
 class SiProtectedUserController @Inject() (
@@ -35,34 +34,14 @@ class SiProtectedUserController @Inject() (
   views: Views,
   mcc: MessagesControllerComponents,
   inputForms: InputForms,
-  auditConnector: AuditConnector,
+  val auditConnector: AuditConnector,
   @Named("appName") appName: String
 )(implicit ec: ExecutionContext)
-    extends StrideController(mcc) {
-
-  private def sendAuditEvent(auditType: String, transactionName: String, moreDetails: Map[String, Option[String]] = Map.empty)(implicit
-    request: StrideRequest[AnyContent]
-  ) = {
-    val details = Map(
-      "pid"  -> Some(request.getUserPid),
-      "name" -> request.nameOpt.map(name => s"${name.name.getOrElse("")} ${name.lastName.getOrElse("")}".trim)
-    )
-
-    val dataEvent = DataEvent(
-      auditSource = appName,
-      auditType   = auditType,
-      tags        = hc.toAuditTags(transactionName, request.path),
-      detail = (details ++ moreDetails) map {
-        case (key, Some(value)) if value.nonEmpty => key -> value
-        case (key, _)                             => key -> "-"
-      }
-    )
-
-    auditConnector.sendEvent(dataEvent).map(_ => ())
-  }
+    extends StrideController(mcc)
+    with Auditor {
 
   def homepage(): Action[AnyContent] = StrideAction.async { implicit request =>
-    sendAuditEvent(
+    sendAuditEventWithMoreDetails(
       auditType       = "ViewProtectedUserList",
       transactionName = "HMRC - SI Protected User List Admin - Home Page - view all users in the list"
     )
@@ -79,7 +58,7 @@ class SiProtectedUserController @Inject() (
 
   def search(): Action[AnyContent] = StrideAction.async { implicit request =>
     def searchProtectedUserListAuditEvent(filterByTeam: Option[String], searchQuery: Option[String]): Future[Unit] = {
-      sendAuditEvent(
+      sendAuditEventWithMoreDetails(
         auditType       = "SearchProtectedUserList",
         transactionName = "HMRC - SI Protected User List Admin - Search - filter users in the list",
         moreDetails = Map(
