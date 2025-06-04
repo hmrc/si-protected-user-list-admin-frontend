@@ -137,7 +137,7 @@ class SiProtectedUserAdminBackendConnector @Inject() (
             tags        = hc.toAuditTags(s"HMRC - SI Protected User List Admin - $action - $transactionType", request.path),
             detail = Json.obj(
               "pid"   -> request.getUserPid,
-              "name"  -> request.nameOpt.map(name => s"${name.name.getOrElse("-")} ${name.lastName.getOrElse("-")}".trim),
+              "name"  -> request.nameOpt.map(name => s"${name.name.getOrElse("")} ${name.lastName.getOrElse("")}".trim).getOrElse("-"),
               "group" -> (if (record.body.group.isBlank) "-" else record.body.group),
               "team"  -> team,
               "entry" -> {
