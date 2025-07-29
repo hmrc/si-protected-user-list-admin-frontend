@@ -1,7 +1,7 @@
 import uk.gov.hmrc.DefaultBuildSettings
 
 ThisBuild / majorVersion := 0
-ThisBuild / scalaVersion := "3.3.5"
+ThisBuild / scalaVersion := "3.3.6"
 ThisBuild / scalacOptions += "-Wconf:msg=Flag.*repeatedly:s"
 
 lazy val microservice = Project("si-protected-user-list-admin-frontend", file("."))
@@ -17,7 +17,6 @@ lazy val microservice = Project("si-protected-user-list-admin-frontend", file(".
     scalacOptions += "-Wconf:msg=unused import&src=routes/.*:s",
 
     pipelineStages := Seq(gzip),
-    resolvers += Resolver.jcenterRepo,
     scalafmtOnCompile := true,
     PlayKeys.playDefaultPort := 8508,
     TwirlKeys.templateImports ++= Seq(
