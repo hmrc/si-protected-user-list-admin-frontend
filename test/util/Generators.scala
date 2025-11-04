@@ -22,7 +22,7 @@ import models.*
 import org.scalacheck.Gen
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.auth.core.retrieve.{Name, ~}
-import uk.gov.hmrc.domain.{Generator, Nino, SaUtr, SaUtrGenerator}
+import uk.gov.hmrc.domain.{Nino, NinoGenerator, SaUtr, SaUtrGenerator}
 
 trait Generators {
   val nonEmptyStringGen: Gen[String] = for {
@@ -49,9 +49,9 @@ trait Generators {
 
   def nonEmptyStringOfGen(length: Int): Gen[String] = Gen.listOfN(length, Gen.alphaChar).map(_.mkString)
 
-  val ninoGen: Gen[Nino] = Gen.const(new Generator().nextNino)
+  val ninoGen: Gen[Nino] = Gen.const(NinoGenerator().nextNino)
 
-  val sautrGen: Gen[SaUtr] = Gen.const(new SaUtrGenerator().nextSaUtr)
+  val sautrGen: Gen[SaUtr] = Gen.const(SaUtrGenerator().nextSaUtr)
 
   val entryGen: Gen[Entry] = for {
     action             <- Gen.oneOf(InputForms.addEntryActionBlock, InputForms.addEntryActionLock)

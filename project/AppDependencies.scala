@@ -12,7 +12,7 @@ object AppDependencies {
 
   private val test = Seq(
     "uk.gov.hmrc"                  %% "bootstrap-test-play-30"          % bootstrapVersion,
-    "uk.gov.hmrc"                  %% "domain-play-30"                  % "13.0.0",
+    "uk.gov.hmrc"                  %% "domain-test-play-30"             % "13.0.0",
     "org.scalatestplus"            %% "scalacheck-1-18"                 % scalaTestPlusVersion
   ).map(_ % Test)
 
